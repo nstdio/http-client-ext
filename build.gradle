@@ -1,0 +1,33 @@
+plugins {
+    id 'java-library'
+}
+
+group 'com.github.nstdio'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    junitVersion = '5.8.0-RC1'
+    lombokDependency = 'org.projectlombok:lombok:1.18.20'
+}
+
+dependencies {
+    testImplementation "org.junit.jupiter:junit-jupiter-api:$junitVersion"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:$junitVersion"
+    testImplementation 'org.assertj:assertj-core:3.20.2'
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junitVersion"
+}
+
+test {
+    useJUnitPlatform()
+}
+
+wrapper {
+    gradleVersion = '7.2'
+}
