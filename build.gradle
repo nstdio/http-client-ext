@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
-    id "org.sonarqube" version "3.3"
+    id 'jacoco'
+    id 'org.sonarqube' version '3.3'
 }
 
 group 'com.github.nstdio'
@@ -35,6 +36,16 @@ sonarqube {
 
 test {
     useJUnitPlatform()
+
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+}
+
+jacoco {
+    toolVersion = "0.8.7"
 }
 
 wrapper {
