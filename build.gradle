@@ -14,6 +14,7 @@ repositories {
     mavenCentral()
 }
 
+def isCI = Boolean.parseBoolean(System.getenv("CI"))
 ext {
     junitVersion = '5.8.0-RC1'
     lombokDependency = 'org.projectlombok:lombok:1.18.20'
@@ -41,7 +42,11 @@ test {
 }
 
 jacocoTestReport {
-    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.required = isCI
+    }
+
+    dependsOn test
 }
 
 jacoco {
