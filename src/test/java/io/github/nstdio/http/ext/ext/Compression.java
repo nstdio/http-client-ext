@@ -1,4 +1,4 @@
-package com.github.nstdio.http.ext;
+package io.github.nstdio.http.ext.ext;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

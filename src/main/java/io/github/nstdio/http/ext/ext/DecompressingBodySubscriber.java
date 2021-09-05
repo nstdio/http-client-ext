@@ -1,4 +1,4 @@
-package com.github.nstdio.http.ext;
+package io.github.nstdio.http.ext.ext;
 
 import java.io.InputStream;
 import java.net.http.HttpResponse.BodySubscriber;
