@@ -12,13 +12,13 @@ import java.net.http.HttpResponse.BodySubscribers;
 import java.net.http.HttpResponse.ResponseInfo;
 import java.util.function.Function;
 import java.util.regex.Pattern;
-import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 final class DecompressingBodyHandler implements BodyHandler<InputStream> {
 
   private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
-  private static final Pattern COMMA_PATTERN = Pattern.compile(",");
+  private static final Pattern COMMA_PATTERN = Pattern.compile(",", Pattern.LITERAL);
   private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
   private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
 
@@ -35,7 +35,7 @@ final class DecompressingBodyHandler implements BodyHandler<InputStream> {
           }
         };
       case "deflate":
-        return DeflaterInputStream::new;
+        return InflaterInputStream::new;
       case "compress":
       case "br":
         throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));

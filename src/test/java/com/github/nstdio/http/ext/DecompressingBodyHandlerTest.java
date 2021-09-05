@@ -12,8 +12,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
-import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.InflaterInputStream;
 
 class DecompressingBodyHandlerTest {
 
@@ -41,7 +41,7 @@ class DecompressingBodyHandlerTest {
 
     //then
     assertThat(inputStream)
-        .isInstanceOf(DeflaterInputStream.class);
+        .isInstanceOf(InflaterInputStream.class);
   }
 
   @ParameterizedTest
