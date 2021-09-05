@@ -1,27 +1,34 @@
 package com.github.nstdio.http.ext;
 
-import org.junit.jupiter.api.Test;
+import static com.github.nstdio.http.ext.BodyHandlers.ofDecompressing;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 
 class DecompressingBodyHandlerIntegrationTest {
 
-  private final HttpClient httpClient = HttpClient.newBuilder()
-      .connectTimeout(Duration.ofSeconds(2))
-      .build();
+  private final HttpClient httpClient = HttpClient.newHttpClient();
   private final URI baseUri = URI.create("https://httpbin.org/");
 
-  @Test
-  void shouldCreate() throws Exception {
+  @ParameterizedTest
+  @ValueSource(strings = {"gzip", "deflate"})
+  void shouldCreate(String compression) throws Exception {
     //given
-    var request = HttpRequest.newBuilder(baseUri.resolve("gzip"))
+    var request = HttpRequest.newBuilder(baseUri.resolve(compression))
         .build();
 
-    var body = httpClient.send(request, HttpResponse.BodyHandlers.ofString()).body();
-    var body2 = httpClient.send(request, BodyHandlers.ofDecompressing()).body();
+    //when
+    var body = httpClient.send(request, ofDecompressing()).body();
+    var json = IOUtils.toString(body);
+
+    //then
+    assertThat(json, isJson());
   }
 }
