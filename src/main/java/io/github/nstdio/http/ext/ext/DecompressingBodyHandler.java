@@ -1,4 +1,4 @@
-package com.github.nstdio.http.ext;
+package io.github.nstdio.http.ext.ext;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;

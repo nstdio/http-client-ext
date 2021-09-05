@@ -1,8 +1,8 @@
-package com.github.nstdio.http.ext;
+package io.github.nstdio.http.ext.ext;
 
-import static com.github.nstdio.http.ext.Compression.deflate;
-import static com.github.nstdio.http.ext.Compression.gzip;
-import static com.github.nstdio.http.ext.DecompressingBodyHandler.decompressionFn;
+import static io.github.nstdio.http.ext.ext.Compression.deflate;
+import static io.github.nstdio.http.ext.ext.Compression.gzip;
+import static io.github.nstdio.http.ext.ext.DecompressingBodyHandler.decompressionFn;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
