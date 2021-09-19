@@ -1,3 +1,6 @@
+import java.nio.file.Files
+import java.util.stream.Collectors
+
 plugins {
     id 'java-library'
     id 'jacoco'
@@ -140,6 +143,21 @@ jacocoTestReport {
 
 jacoco {
     toolVersion = "0.8.7"
+}
+
+tasks.register('addLicenseHeaders') {
+    doLast {
+        String licenseText = Files.lines(file('LICENSE').toPath())
+                .map({ ' * ' + it })
+                .collect(Collectors.joining('\n', '/*\n', '\n */\n'))
+
+        fileTree(dir: 'src', include: '**/*.java').each {
+            String text = it.text
+            if (!text.startsWith(licenseText)) {
+                it.text = licenseText + text
+            }
+        }
+    }
 }
 
 wrapper {
