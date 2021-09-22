@@ -20,39 +20,37 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package io.github.nstdio.http.ext.ext;
+package io.github.nstdio.http.ext;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
-import java.util.function.UnaryOperator;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.GZIPOutputStream;
+import static io.github.nstdio.http.ext.ext.BodyHandlers.ofDecompressing;
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
 
-public class Compression {
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-  public static byte[] gzip(String in) {
-    return compress(in, out -> {
-      try {
-        return new GZIPOutputStream(out);
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    });
-  }
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
 
-  public static byte[] deflate(String in) {
-    return compress(in, DeflaterOutputStream::new);
-  }
+class DecompressingBodyHandlerIntegrationTest {
 
-  private static byte[] compress(String in, UnaryOperator<OutputStream> compressorCreator) {
-    try (var out = new ByteArrayOutputStream(); var compressor = compressorCreator.apply(out)) {
-      compressor.write(in.getBytes());
-      compressor.flush();
-      return out.toByteArray();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+  private final HttpClient httpClient = HttpClient.newHttpClient();
+  private final URI baseUri = URI.create("https://httpbin.org/");
+
+  @ParameterizedTest
+  @ValueSource(strings = {"gzip", "deflate"})
+  void shouldCreate(String compression) throws Exception {
+    //given
+    var request = HttpRequest.newBuilder(baseUri.resolve(compression))
+        .build();
+
+    //when
+    var body = httpClient.send(request, ofDecompressing()).body();
+    var json = IOUtils.toString(body);
+
+    //then
+    assertThat(json, isJson());
   }
 }

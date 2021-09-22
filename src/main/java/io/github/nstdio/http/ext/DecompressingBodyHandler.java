@@ -20,7 +20,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package io.github.nstdio.http.ext.ext;
+package io.github.nstdio.http.ext;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
