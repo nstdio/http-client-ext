@@ -22,7 +22,7 @@
  */
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.ext.BodyHandlers.ofDecompressing;
+import static io.github.nstdio.http.ext.BodyHandlers.ofDecompressing;
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
