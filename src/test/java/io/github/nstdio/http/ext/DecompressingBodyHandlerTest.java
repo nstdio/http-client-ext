@@ -20,11 +20,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package io.github.nstdio.http.ext.ext;
+package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.ext.Compression.deflate;
-import static io.github.nstdio.http.ext.ext.Compression.gzip;
-import static io.github.nstdio.http.ext.ext.DecompressingBodyHandler.decompressionFn;
+import static io.github.nstdio.http.ext.Compression.deflate;
+import static io.github.nstdio.http.ext.Compression.gzip;
+import static io.github.nstdio.http.ext.DecompressingBodyHandler.decompressionFn;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
