@@ -22,9 +22,6 @@
  */
 package io.github.nstdio.http.ext;
 
-import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -37,57 +34,82 @@ import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
+import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.toList;
+
 final class DecompressingBodyHandler implements BodyHandler<InputStream> {
 
-  private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
-  private static final Pattern COMMA_PATTERN = Pattern.compile(",", Pattern.LITERAL);
-  private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
-  private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
+    private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
+    private static final Pattern COMMA_PATTERN = Pattern.compile(",", Pattern.LITERAL);
+    private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
+    private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
 
-  // Visible for testing
-  static Function<InputStream, InputStream> decompressionFn(String directive) {
-    switch (directive) {
-      case "x-gzip":
-      case "gzip":
-        return in -> {
-          try {
-            return new GZIPInputStream(in);
-          } catch (IOException e) {
-            throw new UncheckedIOException(e);
-          }
-        };
-      case "deflate":
-        return InflaterInputStream::new;
-      case "compress":
-      case "br":
-        throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
-      default:
-        throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
-    }
-  }
+    private final Options options;
 
-  @Override
-  public BodySubscriber<InputStream> apply(ResponseInfo responseInfo) {
-    var encodingOpt = responseInfo
-        .headers()
-        .firstValue(HEADER_CONTENT_ENCODING);
-
-    if (encodingOpt.isEmpty()) {
-      return BodySubscribers.ofInputStream();
+    DecompressingBodyHandler(Options config) {
+        this.options = config;
     }
 
-    var encodings = COMMA_PATTERN
-        .splitAsStream(encodingOpt.get())
-        .map(String::trim)
-        .filter(not(String::isEmpty))
-        .collect(toList());
+    // Visible for testing
+    Function<InputStream, InputStream> decompressionFn(String directive) {
+        switch (directive) {
+            case "x-gzip":
+            case "gzip":
+                return in -> {
+                    try {
+                        return new GZIPInputStream(in);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                };
+            case "deflate":
+                return InflaterInputStream::new;
+            case "compress":
+            case "br":
+                if (options.failOnUnsupportedDirectives) {
+                    throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
+                }
+                return Function.identity();
+            default:
+                if (options.failOnUnknownDirectives) {
+                    throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
+                }
 
-    return encodings
-        .stream()
-        .map(DecompressingBodyHandler::decompressionFn)
-        .reduce(Function::andThen)
-        .<BodySubscriber<InputStream>>map(DecompressingBodySubscriber::new)
-        .orElseGet(BodySubscribers::ofInputStream);
-  }
+                return Function.identity();
+        }
+    }
 
+    @Override
+    public BodySubscriber<InputStream> apply(ResponseInfo responseInfo) {
+        var encodingOpt = responseInfo
+                .headers()
+                .firstValue(HEADER_CONTENT_ENCODING);
+
+        if (encodingOpt.isEmpty()) {
+            return BodySubscribers.ofInputStream();
+        }
+
+        var encodings = COMMA_PATTERN
+                .splitAsStream(encodingOpt.get())
+                .map(String::trim)
+                .filter(not(String::isEmpty))
+                .collect(toList());
+
+        return encodings
+                .stream()
+                .map(this::decompressionFn)
+                .reduce(Function::andThen)
+                .<BodySubscriber<InputStream>>map(DecompressingBodySubscriber::new)
+                .orElseGet(BodySubscribers::ofInputStream);
+    }
+
+    static class Options {
+        private final boolean failOnUnsupportedDirectives;
+        private final boolean failOnUnknownDirectives;
+
+        Options(boolean failOnUnsupportedDirectives, boolean failOnUnknownDirectives) {
+            this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
+            this.failOnUnknownDirectives = failOnUnknownDirectives;
+        }
+    }
 }
