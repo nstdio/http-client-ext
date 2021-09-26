@@ -7,7 +7,7 @@
 ### Gradle
 
 ```
-implementation 'io.github.nstdio:http-client-ext:1.0.1'
+implementation 'io.github.nstdio:http-client-ext:1.0.3'
 ```
 
 ### Maven
@@ -15,6 +15,6 @@ implementation 'io.github.nstdio:http-client-ext:1.0.1'
 <dependency>
     <groupId>io.github.nstdio</groupId>
     <artifactId>http-client-ext</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.3</version>
 </dependency>
 ```
