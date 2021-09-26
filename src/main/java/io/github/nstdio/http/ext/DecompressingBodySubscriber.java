@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2021 Edgar Asatryan
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -8,10 +8,10 @@
  * distribute, sublicense, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be
  * included in all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -33,35 +33,35 @@ import java.util.function.Function;
 
 final class DecompressingBodySubscriber implements BodySubscriber<InputStream> {
 
-  private final BodySubscriber<InputStream> delegate = BodySubscribers.ofInputStream();
-  private final Function<InputStream, InputStream> decompressingFn;
+    private final BodySubscriber<InputStream> delegate = BodySubscribers.ofInputStream();
+    private final Function<InputStream, InputStream> decompressingFn;
 
-  DecompressingBodySubscriber(Function<InputStream, InputStream> decompressingFn) {
-    this.decompressingFn = decompressingFn;
-  }
+    DecompressingBodySubscriber(Function<InputStream, InputStream> decompressingFn) {
+        this.decompressingFn = decompressingFn;
+    }
 
-  @Override
-  public CompletionStage<InputStream> getBody() {
-    return delegate.getBody().thenApplyAsync(decompressingFn);
-  }
+    @Override
+    public CompletionStage<InputStream> getBody() {
+        return delegate.getBody().thenApplyAsync(decompressingFn);
+    }
 
-  @Override
-  public void onSubscribe(Subscription subscription) {
-    delegate.onSubscribe(subscription);
-  }
+    @Override
+    public void onSubscribe(Subscription subscription) {
+        delegate.onSubscribe(subscription);
+    }
 
-  @Override
-  public void onNext(List<ByteBuffer> item) {
-    delegate.onNext(item);
-  }
+    @Override
+    public void onNext(List<ByteBuffer> item) {
+        delegate.onNext(item);
+    }
 
-  @Override
-  public void onError(Throwable throwable) {
-    delegate.onError(throwable);
-  }
+    @Override
+    public void onError(Throwable throwable) {
+        delegate.onError(throwable);
+    }
 
-  @Override
-  public void onComplete() {
-    delegate.onComplete();
-  }
+    @Override
+    public void onComplete() {
+        delegate.onComplete();
+    }
 }
