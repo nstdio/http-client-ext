@@ -148,7 +148,8 @@ jacoco {
 tasks.register('addLicenseHeaders') {
     doLast {
         String licenseText = Files.lines(file('LICENSE').toPath())
-                .map({ ' * ' + it })
+                .map({ it.isBlank() ? '' : ' ' + it})
+                .map({ ' *' + it })
                 .collect(Collectors.joining('\n', '/*\n', '\n */\n'))
 
         fileTree(dir: 'src', include: '**/*.java').each {
