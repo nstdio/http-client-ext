@@ -22,6 +22,7 @@
  */
 module http.client.ext {
     requires java.net.http;
+    requires lombok;
 
     exports io.github.nstdio.http.ext;
 }
