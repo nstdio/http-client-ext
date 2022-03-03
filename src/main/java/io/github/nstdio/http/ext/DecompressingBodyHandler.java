@@ -30,17 +30,13 @@ import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.BodySubscribers;
 import java.net.http.HttpResponse.ResponseInfo;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-import static java.util.function.Predicate.not;
+import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
 import static java.util.stream.Collectors.toList;
 
 final class DecompressingBodyHandler implements BodyHandler<InputStream> {
-
-    private static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
-    private static final Pattern COMMA_PATTERN = Pattern.compile(",", Pattern.LITERAL);
     private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
     private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
 
@@ -89,11 +85,7 @@ final class DecompressingBodyHandler implements BodyHandler<InputStream> {
             return BodySubscribers.ofInputStream();
         }
 
-        var encodings = COMMA_PATTERN
-                .splitAsStream(encodingOpt.get())
-                .map(String::trim)
-                .filter(not(String::isEmpty))
-                .collect(toList());
+        var encodings = Headers.splitComma(encodingOpt.get()).collect(toList());
 
         return encodings
                 .stream()

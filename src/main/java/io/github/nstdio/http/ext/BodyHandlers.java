@@ -64,6 +64,7 @@ public final class BodyHandlers {
          * Sets whether throw exception when compression directive not supported or not.
          *
          * @param failOnUnsupportedDirectives Whether throw exception when compression directive not supported or not
+         *
          * @return this for fluent chaining.
          */
         public DecompressingBodyHandlerBuilder failOnUnsupportedDirectives(boolean failOnUnsupportedDirectives) {
@@ -75,6 +76,7 @@ public final class BodyHandlers {
          * Sets whether throw exception when unknown compression directive encountered or not.
          *
          * @param failOnUnknownDirectives Whether throw exception when unknown compression directive encountered or not
+         *
          * @return this for fluent chaining.
          */
         public DecompressingBodyHandlerBuilder failOnUnknownDirectives(boolean failOnUnknownDirectives) {
@@ -93,4 +95,5 @@ public final class BodyHandlers {
             return new DecompressingBodyHandler(config);
         }
     }
+
 }
