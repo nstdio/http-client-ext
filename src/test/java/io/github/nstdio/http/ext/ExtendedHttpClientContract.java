@@ -37,6 +37,7 @@ import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Headers.HEADER_LAST_MODIFIED;
 import static io.github.nstdio.http.ext.Headers.toRFC1123;
 import static io.github.nstdio.http.ext.Matchers.isCached;
+import static io.github.nstdio.http.ext.Properties.duration;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -74,9 +75,10 @@ public interface ExtendedHttpClientContract {
     /**
      * The maximum time to wait until cache gets written.
      */
-    // TODO: Read from arguments, properties, env
-    Duration CACHE_WRITE_DELAY = Duration.ofMillis(500);
-    Duration POLL_INTERVAL = Duration.ofMillis(5);
+    Duration CACHE_WRITE_DELAY = duration("client.test.cache.write.delay")
+            .orElseGet(() -> Duration.ofMillis(500));
+    Duration POLL_INTERVAL = duration("client.test.pool.interval")
+            .orElseGet(() -> Duration.ofMillis(5));
 
     static URI resolve(String path) {
         return URI.create(wm.getRuntimeInfo().getHttpBaseUrl()).resolve(path);
