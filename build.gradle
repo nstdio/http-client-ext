@@ -1,5 +1,11 @@
-import java.nio.file.Files
-import java.util.stream.Collectors
+import com.vdurmont.semver4j.Semver
+import com.vdurmont.semver4j.Semver.SemverType
+
+buildscript {
+    dependencies {
+        classpath 'com.vdurmont:semver4j:3.1.0'
+    }
+}
 
 plugins {
     id 'java-library'
@@ -154,18 +160,15 @@ jacoco {
     toolVersion = "0.8.7"
 }
 
-tasks.register('addLicenseHeaders') {
+task checkGradleVersion {
     doLast {
-        String licenseText = Files.lines(file('LICENSE').toPath())
-                .map({ it.isBlank() ? '' : ' ' + it})
-                .map({ ' *' + it })
-                .collect(Collectors.joining('\n', '/*\n', '\n */\n'))
+        def text = project.getResources().text.fromUri("https://services.gradle.org/versions/current").asString()
+        def parsedJson = new groovy.json.JsonSlurper().parseText(text)
+        def current = new Semver(gradle.getGradleVersion(), SemverType.LOOSE)
+        def latest = parsedJson["version"] as String
 
-        fileTree(dir: 'src', include: '**/*.java').each {
-            String text = it.text
-            if (!text.startsWith(licenseText)) {
-                it.text = licenseText + text
-            }
+        if (current.isLowerThan(latest)) {
+            logger.lifecycle("Gradle needs update. Current: {}, Latest: {}", current, latest)
         }
     }
 }
