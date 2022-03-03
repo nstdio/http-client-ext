@@ -51,4 +51,6 @@ class ResponseInfoImpl implements ResponseInfo {
     public Version version() {
         return version;
     }
+
+    static class ResponseInfoBuilder {}
 }
