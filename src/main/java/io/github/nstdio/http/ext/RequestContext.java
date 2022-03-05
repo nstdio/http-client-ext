@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicLong;
 final class RequestContext {
     @With
     private final HttpRequest request;
+    @With
     private final BodyHandler<?> bodyHandler;
     private final CacheControl cacheControl;
     private final AtomicLong requestTime = new AtomicLong();

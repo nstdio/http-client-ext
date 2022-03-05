@@ -30,6 +30,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.github.nstdio.http.ext.Assertions.assertThat;
+import static io.github.nstdio.http.ext.Assertions.await;
+import static io.github.nstdio.http.ext.Assertions.awaitFor;
 import static io.github.nstdio.http.ext.Headers.HEADER_CACHE_CONTROL;
 import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
 import static io.github.nstdio.http.ext.Headers.HEADER_ETAG;
@@ -37,7 +39,6 @@ import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Headers.HEADER_LAST_MODIFIED;
 import static io.github.nstdio.http.ext.Headers.toRFC1123;
 import static io.github.nstdio.http.ext.Matchers.isCached;
-import static io.github.nstdio.http.ext.Properties.duration;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -45,9 +46,6 @@ import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.assertj.core.api.Assertions;
-import org.awaitility.Awaitility;
-import org.awaitility.core.ConditionFactory;
-import org.awaitility.core.ThrowingRunnable;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -72,24 +70,8 @@ public interface ExtendedHttpClientContract {
             .options(wireMockConfig().dynamicPort())
             .build();
 
-    /**
-     * The maximum time to wait until cache gets written.
-     */
-    Duration CACHE_WRITE_DELAY = duration("client.test.cache.write.delay")
-            .orElseGet(() -> Duration.ofMillis(500));
-    Duration POLL_INTERVAL = duration("client.test.pool.interval")
-            .orElseGet(() -> Duration.ofMillis(5));
-
     static URI resolve(String path) {
         return URI.create(wm.getRuntimeInfo().getHttpBaseUrl()).resolve(path);
-    }
-
-    static void awaitFor(ThrowingRunnable r) {
-        await().untilAsserted(r);
-    }
-
-    static ConditionFactory await() {
-        return Awaitility.await().pollInterval(POLL_INTERVAL).atMost(CACHE_WRITE_DELAY);
     }
 
     /**

@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 class Headers {
     static final String HEADER_VARY = "Vary";
     static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
+    static final String HEADER_CONTENT_LENGTH = "Content-Length";
     static final String HEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
     static final String HEADER_IF_NONE_MATCH = "If-None-Match";
     static final String HEADER_CACHE_CONTROL = "Cache-Control";
@@ -93,6 +94,10 @@ class Headers {
                 .filter(not(String::isEmpty));
     }
 
+    static Optional<String> firstValue(HttpHeaders headers, String name) {
+        return headers.firstValue(name).filter(not(String::isBlank));
+    }
+
     static Instant parseInstant(String date) {
         for (DateTimeFormatter fmt : FORMATTERS) {
             try {
@@ -134,7 +139,7 @@ class Headers {
                 var values = request.allValues(s);
 
                 if (!values.isEmpty()) {
-                    builder.addHeader(s, values);
+                    builder.add(s, values);
                 }
             });
         }

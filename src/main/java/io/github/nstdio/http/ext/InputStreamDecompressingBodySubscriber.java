@@ -22,14 +22,14 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow.Subscription;
-import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
-final class DecompressingBodySubscriber implements BodySubscriber<InputStream> {
+final class InputStreamDecompressingBodySubscriber implements BodySubscriber<InputStream> {
 
     private final BodySubscriber<InputStream> delegate = BodySubscribers.ofInputStream();
-    private final Function<InputStream, InputStream> decompressingFn;
+    private final UnaryOperator<InputStream> decompressingFn;
 
-    DecompressingBodySubscriber(Function<InputStream, InputStream> decompressingFn) {
+    InputStreamDecompressingBodySubscriber(UnaryOperator<InputStream> decompressingFn) {
         this.decompressingFn = decompressingFn;
     }
 

@@ -26,7 +26,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.http.Fault.EMPTY_RESPONSE;
 import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static io.github.nstdio.http.ext.ExtendedHttpClientContract.await;
+import static io.github.nstdio.http.ext.Assertions.await;
 import static io.github.nstdio.http.ext.Headers.HEADER_CACHE_CONTROL;
 import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
 import static io.github.nstdio.http.ext.Headers.HEADER_EXPIRES;

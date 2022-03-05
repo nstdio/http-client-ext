@@ -17,68 +17,127 @@ package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.Compression.deflate;
 import static io.github.nstdio.http.ext.Compression.gzip;
+import static io.github.nstdio.http.ext.Headers.ALLOW_ALL;
+import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import io.github.nstdio.http.ext.DecompressingBodyHandler.Options;
+import org.apache.commons.io.IOUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpResponse.BodyHandler;
+import java.net.http.HttpResponse.BodySubscriber;
+import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 class DecompressingBodyHandlerTest {
 
-    private DecompressingBodyHandler handler;
+    private DecompressingBodyHandler<?> handler;
+    private BodyHandler<Object> mockHandler;
+    private BodySubscriber<Object> mockSubscriber;
 
     @BeforeEach
+    @SuppressWarnings("unchecked")
     void setUp() {
-        handler = new DecompressingBodyHandler(new Options(true, true));
+        mockHandler = Mockito.mock(BodyHandler.class);
+        mockSubscriber = Mockito.mock(BodySubscriber.class);
+        handler = new DecompressingBodyHandler<>(mockHandler, new Options(false, false));
+    }
+
+    @AfterEach
+    void tearDown() {
+        verifyNoInteractions(mockSubscriber);
+    }
+
+    @Test
+    void shouldReturnOriginalSub() {
+        //given
+        ImmutableResponseInfo responseInfo = ImmutableResponseInfo.builder()
+                .headers(HttpHeaders.of(Map.of(), ALLOW_ALL))
+                .build();
+        given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber);
+
+        //when
+        BodySubscriber<?> actual = handler.apply(responseInfo);
+
+        //then
+        assertThat(actual).isSameAs(mockSubscriber);
+        verify(mockHandler).apply(responseInfo);
+        verifyNoMoreInteractions(mockHandler);
+    }
+
+    @Test
+    void shouldReturnOriginalSubWhenDirectivesUnsupported() {
+        //given
+        ImmutableResponseInfo responseInfo = ImmutableResponseInfo.builder()
+                .headers(new HttpHeadersBuilder().add(HEADER_CONTENT_ENCODING, "compress,br,identity,abc").build())
+                .build();
+        given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber);
+
+        //when
+        BodySubscriber<?> actual = handler.apply(responseInfo);
+
+        //then
+        assertThat(actual).isSameAs(mockSubscriber);
+        verify(mockHandler).apply(responseInfo);
+        verifyNoMoreInteractions(mockHandler);
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"gzip", "x-gzip"})
-    void shouldReturnGzipInputStream(String directive) {
+    void shouldReturnGzipInputStream(String directive) throws IOException {
         var gzipContent = new ByteArrayInputStream(gzip("abc"));
 
         //when
         var fn = handler.decompressionFn(directive);
-        var inputStream = fn.apply(gzipContent);
+        var in = fn.apply(gzipContent);
 
         //then
-        assertThat(inputStream)
-                .isInstanceOf(GZIPInputStream.class);
+        assertThat(in).isInstanceOf(GZIPInputStream.class);
+        assertThat(IOUtils.toString(in, StandardCharsets.UTF_8)).isEqualTo("abc");
     }
 
     @Test
-    void shouldReturnDeflateInputStream() {
+    void shouldReturnDeflateInputStream() throws IOException {
         var deflateContent = new ByteArrayInputStream(deflate("abc"));
 
         //when
         var fn = handler.decompressionFn("deflate");
-        var inputStream = fn.apply(deflateContent);
+        var in = fn.apply(deflateContent);
 
         //then
-        assertThat(inputStream)
-                .isInstanceOf(InflaterInputStream.class);
+        assertThat(in).isInstanceOf(InflaterInputStream.class);
+        assertThat(IOUtils.toString(in, StandardCharsets.UTF_8)).isEqualTo("abc");
     }
 
-
     @Nested
-    class FailureControlOptions {
+    class FailureControlOptionsTest {
+
         @ParameterizedTest
         @ValueSource(strings = {"compress", "br"})
         void shouldThrowUnsupportedOperationException(String directive) {
             //given
             var options = new Options(true, true);
-            var handler = new DecompressingBodyHandler(options);
+            var handler = new DecompressingBodyHandler<>(mockHandler, options);
 
             //when + then
             assertThatExceptionOfType(UnsupportedOperationException.class)
@@ -89,6 +148,7 @@ class DecompressingBodyHandlerTest {
         @ParameterizedTest
         @ValueSource(strings = {"", "abc", "gz", "a"})
         void shouldThrowIllegalArgumentException(String directive) {
+            var handler = new DecompressingBodyHandler<>(mockHandler, new Options(true, true));
             //when + then
             assertThatIllegalArgumentException()
                     .isThrownBy(() -> handler.decompressionFn(directive))
@@ -101,7 +161,7 @@ class DecompressingBodyHandlerTest {
         void shouldNotThrowUnsupportedOperationException(String directive) {
             //given
             var options = new Options(false, true);
-            var handler = new DecompressingBodyHandler(options);
+            var handler = new DecompressingBodyHandler<>(mockHandler, options);
             var in = InputStream.nullInputStream();
 
             //when
@@ -118,7 +178,7 @@ class DecompressingBodyHandlerTest {
         void shouldNotIllegalArgumentException(String directive) {
             //given
             var options = new Options(true, false);
-            var handler = new DecompressingBodyHandler(options);
+            var handler = new DecompressingBodyHandler<>(mockHandler, options);
             var in = InputStream.nullInputStream();
 
             //when

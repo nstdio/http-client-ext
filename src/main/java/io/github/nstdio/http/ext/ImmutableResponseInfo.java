@@ -25,7 +25,7 @@ import java.net.http.HttpResponse.ResponseInfo;
 
 @Builder(builderClassName = "ResponseInfoBuilder")
 @RequiredArgsConstructor
-class ResponseInfoImpl implements ResponseInfo {
+class ImmutableResponseInfo implements ResponseInfo {
     private final int statusCode;
     private final HttpHeaders headers;
     private final Version version;

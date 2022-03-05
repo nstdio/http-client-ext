@@ -40,13 +40,13 @@ class HttpHeadersBuilder {
         }
     }
 
-    HttpHeadersBuilder addHeader(String name, String value) {
+    HttpHeadersBuilder add(String name, String value) {
         headersMap.computeIfAbsent(name, k -> new ArrayList<>(1))
                 .add(value);
         return this;
     }
 
-    HttpHeadersBuilder addHeader(String name, List<String> values) {
+    HttpHeadersBuilder add(String name, List<String> values) {
         if (!values.isEmpty()) {
             headersMap.computeIfAbsent(name, k -> new ArrayList<>(values.size()))
                     .addAll(values);
@@ -54,7 +54,7 @@ class HttpHeadersBuilder {
         return this;
     }
 
-    HttpHeadersBuilder setHeader(String name, String value) {
+    HttpHeadersBuilder set(String name, String value) {
         List<String> values = new ArrayList<>(1);
         values.add(value);
         headersMap.put(name, values);
@@ -62,14 +62,14 @@ class HttpHeadersBuilder {
         return this;
     }
 
-    HttpHeadersBuilder setHeader(String name, List<String> value) {
+    HttpHeadersBuilder set(String name, List<String> value) {
         List<String> values = new ArrayList<>(value);
         headersMap.put(name, values);
 
         return this;
     }
 
-    HttpHeadersBuilder removeHeader(String name, String value) {
+    HttpHeadersBuilder remove(String name, String value) {
         List<String> values = headersMap.get(name);
         if (value != null) {
             values.remove(value);
@@ -77,6 +77,11 @@ class HttpHeadersBuilder {
                 headersMap.remove(name);
             }
         }
+        return this;
+    }
+
+    HttpHeadersBuilder remove(String name) {
+        headersMap.remove(name);
         return this;
     }
 
