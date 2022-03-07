@@ -126,10 +126,10 @@ public class CacheEntryMetadata {
 
                     if (add) {
                         HttpHeaders newHeaders = new HttpHeadersBuilder(responseHeaders)
-                                .addHeader(HEADER_WARNING, "113 - \"Heuristic Expiration\"")
+                                .add(HEADER_WARNING, "113 - \"Heuristic Expiration\"")
                                 .build();
 
-                        response = ResponseInfoImpl.toBuilder(response)
+                        response = ImmutableResponseInfo.toBuilder(response)
                                 .headers(newHeaders)
                                 .build();
                     }
@@ -232,10 +232,10 @@ public class CacheEntryMetadata {
 
         HttpHeadersBuilder headersBuilder = new HttpHeadersBuilder(response.headers());
 
-        toRemove.forEach(value -> headersBuilder.removeHeader(HEADER_WARNING, value));
-        responseHeaders.map().forEach(headersBuilder::setHeader);
+        toRemove.forEach(value -> headersBuilder.remove(HEADER_WARNING, value));
+        responseHeaders.map().forEach(headersBuilder::set);
 
-        response = ResponseInfoImpl.toBuilder(response).headers(headersBuilder.build()).build();
+        response = ImmutableResponseInfo.toBuilder(response).headers(headersBuilder.build()).build();
 
         initialize();
     }

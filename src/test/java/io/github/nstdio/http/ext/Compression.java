@@ -19,30 +19,31 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UncheckedIOException;
-import java.util.function.UnaryOperator;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class Compression {
+class Compression {
 
-    public static byte[] gzip(String in) {
+    static byte[] gzip(String in) {
         return compress(in, out -> {
             try {
-                return new GZIPOutputStream(out);
+                return new GZIPOutputStream(out, true);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         });
     }
 
-    public static byte[] deflate(String in) {
-        return compress(in, DeflaterOutputStream::new);
+    static byte[] deflate(String in) {
+        return compress(in, out -> new DeflaterOutputStream(out, true));
     }
 
-    private static byte[] compress(String in, UnaryOperator<OutputStream> compressorCreator) {
+    private static byte[] compress(String in, Function<OutputStream, DeflaterOutputStream> compressorCreator) {
         try (var out = new ByteArrayOutputStream(); var compressor = compressorCreator.apply(out)) {
-            compressor.write(in.getBytes());
-            compressor.flush();
+            compressor.write(in.getBytes(StandardCharsets.UTF_8));
+            compressor.finish();
             return out.toByteArray();
         } catch (IOException e) {
             throw new UncheckedIOException(e);

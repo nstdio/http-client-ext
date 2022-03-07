@@ -13,34 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.BodySubscribers;
 import java.net.http.HttpResponse.ResponseInfo;
-import java.util.function.Function;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.UnaryOperator;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
-final class DecompressingBodyHandler implements BodyHandler<InputStream> {
+class DecompressingBodyHandler<T> implements BodyHandler<T> {
     private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
     private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
-
+    private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
+    private final BodyHandler<T> original;
     private final Options options;
 
-    DecompressingBodyHandler(Options config) {
-        this.options = config;
+    private volatile List<String> directives;
+
+    DecompressingBodyHandler(BodyHandler<T> original, Options options) {
+        this.original = original;
+        this.options = options;
     }
 
-    // Visible for testing
-    Function<InputStream, InputStream> decompressionFn(String directive) {
+    private UnaryOperator<InputStream> chain(UnaryOperator<InputStream> u1, UnaryOperator<InputStream> u2) {
+        return in -> u2.apply(u1.apply(in));
+    }
+
+    UnaryOperator<InputStream> decompressionFn(String directive) {
         switch (directive) {
             case "x-gzip":
             case "gzip":
@@ -55,40 +70,59 @@ final class DecompressingBodyHandler implements BodyHandler<InputStream> {
                 return InflaterInputStream::new;
             case "compress":
             case "br":
-                if (options.failOnUnsupportedDirectives) {
+                if (options.failOnUnsupportedDirectives()) {
                     throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
                 }
-                return Function.identity();
+                return IDENTITY;
             default:
-                if (options.failOnUnknownDirectives) {
+                if (options.failOnUnknownDirectives()) {
                     throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
                 }
 
-                return Function.identity();
+                return IDENTITY;
         }
     }
 
     @Override
-    public BodySubscriber<InputStream> apply(ResponseInfo responseInfo) {
-        var encodingOpt = responseInfo
-                .headers()
-                .firstValue(HEADER_CONTENT_ENCODING);
-
-        if (encodingOpt.isEmpty()) {
-            return BodySubscribers.ofInputStream();
+    public BodySubscriber<T> apply(ResponseInfo info) {
+        var directiveToFn = computeDirectives(info.headers());
+        if (directiveToFn.isEmpty()) {
+            return original.apply(info);
         }
 
-        var encodings = Headers.splitComma(encodingOpt.get()).collect(toList());
-
-        return encodings
+        var reduced = directiveToFn
+                .values()
                 .stream()
-                .map(this::decompressionFn)
-                .reduce(Function::andThen)
-                .<BodySubscriber<InputStream>>map(DecompressingBodySubscriber::new)
-                .orElseGet(BodySubscribers::ofInputStream);
+                .reduce(IDENTITY, this::chain);
+
+        directives = List.copyOf(directiveToFn.keySet());
+
+        return new DecompressingSubscriber<>(original.apply(info), reduced);
     }
 
+    private Map<String, UnaryOperator<InputStream>> computeDirectives(HttpHeaders headers) {
+        var encodingOpt = Headers.firstValue(headers, HEADER_CONTENT_ENCODING);
+        if (encodingOpt.isEmpty()) {
+            return Map.of();
+        }
+
+        return Headers.splitComma(encodingOpt.get())
+                .map(s -> Map.entry(s, decompressionFn(s)))
+                .filter(e -> e.getValue() != IDENTITY)
+                .collect(toMap(Entry::getKey, Entry::getValue, (f1, f2) -> f1, LinkedHashMap::new));
+    }
+
+    List<String> directives(HttpHeaders headers) {
+        if (directives != null)
+            return directives;
+
+        return (directives = List.copyOf(computeDirectives(headers).keySet()));
+    }
+
+    @Getter
+    @Accessors(fluent = true)
     static class Options {
+        static final Options LENIENT = new Options(false, false);
         private final boolean failOnUnsupportedDirectives;
         private final boolean failOnUnknownDirectives;
 

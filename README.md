@@ -31,7 +31,7 @@ The `ExtendedHttpClient` implements client part of [RFC7234](https://datatracker
 Here is the example of creating client with in memory cache:
 
 ```java
-HttpClient client=ExtendedHttpClient.newBuilder()
+HttpClient client = ExtendedHttpClient.newBuilder()
         .cache(Cache.newInMemoryCacheBuilder().build())
         .build();
 
@@ -51,4 +51,33 @@ Cache cache = Cache.newInMemoryCacheBuilder()
         .requestFilter(request -> request.uri().getHost().equals("api.github.com")) // cache only requests that match given predicate
         .responseFilter(response -> response.statusCode() == 200) // cache only responses that match given predicate
         .build();
+```
+
+### Decompression (gzip, deflate)
+Here is an example of transparent encoding feature
+
+```java
+HttpClient client = ExtendedHttpClient.newBuilder()
+        .transparentEncoding(true)
+        .build();
+
+URI uri = URI.create("https://api.github.com/users/defunkt");
+HttpRequest request = HttpRequest.newBuilder(uri).build();
+
+// Client will add `Accept-Encoding: gzip, deflate` header to the request
+// then decompress response body transparently of the user        
+HttpResponse<String> response = client.send(request, ofString());
+```
+
+there is also dedicated `BodyHandler` for that, but in this case user should add `Accept-Encoding` header manually
+
+```java
+HttpClient client = HttpClient.newClient();
+
+URI uri = URI.create("https://api.github.com/users/defunkt");
+HttpRequest request = HttpRequest.newBuilder(uri)
+        .header("Accept-Encoding", "gzip, deflate")
+        .build();
+
+HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressing(ofString()));
 ```

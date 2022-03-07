@@ -19,6 +19,7 @@ package io.github.nstdio.http.ext;
 import io.github.nstdio.http.ext.DecompressingBodyHandler.Options;
 
 import java.io.InputStream;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 
 /**
@@ -36,6 +37,10 @@ public final class BodyHandlers {
      */
     public static BodyHandler<InputStream> ofDecompressing() {
         return new DecompressingBodyHandlerBuilder().build();
+    }
+
+    public static <T> BodyHandler<T> ofDecompressing(BodyHandler<T> downstream) {
+        return new DecompressingBodyHandlerBuilder().build(downstream);
     }
 
     /**
@@ -78,15 +83,29 @@ public final class BodyHandlers {
             return this;
         }
 
+        public DecompressingBodyHandlerBuilder lenient(boolean lenient) {
+            return failOnUnsupportedDirectives(!lenient)
+                    .failOnUnsupportedDirectives(!lenient);
+        }
+
         /**
          * Creates the new decompressing body handler.
          *
          * @return The builder for decompressing body handler.
          */
         public BodyHandler<InputStream> build() {
+            return build(HttpResponse.BodyHandlers.ofInputStream());
+        }
+
+        /**
+         * Creates the new decompressing body handler.
+         *
+         * @return The builder for decompressing body handler.
+         */
+        public <T> BodyHandler<T> build(BodyHandler<T> downstream) {
             var config = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
 
-            return new DecompressingBodyHandler(config);
+            return new DecompressingBodyHandler<>(downstream, config);
         }
     }
 

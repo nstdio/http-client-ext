@@ -28,7 +28,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.charset.StandardCharsets;
 
-class DecompressingBodyHandlerIntegrationTest {
+class InputStreamDecompressingBodyHandlerIntegrationTest {
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final URI baseUri = URI.create("https://httpbin.org/");
