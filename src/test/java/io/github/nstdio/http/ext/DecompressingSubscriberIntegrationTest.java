@@ -22,8 +22,6 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
-import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_LENGTH;
 import static java.net.http.HttpResponse.BodyHandlers.ofInputStream;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -39,12 +37,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.util.concurrent.Executors;
 
 class DecompressingSubscriberIntegrationTest {
-    private final HttpClient client = HttpClient.newBuilder()
-            .executor(Executors.newSingleThreadExecutor())
-            .build();
+    private final HttpClient client = HttpClient.newHttpClient();
+
     @RegisterExtension
     WireMockExtension wm = WireMockExtension.newInstance()
             .configureStaticDsl(true)
@@ -84,19 +80,18 @@ class DecompressingSubscriberIntegrationTest {
     }
 
     private LargeBodyDataDecompression setupLargeBodyDecompressionTest() {
-        var body = RandomStringUtils.randomAlphabetic(16384 * 10);
+        return setupLargeBodyDecompressionTest(RandomStringUtils.randomAlphabetic(16384 * 10));
+    }
+
+    private LargeBodyDataDecompression setupLargeBodyDecompressionTest(String body) {
         byte[] gzippedBody = Compression.gzip(body);
         String testUrl = "/gzip";
         stubFor(get(urlEqualTo(testUrl))
-                .willReturn(ok()
-                        .withHeader(HEADER_CONTENT_ENCODING, "gzip")
-                        .withHeader(HEADER_CONTENT_LENGTH, String.valueOf(gzippedBody.length))
-                        .withBody(gzippedBody)
-                )
-        );
+                .willReturn(ok().withBody(gzippedBody)));
         var uri = URI.create(wm.getRuntimeInfo().getHttpBaseUrl()).resolve(testUrl);
 
-        return new LargeBodyDataDecompression(HttpRequest.newBuilder(uri).build(), body);
+        HttpRequest request = HttpRequest.newBuilder(uri).build();
+        return new LargeBodyDataDecompression(request, body);
     }
 
     static class LargeBodyDataDecompression {

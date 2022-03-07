@@ -86,6 +86,22 @@ class DecompressingBodyHandlerTest {
     }
 
     @Test
+    void shouldReturnDirectSubscriptionWhenDirect() {
+        Options options = new Options(false, false);
+        handler = DecompressingBodyHandler.ofDirect(options);
+
+        ImmutableResponseInfo responseInfo = ImmutableResponseInfo.builder()
+                .headers(new HttpHeadersBuilder().add("Content-Encoding", "gzip").build())
+                .build();
+
+        //when
+        BodySubscriber<?> actual = handler.apply(responseInfo);
+
+        //then
+        assertThat(actual).isExactlyInstanceOf(InputStreamDecompressingBodySubscriber.class);
+    }
+
+    @Test
     void shouldReturnOriginalSubWhenDirectivesUnsupported() {
         //given
         ImmutableResponseInfo responseInfo = ImmutableResponseInfo.builder()

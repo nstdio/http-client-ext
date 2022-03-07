@@ -94,11 +94,14 @@ public final class BodyHandlers {
          * @return The builder for decompressing body handler.
          */
         public BodyHandler<InputStream> build() {
-            return build(HttpResponse.BodyHandlers.ofInputStream());
+            var options = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
+            return DecompressingBodyHandler.ofDirect(options);
         }
 
         /**
          * Creates the new decompressing body handler.
+         * <p>
+         * Please use {@link #build()} if {@code downstream} is {@link HttpResponse.BodyHandlers#ofInputStream()}.
          *
          * @return The builder for decompressing body handler.
          */

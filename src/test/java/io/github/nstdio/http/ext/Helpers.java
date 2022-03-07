@@ -19,15 +19,25 @@ package io.github.nstdio.http.ext;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toMap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class Helpers {
-    public static HttpResponse.ResponseInfo responseInfo(Map<String, String> headers) {
+class Helpers {
+    private Helpers() {
+    }
+
+    static HttpResponse.ResponseInfo responseInfo(Map<String, String> headers) {
         return new HttpResponse.ResponseInfo() {
             @Override
             public int statusCode() {
@@ -47,5 +57,40 @@ public class Helpers {
                 return HttpClient.Version.HTTP_1_1;
             }
         };
+    }
+
+    static List<ByteBuffer> toBuffers(byte[] bytes, boolean checkResult) {
+        List<ByteBuffer> ret = new ArrayList<>();
+        int start = 0;
+        int stop = bytes.length + 1;
+        int end = Math.max(1, RandomUtils.nextInt(start, stop));
+
+        while (end != stop) {
+            byte[] copy = Arrays.copyOfRange(bytes, start, end);
+
+            ret.add(ByteBuffer.wrap(copy));
+
+            start = end;
+            end = RandomUtils.nextInt(start + 1, stop);
+        }
+
+        if (checkResult) {
+            int i = 0;
+            for (ByteBuffer b : ret) {
+                while (b.hasRemaining()) {
+                    assertEquals(bytes[i++], b.get());
+                }
+
+                b.flip();
+            }
+        }
+
+        return ret;
+    }
+
+    static String randomString(int min, int max) {
+        int count = RandomUtils.nextInt(min, max + 1);
+
+        return RandomStringUtils.randomAlphabetic(count);
     }
 }

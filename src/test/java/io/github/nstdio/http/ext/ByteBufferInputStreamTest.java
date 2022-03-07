@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.Helpers.toBuffers;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,39 +33,10 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 class ByteBufferInputStreamTest {
-    static List<ByteBuffer> toBuffers(byte[] bytes, boolean checkResult) {
-        List<ByteBuffer> ret = new ArrayList<>();
-        int start = 0;
-        int stop = bytes.length + 1;
-        int end = Math.max(1, RandomUtils.nextInt(start, stop));
-
-        while (end != stop) {
-            byte[] copy = Arrays.copyOfRange(bytes, start, end);
-
-            ret.add(ByteBuffer.wrap(copy));
-
-            start = end;
-            end = RandomUtils.nextInt(start + 1, stop);
-        }
-
-        if (checkResult) {
-            int i = 0;
-            for (ByteBuffer b : ret) {
-                while (b.hasRemaining()) {
-                    assertEquals(bytes[i++], b.get());
-                }
-            }
-        }
-
-        return ret;
-    }
 
     private static byte[] nextPositiveBytes(int n) {
         var bytes = RandomUtils.nextBytes(n);

@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
@@ -43,12 +44,21 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
     private final BodyHandler<T> original;
     private final Options options;
-
+    private final boolean direct;
     private volatile List<String> directives;
 
     DecompressingBodyHandler(BodyHandler<T> original, Options options) {
+        this(Objects.requireNonNull(original), Objects.requireNonNull(options), false);
+    }
+
+    private DecompressingBodyHandler(BodyHandler<T> original, Options options, boolean direct) {
         this.original = original;
         this.options = options;
+        this.direct = direct;
+    }
+
+    static DecompressingBodyHandler<InputStream> ofDirect(Options options) {
+        return new DecompressingBodyHandler<>(null, options, true);
     }
 
     private UnaryOperator<InputStream> chain(UnaryOperator<InputStream> u1, UnaryOperator<InputStream> u2) {
@@ -97,7 +107,18 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
 
         directives = List.copyOf(directiveToFn.keySet());
 
+        if (direct) {
+            return directSubscriber(reduced);
+        }
+
         return new DecompressingSubscriber<>(original.apply(info), reduced);
+    }
+
+    private BodySubscriber<T> directSubscriber(UnaryOperator<InputStream> reduced) {
+        @SuppressWarnings("unchecked")
+        var directSubscriber = (BodySubscriber<T>) new InputStreamDecompressingBodySubscriber(reduced);
+
+        return directSubscriber;
     }
 
     private Map<String, UnaryOperator<InputStream>> computeDirectives(HttpHeaders headers) {
