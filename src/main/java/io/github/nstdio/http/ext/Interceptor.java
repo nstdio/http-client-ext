@@ -16,40 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
-import static lombok.Lombok.sneakyThrow;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
-import java.net.http.HttpResponse;
-import java.util.Optional;
-
 interface Interceptor {
     <T> Chain<T> intercept(Chain<T> in);
 
-    @Getter
-    @Accessors(fluent = true)
-    @AllArgsConstructor(staticName = "of")
-    class Chain<T> {
-        RequestContext ctx;
-        AsyncHandler<T> asyncHandler;
-        Optional<HttpResponse<T>> response;
-
-        public static <T> Chain<T> of(RequestContext ctx) {
-            return Chain.of(ctx, (r, th) -> {
-                if (r != null)
-                    return r;
-                throw sneakyThrow(th);
-            });
-        }
-
-        public static <T> Chain<T> of(RequestContext ctx, AsyncHandler<T> asyncHandler) {
-            return new Chain<>(ctx, asyncHandler, Optional.empty());
-        }
-
-        Chain<T> withResponse(HttpResponse<T> response) {
-            return of(ctx, asyncHandler, Optional.of(response));
-        }
-    }
 }
