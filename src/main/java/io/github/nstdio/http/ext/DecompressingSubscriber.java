@@ -108,8 +108,11 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
                     buf = newBuffer();
                 }
 
-                byte b = (byte) decompressingStream.read();
-                buf.put(b);
+                int r = decompressingStream.read();
+                if (r != -1) {
+                    byte b = (byte) r;
+                    buf.put(b);
+                }
             }
             pushNext(dec, buf);
         } catch (EOFException e) {
