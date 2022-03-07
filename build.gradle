@@ -1,5 +1,6 @@
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.Semver.SemverType
+import io.github.nstdio.http.ext.ReadmeUpdateTask
 
 buildscript {
     dependencies {
@@ -140,8 +141,10 @@ release {
     }
 }
 
+tasks.register('updateReadme', ReadmeUpdateTask)
+
 afterEvaluate {
-    afterReleaseBuild.dependsOn publishToSonatype, closeAndReleaseSonatypeStagingRepository
+    afterReleaseBuild.dependsOn publishToSonatype, closeAndReleaseSonatypeStagingRepository, updateReadme
 }
 
 test {
