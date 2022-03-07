@@ -18,8 +18,6 @@ package io.github.nstdio.http.ext;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-import io.github.nstdio.http.ext.Interceptor.Chain;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
