@@ -228,7 +228,7 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     private <T> Sender<T> asyncSender(PushPromiseHandler<T> pushPromiseHandler) {
-        return (ctx) -> delegate.sendAsync(ctx.request(), ctx.bodyHandler(), pushPromiseHandler);
+        return ctx -> delegate.sendAsync(ctx.request(), ctx.bodyHandler(), pushPromiseHandler);
     }
 
     /**
