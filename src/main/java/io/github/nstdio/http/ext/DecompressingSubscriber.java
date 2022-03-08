@@ -27,16 +27,20 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.UnaryOperator;
 import java.util.zip.GZIPInputStream;
 
 class DecompressingSubscriber<T> implements BodySubscriber<T> {
+    private static final List<ByteBuffer> LAST_ITEM = List.of();
+
     private final BodySubscriber<T> downstream;
     private final int bufferSize;
     private final ByteBufferInputStream is = new ByteBufferInputStream();
     private final UnaryOperator<InputStream> fn;
     private final AtomicBoolean initError = new AtomicBoolean();
     private final AtomicBoolean completed = new AtomicBoolean();
+    private final AtomicInteger lastAvailable = new AtomicInteger(-1);
 
     /**
      * Created by {@code fn} having {@code is} as input.
@@ -88,13 +92,29 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
         }
 
         if (initError.get()) {
-            downstream.onNext(item);
+            onNext0(item);
             return;
         }
 
         item.forEach(is::addBuffer);
+
+        if (decompressingStream == null) {
+            // trying to buffer at least 10 bytes
+            // to normally initialize decompressingStream
+
+            int available = currentlyAvailable();
+            if (available < 10) {
+                // nothing changed since last execution
+                if (lastAvailable.getAndSet(available) == available) {
+                    pushRemainingBytes();
+                }
+
+                return;
+            }
+        }
+
         if (!initDecompressingStream()) {
-            downstream.onNext(item);
+            pushRemainingBytes();
             return;
         }
 
@@ -102,31 +122,55 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
         ByteBuffer buf = newBuffer();
 
         try {
-            while (decompressingStream.available() > 0) {
+            var stream = decompressingStream;
+            while (stream.available() > 0) {
                 if (!buf.hasRemaining()) {
                     add(dec, buf);
                     buf = newBuffer();
                 }
 
-                int r = decompressingStream.read();
+                int r = stream.read();
                 if (r != -1) {
-                    byte b = (byte) r;
-                    buf.put(b);
+                    buf.put((byte) r);
                 }
             }
+
             pushNext(dec, buf);
         } catch (EOFException e) {
             pushNext(dec, buf);
         } catch (IOException e) {
-            downstream.onError(e);
+            if (item == LAST_ITEM) {
+                completed.set(true);
+            }
+
+            onError(e);
             onComplete();
+
+        }
+    }
+
+    private void pushRemainingBytes() {
+        try {
+            List<ByteBuffer> wrap = List.of(ByteBuffer.wrap(is.readAllBytes()));
+            onNext0(wrap);
+        } catch (IOException ignored) {
+            // cannot happen because using ByteBufferInputStream which
+            // is not connect to any I/O device.
+        }
+
+        close();
+    }
+
+    private void onNext0(List<ByteBuffer> item) {
+        if (item != LAST_ITEM) {
+            downstream.onNext(item);
         }
     }
 
     private void pushNext(List<ByteBuffer> dec, ByteBuffer buf) {
         add(dec, buf);
         if (!dec.isEmpty()) {
-            downstream.onNext(dec);
+            onNext0(dec);
         }
     }
 
@@ -141,27 +185,39 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
     }
 
     private boolean initDecompressingStream() {
-        if (initError.get()) {
-            return false;
+        if (decompressingStream != null) {
+            return true;
         }
 
-        if (decompressingStream == null) {
+        try {
+            is.mark(32);
+            decompressingStream = fn.apply(is);
+        } catch (UncheckedIOException e) {
+            initError.set(true);
             try {
-                decompressingStream = fn.apply(is);
-                return true;
-            } catch (UncheckedIOException e) {
-                initError.set(true);
-                is.close();
+                is.reset();
+            } catch (IOException ignored) {
+                // not relevant
             }
         }
 
         return !initError.get();
     }
 
+    private int currentlyAvailable() {
+        int available = 0;
+        try {
+            available = is.available();
+        } catch (IOException ignored) {
+            // not relevant
+        }
+
+        return available;
+    }
+
     @Override
     public void onError(Throwable throwable) {
         downstream.onError(throwable);
-        close();
     }
 
     private void close() {
@@ -171,6 +227,8 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
 
     @Override
     public void onComplete() {
+        onNext(LAST_ITEM);
+
         close();
         completed.set(true);
         downstream.onComplete();

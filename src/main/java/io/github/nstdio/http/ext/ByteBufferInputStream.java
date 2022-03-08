@@ -25,26 +25,21 @@ import java.util.Objects;
 
 class ByteBufferInputStream extends InputStream {
     private final Deque<ByteBuffer> buffers = new ArrayDeque<>();
+    private ByteBuffer mark;
     private boolean closed;
 
     @Override
     public int read() throws IOException {
         ensureOpen();
-        Deque<ByteBuffer> buffs = buffers;
-        ByteBuffer buf = buffs.peek();
-        int r;
+        ByteBuffer buf = nextBuffer();
 
         if (buf == null) {
-            r = -1;
-        } else if (!buf.hasRemaining()) {
-            // current buffer fully consumed, so remove it
-            buffs.poll();
-            r = (buf = buffs.peek()) == null ? -1 : buf.get();
-        } else {
-            r = buf.get();
+            return -1;
         }
 
-        return r != -1 ? r & 0xff : -1;
+        int r = buf.get() & 0xff;
+        mark0(r);
+        return r;
     }
 
     @Override
@@ -56,8 +51,7 @@ class ByteBufferInputStream extends InputStream {
             return 0;
         }
 
-        Deque<ByteBuffer> buffs = buffers;
-        ByteBuffer buf = buffs.peek();
+        ByteBuffer buf = nextBuffer();
         if (buf == null) {
             return -1;
         }
@@ -65,25 +59,90 @@ class ByteBufferInputStream extends InputStream {
         int i = off;
         for (; i < end; i++) {
             if (!buf.hasRemaining()) {
-                while (buf != null && !buf.hasRemaining()) {
-                    buffs.poll();
-                    buf = buffs.peek();
-                }
-
-                if (buf == null) {
-                    break;
-                }
+                buf = nextBuffer();
+                if (buf == null) break;
             }
 
             b[i] = buf.get();
         }
 
-        return i - off;
+        int read = i - off;
+
+        mark0(b, off, read);
+        return read;
+    }
+
+    private ByteBuffer nextBuffer() {
+        Deque<ByteBuffer> buffs = buffers;
+        ByteBuffer buf = buffs.peek();
+
+        while (buf != null && !buf.hasRemaining()) {
+            buffs.poll();
+            buf = buffs.peek();
+        }
+
+        return buf;
+    }
+
+    @Override
+    public int available() throws IOException {
+        ensureOpen();
+
+        int a = 0;
+        for (var buffer : buffers) a += buffer.remaining();
+
+        return a;
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+        if (mark == null) {
+            throw new IOException("nothing to reset");
+        }
+
+        buffers.push(mark.flip());
+        mark = null;
+    }
+
+    @Override
+    public synchronized void mark(int readlimit) {
+        if (readlimit <= 0) {
+            mark = null;
+        } else {
+            mark = ByteBuffer.allocate(readlimit);
+        }
+    }
+
+    private void mark0(int b) {
+        if (mark != null) {
+            if (mark.hasRemaining()) {
+                mark.put((byte) b);
+            } else {
+                mark = null;
+            }
+        }
+    }
+
+    private void mark0(byte[] b, int off, int len) {
+        if (mark != null) {
+            int rem = mark.remaining();
+            if (len > rem) {
+                mark = null;
+            } else {
+                mark.put(b, off, len);
+            }
+        }
+    }
+
+    @Override
+    public boolean markSupported() {
+        return true;
     }
 
     @Override
     public void close() {
         buffers.clear();
+        mark = null;
         closed = true;
     }
 
