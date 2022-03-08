@@ -27,6 +27,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.verify;
 import static com.github.tomakehurst.wiremock.http.Fault.EMPTY_RESPONSE;
 import static io.github.nstdio.http.ext.Assertions.assertThat;
 import static io.github.nstdio.http.ext.Assertions.await;
+import static io.github.nstdio.http.ext.Assertions.awaitFor;
 import static io.github.nstdio.http.ext.Headers.HEADER_CACHE_CONTROL;
 import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
 import static io.github.nstdio.http.ext.Headers.HEADER_EXPIRES;
@@ -184,13 +185,14 @@ class InMemoryExtendedHttpClientIntegrationTest implements ExtendedHttpClientCon
         );
         var request = requestBuilder().build();
 
-        //when
+        //when + then
         var r1 = send(request);
-        var r2 = send(request);
-
-        //then
         assertThat(r1).isNetwork().hasStatusCode(200).hasBody("abc");
-        assertThat(r2).isNotNetwork().isNotCached().hasStatusCode(504);
+
+        awaitFor(() -> {
+            var r2 = send(request);
+            assertThat(r2).isNotNetwork().isNotCached().hasStatusCode(504);
+        });
     }
 
     @Test

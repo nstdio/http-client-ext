@@ -149,6 +149,10 @@ afterEvaluate {
 
 test {
     useJUnitPlatform()
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat "full"
+    }
 
     finalizedBy jacocoTestReport
 }

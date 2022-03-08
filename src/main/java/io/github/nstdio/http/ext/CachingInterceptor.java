@@ -88,7 +88,7 @@ class CachingInterceptor implements Interceptor {
                 return sendAndCache(in, entry);
             }
         } else {
-            AsyncHandler<T> fn = (r, th) -> {
+            FutureHandler<T> fn = (r, th) -> {
                 if (r != null) {
                     if (shouldInvalidate(r)) {
                         invalidate(r);
@@ -98,7 +98,7 @@ class CachingInterceptor implements Interceptor {
                 throw sneakyThrow(th);
             };
 
-            return Chain.of(ctx, in.asyncHandler().andThen(fn));
+            return Chain.of(ctx, in.futureHandler().andThen(fn));
         }
     }
 
@@ -126,7 +126,7 @@ class CachingInterceptor implements Interceptor {
         newCtx.requestTime().compareAndSet(0, clock.millis());
 
         var bodyHandler = cacheAware(newCtx);
-        AsyncHandler<T> handler = (r, th) -> {
+        FutureHandler<T> handler = (r, th) -> {
             if (r != null) {
                 return possiblyCached(newCtx, entry, r);
             } else {
@@ -139,7 +139,7 @@ class CachingInterceptor implements Interceptor {
             throw Throwables.sneakyThrow(th);
         };
 
-        return Chain.of(newCtx.withBodyHandler(bodyHandler), in.asyncHandler().andThen(handler));
+        return Chain.of(newCtx.withBodyHandler(bodyHandler), in.futureHandler().andThen(handler));
     }
 
     private <T> HttpResponse.BodyHandler<T> cacheAware(RequestContext ctx) {

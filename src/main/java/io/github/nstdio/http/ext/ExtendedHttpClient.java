@@ -40,7 +40,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class ExtendedHttpClient extends HttpClient {
     private final Cache cache;
@@ -167,11 +167,13 @@ public class ExtendedHttpClient extends HttpClient {
 
     private <T> CompletableFuture<HttpResponse<T>> send0(HttpRequest request, BodyHandler<T> bodyHandler, Sender<T> sender) {
         Chain<T> chain = buildAndExecute(request, bodyHandler);
+        FutureHandler<T> handler = chain.futureHandler();
 
-        return chain.response()
+        var future = chain.response()
                 .map(CompletableFuture::completedFuture)
-                .orElseGet(() -> sender.apply(chain.ctx().request(), chain.ctx().bodyHandler()))
-                .handleAsync(chain.asyncHandler());
+                .orElseGet(() -> sender.apply(chain.ctx()));
+
+        return future.isDone() ? future.handle(handler) : future.handleAsync(handler);
     }
 
     private <T> Chain<T> buildAndExecute(HttpRequest request, BodyHandler<T> bodyHandler) {
@@ -212,9 +214,9 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     private <T> Sender<T> syncSender() {
-        return (r, h) -> {
+        return ctx -> {
             try {
-                return completedFuture(delegate.send(r, h));
+                return completedFuture(delegate.send(ctx.request(), ctx.bodyHandler()));
             } catch (IOException | InterruptedException e) {
                 return CompletableFuture.failedFuture(e);
             }
@@ -222,17 +224,17 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     private <T> Sender<T> asyncSender() {
-        return delegate::sendAsync;
+        return ctx -> delegate.sendAsync(ctx.request(), ctx.bodyHandler());
     }
 
     private <T> Sender<T> asyncSender(PushPromiseHandler<T> pushPromiseHandler) {
-        return (r, h) -> delegate.sendAsync(r, h, pushPromiseHandler);
+        return (ctx) -> delegate.sendAsync(ctx.request(), ctx.bodyHandler(), pushPromiseHandler);
     }
 
     /**
      * Type alias.
      */
-    interface Sender<T> extends BiFunction<HttpRequest, BodyHandler<T>, CompletableFuture<HttpResponse<T>>> {
+    interface Sender<T> extends Function<RequestContext, CompletableFuture<HttpResponse<T>>> {
     }
 
     public static class Builder implements HttpClient.Builder {
