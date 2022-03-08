@@ -25,16 +25,16 @@ import java.util.concurrent.Flow;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.TimeUnit;
 
-class ScatteringSubscription implements Flow.Subscription {
+class PlainSubscription implements Flow.Subscription {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final Subscriber<List<ByteBuffer>> subscriber;
     private final List<ByteBuffer> buffers;
     private final Iterator<ByteBuffer> it;
     private boolean canceled;
 
-    ScatteringSubscription(Subscriber<List<ByteBuffer>> subscriber, byte[] body) {
+    PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers) {
         this.subscriber = subscriber;
-        this.buffers = Helpers.toBuffers(body, true);
+        this.buffers = buffers;
         this.it = buffers.iterator();
     }
 

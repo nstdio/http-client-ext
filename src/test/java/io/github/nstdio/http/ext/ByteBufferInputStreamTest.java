@@ -17,13 +17,14 @@
 package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.Helpers.toBuffers;
+import static org.apache.commons.lang3.RandomUtils.nextBytes;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Named;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -38,21 +39,9 @@ import java.util.stream.Stream;
 
 class ByteBufferInputStreamTest {
 
-    private static byte[] nextPositiveBytes(int n) {
-        var bytes = RandomUtils.nextBytes(n);
-
-        for (int i = 0; i < n; i++) {
-            if (bytes[i] < 0) {
-                bytes[i] *= -1;
-            }
-        }
-
-        return bytes;
-    }
-
     static Stream<Named<byte[]>> fullReadingData() {
         return IntStream.of(100, 8192, 16384, 65536, 131072)
-                .mapToObj(n -> Named.named("Size: " + n, nextPositiveBytes(n)));
+                .mapToObj(n -> Named.named("Size: " + n, nextBytes(n)));
     }
 
     @ParameterizedTest
@@ -87,7 +76,7 @@ class ByteBufferInputStreamTest {
     void shouldReturnNegativeWhenInputIsEmpty() throws IOException {
         //given
         var is = new ByteBufferInputStream();
-        byte[] bytes = nextPositiveBytes(8);
+        byte[] bytes = nextBytes(8);
         is.addBuffer(ByteBuffer.wrap(bytes));
 
         //when
@@ -119,7 +108,7 @@ class ByteBufferInputStreamTest {
     @Test
     void shouldFlipBuffer() throws IOException {
         //given
-        byte[] bytes = nextPositiveBytes(32);
+        byte[] bytes = nextBytes(32);
         var is = new ByteBufferInputStream();
         toBuffers(bytes, false)
                 .stream()
@@ -138,12 +127,37 @@ class ByteBufferInputStreamTest {
     @Test
     @SuppressWarnings("ResultOfMethodCallIgnored")
     void shouldThrowWhenClosed() {
+        //given
         var is = new ByteBufferInputStream();
+
+        //when
         is.close();
 
+        //then
         assertThatIOException().isThrownBy(is::read);
         assertThatIOException().isThrownBy(() -> is.read(new byte[0]));
         assertThatIOException().isThrownBy(() -> is.read(new byte[5], 0, 5));
         assertThatIOException().isThrownBy(is::readAllBytes);
+        assertThatIOException().isThrownBy(is::available);
+    }
+
+    @Test
+    void shouldReportAvailable() throws Exception {
+        //given
+        byte[] bytes = nextBytes(32);
+        var is = new ByteBufferInputStream();
+        toBuffers(bytes, false).forEach(is::addBuffer);
+
+        //when
+        int actual = is.available();
+
+        //then
+        assertEquals(bytes.length, actual);
+    }
+
+    @Test
+    void shouldSupportMark() {
+        //given + when + then
+        assertTrue(new ByteBufferInputStream().markSupported());
     }
 }
