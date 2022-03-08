@@ -30,7 +30,7 @@ import java.util.Optional;
 @AllArgsConstructor(staticName = "of")
 class Chain<T> {
     RequestContext ctx;
-    AsyncHandler<T> asyncHandler;
+    FutureHandler<T> futureHandler;
     Optional<HttpResponse<T>> response;
 
     public static <T> Chain<T> of(RequestContext ctx) {
@@ -41,11 +41,11 @@ class Chain<T> {
         });
     }
 
-    public static <T> Chain<T> of(RequestContext ctx, AsyncHandler<T> asyncHandler) {
-        return new Chain<>(ctx, asyncHandler, Optional.empty());
+    public static <T> Chain<T> of(RequestContext ctx, FutureHandler<T> futureHandler) {
+        return new Chain<>(ctx, futureHandler, Optional.empty());
     }
 
     Chain<T> withResponse(HttpResponse<T> response) {
-        return of(ctx, asyncHandler, Optional.of(response));
+        return of(ctx, futureHandler, Optional.of(response));
     }
 }

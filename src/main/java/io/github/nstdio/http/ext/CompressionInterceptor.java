@@ -32,7 +32,7 @@ class CompressionInterceptor implements Interceptor {
     public <T> Chain<T> intercept(Chain<T> in) {
         var handler = decompressingHandler(in.ctx().<T>bodyHandler());
 
-        AsyncHandler<T> fn = AsyncHandler.of(r -> {
+        FutureHandler<T> fn = FutureHandler.of(r -> {
             List<String> directives = handler.directives(r.headers());
             if (!directives.isEmpty()) {
                 return removeCompressionHeaders(r, directives);
@@ -45,10 +45,10 @@ class CompressionInterceptor implements Interceptor {
                 .withRequest(preProcessRequest(in.ctx().request()))
                 .withBodyHandler(handler);
 
-        AsyncHandler<T> asyncHandler = in.asyncHandler().andThen(fn);
+        FutureHandler<T> futureHandler = in.futureHandler().andThen(fn);
         Optional<HttpResponse<T>> response = in.response();
 
-        return Chain.of(ctx, asyncHandler, response);
+        return Chain.of(ctx, futureHandler, response);
     }
 
     private HttpRequest preProcessRequest(HttpRequest request) {

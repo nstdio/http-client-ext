@@ -23,14 +23,15 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 
 /**
- * The function to pass to {@link java.util.concurrent.CompletableFuture#handleAsync(BiFunction)}. The type alias and
- * handy chaining for other {@code AsyncHandler}s.
+ * The function to pass to {@link java.util.concurrent.CompletableFuture#handleAsync(BiFunction)} or {@link
+ * java.util.concurrent.CompletableFuture#handle(BiFunction)}. The type alias and handy chaining for other {@code
+ * FutureHandler}s.
  *
  * @param <T> The response body type.
  */
 @FunctionalInterface
-interface AsyncHandler<T> extends BiFunction<HttpResponse<T>, Throwable, HttpResponse<T>> {
-    static <T> AsyncHandler<T> of(UnaryOperator<HttpResponse<T>> op) {
+interface FutureHandler<T> extends BiFunction<HttpResponse<T>, Throwable, HttpResponse<T>> {
+    static <T> FutureHandler<T> of(UnaryOperator<HttpResponse<T>> op) {
         return (r, th) -> {
             if (r != null) {
                 return op.apply(r);
@@ -39,7 +40,7 @@ interface AsyncHandler<T> extends BiFunction<HttpResponse<T>, Throwable, HttpRes
         };
     }
 
-    default AsyncHandler<T> andThen(AsyncHandler<T> other) {
+    default FutureHandler<T> andThen(FutureHandler<T> other) {
         return (r, th) -> {
             try {
                 HttpResponse<T> result = apply(r, th);
