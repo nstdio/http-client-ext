@@ -16,21 +16,21 @@
 
 package io.github.nstdio.http.ext;
 
-import static java.util.stream.Collectors.toList;
-
-import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
-class CachingBodySubscriber<T, C> implements HttpResponse.BodySubscriber<T> {
-    private final HttpResponse.BodySubscriber<T> originalSub;
+class CachingBodySubscriber<T, C> implements BodySubscriber<T> {
+    private final BodySubscriber<T> originalSub;
     private final Consumer<C> finisher;
-    private final HttpResponse.BodySubscriber<C> cachingSub;
+    private final BodySubscriber<C> cachingSub;
 
-    CachingBodySubscriber(HttpResponse.BodySubscriber<T> originalSub, HttpResponse.BodySubscriber<C> sub, Consumer<C> finisher) {
+    CachingBodySubscriber(BodySubscriber<T> originalSub, BodySubscriber<C> sub, Consumer<C> finisher) {
         this.originalSub = originalSub;
         this.cachingSub = sub;
         this.finisher = finisher;
@@ -51,29 +51,40 @@ class CachingBodySubscriber<T, C> implements HttpResponse.BodySubscriber<T> {
 
     @Override
     public void onSubscribe(Flow.Subscription subscription) {
-        originalSub.onSubscribe(subscription);
         cachingSub.onSubscribe(subscription);
+        originalSub.onSubscribe(subscription);
     }
 
     @Override
     public void onNext(List<ByteBuffer> item) {
-        originalSub.onNext(item);
-        cachingSub.onNext(dup(item));
+        cachingSub.onNext(item);
+        originalSub.onNext(dup(item));
     }
 
     private List<ByteBuffer> dup(List<ByteBuffer> item) {
-        return item.stream().map(ByteBuffer::duplicate).collect(toList());
+        List<ByteBuffer> list = new ArrayList<>(item.size());
+
+        for (ByteBuffer byteBuffer : item) {
+            ByteBuffer duplicate = byteBuffer.duplicate();
+            if (!duplicate.hasRemaining()) {
+                duplicate.flip();
+            }
+
+            list.add(duplicate);
+        }
+
+        return Collections.unmodifiableList(list);
     }
 
     @Override
     public void onError(Throwable throwable) {
-        originalSub.onError(throwable);
         cachingSub.onError(throwable);
+        originalSub.onError(throwable);
     }
 
     @Override
     public void onComplete() {
-        originalSub.onComplete();
         cachingSub.onComplete();
+        originalSub.onComplete();
     }
 }

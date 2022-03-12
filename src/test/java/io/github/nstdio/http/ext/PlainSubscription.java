@@ -19,6 +19,7 @@ package io.github.nstdio.http.ext;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
@@ -26,21 +27,26 @@ import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.TimeUnit;
 
 class PlainSubscription implements Flow.Subscription {
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final Optional<ExecutorService> executor;
     private final Subscriber<List<ByteBuffer>> subscriber;
     private final List<ByteBuffer> buffers;
     private final Iterator<ByteBuffer> it;
-    private boolean canceled;
+    private boolean completed;
 
     PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers) {
+        this(subscriber, buffers, true);
+    }
+
+    PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers, boolean async) {
         this.subscriber = subscriber;
         this.buffers = buffers;
         this.it = buffers.iterator();
+        this.executor = async ? Optional.of(Executors.newSingleThreadExecutor()) : Optional.empty();
     }
 
     @Override
     public void request(long n) {
-        if (canceled)
+        if (completed)
             return;
 
         request0(n);
@@ -49,25 +55,45 @@ class PlainSubscription implements Flow.Subscription {
     private void request0(long n) {
         while (n != 0 && it.hasNext()) {
             List<ByteBuffer> next = List.of(it.next());
-            executor.execute(() -> subscriber.onNext(next));
+            execute(() -> subscriber.onNext(next));
             n--;
         }
+
+        if (!it.hasNext()) {
+            completed = true;
+            clean();
+
+            subscriber.onComplete();
+        }
+    }
+
+    void execute(Runnable cmd) {
+        executor.ifPresentOrElse(service -> service.execute(cmd), cmd);
     }
 
     @Override
     public void cancel() {
-        if (canceled) {
+        if (completed) {
             return;
         }
-        canceled = true;
+
+        completed = true;
         request0(Integer.MAX_VALUE);
 
+        clean();
+    }
+
+    private void clean() {
         buffers.clear();
-        try {
-            executor.shutdown();
-            //noinspection ResultOfMethodCallIgnored
-            executor.awaitTermination(1, TimeUnit.SECONDS);
-        } catch (InterruptedException ignored) {
-        }
+
+        executor.ifPresent(service -> {
+            service.shutdown();
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                service.awaitTermination(1, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // noop
+            }
+        });
     }
 }

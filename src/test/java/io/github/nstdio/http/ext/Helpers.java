@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Map.entry;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toMap;
@@ -86,6 +87,10 @@ class Helpers {
         }
 
         return ret;
+    }
+
+    static List<ByteBuffer> toBuffers(String in) {
+        return toBuffers(in.getBytes(UTF_8), false);
     }
 
     static String randomString(int min, int max) {
