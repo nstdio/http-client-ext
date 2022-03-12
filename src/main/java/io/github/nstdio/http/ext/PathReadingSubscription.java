@@ -61,8 +61,8 @@ class PathReadingSubscription implements Subscription {
                     buff.flip();
                     subscriber.onNext(List.of(buff));
                 } else {
-                    subscriber.onComplete();
                     completed.set(true);
+                    subscriber.onComplete();
                     break;
                 }
             }

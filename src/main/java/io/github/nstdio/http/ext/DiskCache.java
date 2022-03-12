@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,7 +82,7 @@ class DiskCache implements Cache {
 
                 var path = dir.resolve(fileName);
 
-                return BodySubscribers.ofFile(path);
+                return new PathSubscriber(path);
             }
 
             @Override

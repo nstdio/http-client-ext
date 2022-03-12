@@ -45,9 +45,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -56,6 +58,8 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandler;
+import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -546,6 +550,32 @@ public interface ExtendedHttpClientContract {
             HttpResponse<String> response = send(HttpRequest.newBuilder(uri).build());
             assertThat(response).isNetwork().isNotCached();
         }
+    }
+
+    @Test
+    default void shouldWorkWithPathSubscriber(@TempDir Path tempDir) throws Exception {
+        //given
+        Path file = tempDir.resolve("download");
+        String body = RandomStringUtils.randomAlphabetic(32);
+
+        stubFor(get(urlEqualTo(path()))
+                .willReturn(ok()
+                        .withHeader(HEADER_CACHE_CONTROL, "max-age=16")
+                        .withBody(body)
+                )
+        );
+        BodyHandler<Path> bodyHandler = HttpResponse.BodyHandlers.ofFile(file);
+        HttpRequest request = requestBuilder().build();
+
+        //when
+        var r1 = client().send(request, bodyHandler);
+        var r1Path = r1.body();
+        var r2 = await().until(() -> client().send(request, bodyHandler), isCached());
+        var r2Path = r2.body();
+
+        //then
+        Assertions.assertThat(r1Path).exists().hasContent(body);
+        Assertions.assertThat(r2Path).exists().hasContent(body);
     }
 
     default String rfc1123Date() {

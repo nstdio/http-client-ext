@@ -172,9 +172,9 @@ class InMemoryCache implements Cache {
                         return;
                     }
 
+                    completed.set(true);
                     sub.onNext(List.of(ByteBuffer.wrap(body).asReadOnlyBuffer()));
                     sub.onComplete();
-                    completed.set(true);
                 }
 
                 @Override
