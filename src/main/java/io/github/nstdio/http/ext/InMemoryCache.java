@@ -23,7 +23,6 @@ import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Flow;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
@@ -158,31 +157,7 @@ class InMemoryCache implements Cache {
 
         @Override
         public void subscribeTo(Flow.Subscriber<List<ByteBuffer>> sub) {
-            Flow.Subscription subscription = new Flow.Subscription() {
-                private final AtomicBoolean completed = new AtomicBoolean(false);
-
-                @Override
-                public void request(long n) {
-                    if (completed.get()) {
-                        return;
-                    }
-
-                    if (n <= 0) {
-                        sub.onError(new IllegalArgumentException("n <= 0"));
-                        return;
-                    }
-
-                    completed.set(true);
-                    sub.onNext(List.of(ByteBuffer.wrap(body).asReadOnlyBuffer()));
-                    sub.onComplete();
-                }
-
-                @Override
-                public void cancel() {
-                    completed.set(true);
-                }
-            };
-
+            Flow.Subscription subscription = new ByteArraySubscription(sub, body);
             sub.onSubscribe(subscription);
         }
 
