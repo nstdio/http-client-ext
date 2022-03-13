@@ -47,8 +47,8 @@ class CacheControlTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "max-age=32,max-stale=64,min-fresh=128",
-            "max-age=\"32\" ,max-stale=\"64\",min-fresh=\"128\"",
+            "max-age=32,max-stale=64,min-fresh=128,stale-if-error=256,stale-while-revalidate=512",
+            "max-age=\"32\" ,max-stale=\"64\",min-fresh=\"128\",stale-if-error=\"256\",stale-while-revalidate=\"512\"",
     })
     void shouldParseValues(String value) {
         //given
@@ -61,7 +61,9 @@ class CacheControlTest {
         assertThat(actual.maxAge()).isEqualTo(32);
         assertThat(actual.maxStale()).isEqualTo(64);
         assertThat(actual.minFresh()).isEqualTo(128);
-        assertThat(actual).hasToString("max-age=32, max-stale=64, min-fresh=128");
+        assertThat(actual.staleIfError()).isEqualTo(256);
+        assertThat(actual.staleWhileRevalidate()).isEqualTo(512);
+        assertThat(actual).hasToString("max-age=32, max-stale=64, min-fresh=128, stale-if-error=256, stale-while-revalidate=512");
     }
 
     @Test
@@ -70,18 +72,23 @@ class CacheControlTest {
         var minFresh = 5;
         var maxStale = 6;
         var maxAge = 7;
+        var staleIfError = 8;
+        var staleWhileRevalidate = 9;
         var cc = CacheControl
                 .builder()
                 .minFresh(minFresh)
                 .maxStale(maxStale)
                 .maxAge(maxAge)
+                .staleIfError(staleIfError)
+                .staleWhileRevalidate(staleWhileRevalidate)
                 .noCache()
                 .noTransform()
                 .onlyIfCached()
                 .noStore()
                 .mustRevalidate()
+                .immutable()
                 .build();
-        var expected = String.format("no-cache, no-store, must-revalidate, no-transform, only-if-cached, max-age=%d, max-stale=%d, min-fresh=%d", maxAge, maxStale, minFresh);
+        var expected = String.format("no-cache, no-store, must-revalidate, no-transform, immutable, only-if-cached, max-age=%d, max-stale=%d, min-fresh=%d, stale-if-error=%d, stale-while-revalidate=%d", maxAge, maxStale, minFresh, staleIfError, staleWhileRevalidate);
 
         //when + then
         assertThat(cc).hasToString(expected);

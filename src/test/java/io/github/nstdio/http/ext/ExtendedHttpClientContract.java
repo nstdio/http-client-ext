@@ -46,6 +46,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
@@ -584,6 +585,16 @@ public interface ExtendedHttpClientContract {
         //then
         Assertions.assertThat(r1Path).exists().hasContent(body);
         Assertions.assertThat(r2Path).exists().hasContent(body);
+    }
+
+    @Test
+    @Disabled("https://datatracker.ietf.org/doc/html/rfc5861#section-4")
+    default void shouldRespectStaleIfError() {
+    }
+
+    @Test
+    @Disabled("https://datatracker.ietf.org/doc/html/rfc5861#section-3")
+    default void shouldRespectStaleWhileRevalidate() {
     }
 
     default String rfc1123Date() {

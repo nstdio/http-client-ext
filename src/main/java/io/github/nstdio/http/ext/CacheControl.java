@@ -24,32 +24,39 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@SuppressWarnings("WeakerAccess")
 public class CacheControl {
-    public static final CacheControl FORCE_CACHE = builder().onlyIfCached().maxAge(Long.MAX_VALUE).build();
     private static final CacheControl EMPTY = builder().build();
+    private static final Pattern VALUE_DIRECTIVES_PATTERN = Pattern.compile("(max-age|max-stale|min-fresh|stale-if-error|stale-while-revalidate)=(?:([0-9]+)|\"([0-9]+)\")");
 
-    private static final Pattern VALUE_DIRECTIVES_PATTERN = Pattern.compile("(max-age|max-stale|min-fresh)=(?:([0-9]+)|\"([0-9]+)\")");
-    private final boolean noCache;
-    private final boolean noStore;
-    private final boolean mustRevalidate;
+    //@formatter:off
+    private static final int NO_CACHE        = 1 << 1;
+    private static final int NO_STORE        = 1 << 2;
+    private static final int MUST_REVALIDATE = 1 << 3;
+    private static final int NO_TRANSFORM    = 1 << 4;
+    private static final int IMMUTABLE       = 1 << 5;
+    private static final int ONLY_IF_CACHED  = 1 << 6;
+    //@formatter:on
+
+    public static final CacheControl FORCE_CACHE = builder().onlyIfCached().maxAge(Long.MAX_VALUE).build();
+
+    private final int flags;
 
     private final long maxAge;
     private final long maxStale;
     private final long minFresh;
 
-    private final boolean noTransform;
-    private final boolean onlyIfCached;
+    private final long staleIfError;
+    private final long staleWhileRevalidate;
 
-    private CacheControl(boolean noCache, boolean noStore, boolean mustRevalidate, long maxAge, long maxStale,
-                         long minFresh, boolean noTransform, boolean onlyIfCached) {
-        this.mustRevalidate = mustRevalidate;
-        this.noCache = noCache;
-        this.noStore = noStore;
+    private CacheControl(int flags, long maxAge, long maxStale,
+                         long minFresh, long staleIfError, long staleWhileRevalidate) {
+        this.flags = flags;
         this.maxAge = maxAge;
         this.maxStale = maxStale;
         this.minFresh = minFresh;
-        this.noTransform = noTransform;
-        this.onlyIfCached = onlyIfCached;
+        this.staleIfError = staleIfError;
+        this.staleWhileRevalidate = staleWhileRevalidate;
     }
 
     public static CacheControl of(HttpRequest request) {
@@ -77,6 +84,9 @@ public class CacheControl {
                     break;
                 case "no-transform":
                     builder.noTransform();
+                    break;
+                case "immutable":
+                    builder.immutable();
                     break;
                 case "only-if-cached":
                     builder.onlyIfCached();
@@ -113,6 +123,12 @@ public class CacheControl {
                 case "min-fresh":
                     builder.minFresh(sec);
                     break;
+                case "stale-if-error":
+                    builder.staleIfError(sec);
+                    break;
+                case "stale-while-revalidate":
+                    builder.staleWhileRevalidate(sec);
+                    break;
                 default:
                     // Since pattern already matched VALUE_DIRECTIVES_PATTERN
                     // there is misalignment between pattern and cases
@@ -132,16 +148,24 @@ public class CacheControl {
         return unit.convert(value, TimeUnit.SECONDS);
     }
 
+    private static boolean isSet(int flag, int mask) {
+        return (flag & mask) > 0;
+    }
+
+    private static int set(int flag, int mask) {
+        return flag | mask;
+    }
+
     public boolean noCache() {
-        return noCache;
+        return isSet(flags, NO_CACHE);
     }
 
     public boolean noStore() {
-        return noStore;
+        return isSet(flags, NO_STORE);
     }
 
     public boolean mustRevalidate() {
-        return mustRevalidate;
+        return isSet(flags, MUST_REVALIDATE);
     }
 
     public long maxAge() {
@@ -168,27 +192,50 @@ public class CacheControl {
         return convert(minFresh, unit);
     }
 
+    public long staleIfError() {
+        return staleIfError;
+    }
+
+    public long staleIfError(TimeUnit unit) {
+        return convert(staleIfError, unit);
+    }
+
+    public long staleWhileRevalidate() {
+        return staleWhileRevalidate;
+    }
+
+    public long staleWhileRevalidate(TimeUnit unit) {
+        return convert(staleWhileRevalidate, unit);
+    }
+
     public boolean noTransform() {
-        return noTransform;
+        return isSet(flags, NO_TRANSFORM);
+    }
+
+    public boolean immutable() {
+        return isSet(flags, IMMUTABLE);
     }
 
     public boolean onlyIfCached() {
-        return onlyIfCached;
+        return isSet(flags, ONLY_IF_CACHED);
     }
 
     @Override
     public String toString() {
         var sb = new StringBuilder();
-        if (noCache) sb.append("no-cache");
-        if (noStore) appendComma(sb).append("no-store");
-        if (mustRevalidate) appendComma(sb).append("must-revalidate");
+        if (noCache()) sb.append("no-cache");
+        if (noStore()) appendComma(sb).append("no-store");
+        if (mustRevalidate()) appendComma(sb).append("must-revalidate");
 
-        if (noTransform) appendComma(sb).append("no-transform");
-        if (onlyIfCached) appendComma(sb).append("only-if-cached");
+        if (noTransform()) appendComma(sb).append("no-transform");
+        if (immutable()) appendComma(sb).append("immutable");
+        if (onlyIfCached()) appendComma(sb).append("only-if-cached");
 
         if (maxAge > -1) appendComma(sb).append("max-age=").append(maxAge);
         if (maxStale > -1) appendComma(sb).append("max-stale=").append(maxStale);
         if (minFresh > -1) appendComma(sb).append("min-fresh=").append(minFresh);
+        if (staleIfError > -1) appendComma(sb).append("stale-if-error=").append(staleIfError);
+        if (staleWhileRevalidate > -1) appendComma(sb).append("stale-while-revalidate=").append(staleWhileRevalidate);
 
         return sb.toString();
     }
@@ -199,32 +246,29 @@ public class CacheControl {
     }
 
     public static class CacheControlBuilder {
-        private boolean noCache;
-        private boolean noStore;
-        private boolean mustRevalidate;
+        private int flags;
 
         private long maxAge = -1;
         private long maxStale = -1;
         private long minFresh = -1;
-
-        private boolean noTransform;
-        private boolean onlyIfCached;
+        private long staleIfError = -1;
+        private long staleWhileRevalidate = -1;
 
         CacheControlBuilder() {
         }
 
         public CacheControlBuilder noCache() {
-            noCache = true;
+            flags = set(flags, NO_CACHE);
             return this;
         }
 
         public CacheControlBuilder noStore() {
-            noStore = true;
+            flags = set(flags, NO_STORE);
             return this;
         }
 
         public CacheControlBuilder mustRevalidate() {
-            mustRevalidate = true;
+            flags = set(flags, MUST_REVALIDATE);
             return this;
         }
 
@@ -243,22 +287,33 @@ public class CacheControl {
             return this;
         }
 
+        public CacheControlBuilder staleIfError(long deltaSeconds) {
+            this.staleIfError = deltaSeconds;
+            return this;
+        }
+
+        public CacheControlBuilder staleWhileRevalidate(long deltaSeconds) {
+            staleWhileRevalidate = deltaSeconds;
+            return this;
+        }
+
         public CacheControlBuilder noTransform() {
-            noTransform = true;
+            flags = set(flags, NO_TRANSFORM);
+            return this;
+        }
+
+        public CacheControlBuilder immutable() {
+            flags = set(flags, IMMUTABLE);
             return this;
         }
 
         public CacheControlBuilder onlyIfCached() {
-            onlyIfCached = true;
+            flags = set(flags, ONLY_IF_CACHED);
             return this;
         }
 
         public CacheControl build() {
-            return new CacheControl(noCache, noStore, mustRevalidate, maxAge, maxStale, minFresh, noTransform, onlyIfCached);
-        }
-
-        public String toString() {
-            return "CacheControl.CacheControlBuilder(noCache=" + this.noCache + ", noStore=" + this.noStore + ", maxAge=" + this.maxAge + ", maxStale=" + this.maxStale + ", minFresh=" + this.minFresh + ", noTransform=" + this.noTransform + ", onlyIfCached=" + this.onlyIfCached + ")";
+            return new CacheControl(flags, maxAge, maxStale, minFresh, staleIfError, staleWhileRevalidate);
         }
     }
 }
