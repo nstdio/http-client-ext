@@ -29,14 +29,15 @@ abstract class ReadmeUpdateTask extends DefaultTask {
         def v = project.version as String
 
         def file = project.file("README.md")
-        def text = file.text as String
+        def text = new StringBuilder(file.text as String)
 
-        text = replaceMaven(replaceGradle(text, v), v)
-        file.setText(text)
+        replaceGradle(text, v)
+        replaceMaven(text, v)
+
+        file.setText(text.toString())
     }
 
-
-    static String replaceMaven(String text, String version) {
+    static StringBuilder replaceMaven(StringBuilder text, String version) {
         def pattern = """
 <dependency>
 \\s+<groupId>io\\.github\\.nstdio</groupId>
@@ -44,25 +45,23 @@ abstract class ReadmeUpdateTask extends DefaultTask {
 \\s+<version>(.+)</version>
 </dependency>
 """
-        def mvnPattern = Pattern.compile(pattern, Pattern.MULTILINE);
-        return replacePattern(mvnPattern, text, version);
+        def mvnPattern = Pattern.compile(pattern, Pattern.MULTILINE)
+        return replacePattern(mvnPattern, text, version)
     }
 
-    static String replaceGradle(String text, String version) {
+    static void replaceGradle(StringBuilder text, String version) {
         def gradlePattern = Pattern.compile("implementation 'io\\.github\\.nstdio:http-client-ext:(.+)'");
-        return replacePattern(gradlePattern, text, version);
+        replacePattern(gradlePattern, text, version)
     }
 
-    static String replacePattern(Pattern pattern, String text, String version) {
-        Matcher matcher = pattern.matcher(text);
+    static void replacePattern(Pattern pattern, StringBuilder text, String version) {
+        Matcher matcher = pattern.matcher(text)
         if (matcher.find()) {
-            int start = matcher.start(1);
-            int end = matcher.end(1);
+            int start = matcher.start(1)
+            int end = matcher.end(1)
 
-            text = new StringBuilder(text).replace(start, end, version).toString();
+            text.replace(start, end, version)
         }
-
-        return text;
     }
 }
 
