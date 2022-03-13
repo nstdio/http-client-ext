@@ -208,6 +208,14 @@ public class CacheEntryMetadata {
         return maxAge;
     }
 
+    long requestTime() {
+        return requestTimeMs;
+    }
+
+    long responseTime() {
+        return responseTimeMs;
+    }
+
     Optional<String> etag() {
         return response.headers().firstValue(HEADER_ETAG);
     }

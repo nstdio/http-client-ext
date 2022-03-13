@@ -28,6 +28,7 @@ import org.awaitility.core.ConditionFactory;
 import org.awaitility.core.ThrowingRunnable;
 
 import java.net.http.HttpHeaders;
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
@@ -108,6 +109,24 @@ public final class Assertions {
         public HttpHeadersAssertion hasNoHeader(String header) {
             org.assertj.core.api.Assertions.assertThat(actual.allValues(header))
                     .isEmpty();
+            return this;
+        }
+
+        public HttpHeadersAssertion isEqualTo(HttpHeaders other) {
+            org.assertj.core.api.Assertions.assertThat(actual).isEqualTo(other);
+            return this;
+        }
+    }
+
+    @SuppressWarnings({"WeakerAccess", "UnusedReturnValue"})
+    public static class HttpRequestAssertion extends ObjectAssert<HttpRequest> {
+
+        public HttpRequestAssertion(HttpRequest httpRequest) {
+            super(httpRequest);
+        }
+
+        public HttpRequestAssertion isEqualTo(HttpRequest other) {
+            org.assertj.core.api.Assertions.assertThat(actual).isEqualTo(other);
             return this;
         }
     }

@@ -27,8 +27,8 @@ import java.util.function.ToIntFunction;
 
 class LruMultimap<K, V> {
     private final Map<K, List<V>> m;
-    private final Consumer<V> evictListener;
     private final int maxSize;
+    private Consumer<V> evictListener;
     private int size;
 
     LruMultimap(int maxSize, Consumer<V> evictListener) {
@@ -116,6 +116,14 @@ class LruMultimap<K, V> {
                 notifyEvicted(removeEldest(old));
                 size--;
             }
+        }
+    }
+
+    void addEvictionListener(Consumer<V> l) {
+        if (evictListener == null) {
+            evictListener = l;
+        } else {
+            evictListener = evictListener.andThen(l);
         }
     }
 

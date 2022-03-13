@@ -28,6 +28,15 @@ implementation 'io.github.nstdio:http-client-ext:1.2.2'
 
 The `ExtendedHttpClient` implements client part of [RFC7234](https://datatracker.ietf.org/doc/html/rfc7234)
 
+There are two types of cache:
+```
+// backed by volotile in-memory storage
+Cache mem = Cache.newInMemoryCacheBuilder().build()
+
+// and persistent storage
+Cache disk = Cache.newDiskCacheBuilder().dir(Path.of("...")).build()
+```
+
 Here is the example of creating client with in memory cache:
 
 ```java
@@ -52,6 +61,8 @@ Cache cache = Cache.newInMemoryCacheBuilder()
         .responseFilter(response -> response.statusCode() == 200) // cache only responses that match given predicate
         .build();
 ```
+
+the exact same configuration applies to persistent builder with addition of [DiskCacheBuilder#dir](https://github.com/nstdio/http-client-ext/blob/main/src/main/java/io/github/nstdio/http/ext/Cache.java#L163)
 
 ### Decompression (gzip, deflate)
 Here is an example of transparent encoding feature
