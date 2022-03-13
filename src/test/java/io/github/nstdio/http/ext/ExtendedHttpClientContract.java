@@ -40,7 +40,6 @@ import static io.github.nstdio.http.ext.Headers.HEADER_LAST_MODIFIED;
 import static io.github.nstdio.http.ext.Headers.toRFC1123;
 import static io.github.nstdio.http.ext.Matchers.isCached;
 import static java.net.http.HttpResponse.BodyHandlers.ofString;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
@@ -64,7 +63,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public interface ExtendedHttpClientContract {
     @RegisterExtension
@@ -82,6 +80,11 @@ public interface ExtendedHttpClientContract {
      * The client under the test.
      */
     ExtendedHttpClient client();
+
+    /**
+     * The client created with {@code clock} under the test.
+     */
+    ExtendedHttpClient client(Clock clock);
 
     default HttpResponse<String> send(HttpRequest request) throws IOException, InterruptedException {
         return client().send(request, ofString());
@@ -225,24 +228,27 @@ public interface ExtendedHttpClientContract {
     @Test
     default void shouldRespectMinFreshRequests() throws Exception {
         //given
+        var clock = FixedRateTickClock.of(clock(), Duration.ofSeconds(1));
+        var client = client(clock);
+        var bodyHandler = ofString();
+
         stubFor(get(urlEqualTo(path()))
                 .willReturn(ok()
-                        .withHeader(HEADER_CACHE_CONTROL, "max-age=3")
+                        .withHeader(HEADER_CACHE_CONTROL, "max-age=5")
                         .withBody("abc")
                 )
         );
 
         //when + then
-        var r1 = send(requestBuilder().build());
+        var r1 = client.send(requestBuilder().build(), bodyHandler);
         assertThat(r1).isNotCached();
 
         awaitFor(() -> {
-            var r2 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "min-fresh=1").build());
+            var r2 = client.send(requestBuilder().header(HEADER_CACHE_CONTROL, "min-fresh=4").build(), bodyHandler);
             assertThat(r2).isCached();
         });
 
-        MILLISECONDS.sleep(2050);
-        var r3 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "min-fresh=1").build());
+        var r3 = client.send(requestBuilder().header(HEADER_CACHE_CONTROL, "min-fresh=1").build(), bodyHandler);
         assertThat(r3).isNotCached();
     }
 
@@ -470,6 +476,10 @@ public interface ExtendedHttpClientContract {
     @Test
     default void shouldRespectMaxAgeRequests() throws Exception {
         //given
+        var clock = FixedRateTickClock.of(clock(), Duration.ofSeconds(1));
+        var client = client(clock);
+        var bodyHandler = ofString();
+
         stubFor(get(urlEqualTo(path()))
                 .willReturn(ok()
                         .withHeader(HEADER_CACHE_CONTROL, "max-age=16")
@@ -478,17 +488,15 @@ public interface ExtendedHttpClientContract {
         );
 
         //when + then
-        var r1 = send(requestBuilder().build());
+        var r1 = client.send(requestBuilder().build(), bodyHandler);
         assertThat(r1).isNotCached();
 
         awaitFor(() -> {
-            var r2 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-age=8").build());
+            var r2 = client.send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-age=8").build(), bodyHandler);
             assertThat(r2).isCached();
         });
 
-        TimeUnit.SECONDS.sleep(1);
-
-        var r3 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-age=1").build());
+        var r3 = client.send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-age=1").build(), bodyHandler);
         assertThat(r3).isNotCached();
     }
 

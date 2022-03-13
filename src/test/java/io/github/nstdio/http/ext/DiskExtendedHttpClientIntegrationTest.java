@@ -25,15 +25,21 @@ import java.time.Clock;
 
 public class DiskExtendedHttpClientIntegrationTest implements ExtendedHttpClientContract {
     private ExtendedHttpClient client;
+    private DiskCache cache;
 
     @BeforeEach
     void setUp(@TempDir Path cacheDir) {
-        var cache = new DiskCache(cacheDir);
+        cache = new DiskCache(cacheDir);
         client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, Clock.systemUTC());
     }
 
     @Override
     public ExtendedHttpClient client() {
         return client;
+    }
+
+    @Override
+    public ExtendedHttpClient client(Clock clock) {
+        return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
     }
 }

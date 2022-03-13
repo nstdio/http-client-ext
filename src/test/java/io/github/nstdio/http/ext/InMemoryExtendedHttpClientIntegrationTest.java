@@ -71,6 +71,16 @@ class InMemoryExtendedHttpClientIntegrationTest implements ExtendedHttpClientCon
         return path;
     }
 
+    @Override
+    public ExtendedHttpClient client() {
+        return client;
+    }
+
+    @Override
+    public ExtendedHttpClient client(Clock clock) {
+        return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+    }
+
     @Test
     void shouldRespondWithCachedWhenNotModified() throws IOException, InterruptedException {
         //given
@@ -223,10 +233,5 @@ class InMemoryExtendedHttpClientIntegrationTest implements ExtendedHttpClientCon
         assertThat(r2).isNetwork();
 
         assertNull(cache.get(request));
-    }
-
-    @Override
-    public ExtendedHttpClient client() {
-        return client;
     }
 }
