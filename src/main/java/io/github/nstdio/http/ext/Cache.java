@@ -16,18 +16,16 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.Predicates.alwaysTrue;
-
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.ResponseInfo;
 import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
+@SuppressWarnings("WeakerAccess")
 public interface Cache {
     /**
      * Creates a new {@code InMemoryCacheBuilder} instance.
@@ -36,6 +34,15 @@ public interface Cache {
      */
     static InMemoryCacheBuilder newInMemoryCacheBuilder() {
         return new InMemoryCacheBuilder();
+    }
+
+    /**
+     * Creates a new {@code DiskCacheBuilder} instance.
+     *
+     * @return the new {@code  DiskCacheBuilder}.
+     */
+    static DiskCacheBuilder newDiskCacheBuilder() {
+        return new DiskCacheBuilder();
     }
 
     /**
@@ -114,98 +121,57 @@ public interface Cache {
         void subscribeTo(Subscriber<List<ByteBuffer>> sub);
 
         CacheEntryMetadata metadata();
+
+        default long bodySize() {
+            return -1;
+        }
     }
 
     interface CacheBuilder {
         Cache build();
     }
 
-    class InMemoryCacheBuilder implements CacheBuilder {
-        private int maxItems = 1 << 13;
-        private Predicate<HttpRequest> requestFilter;
-        private Predicate<ResponseInfo> responseFilter;
-
-        private long size = -1;
-
+    /**
+     * The builder for in memory cache.
+     */
+    class InMemoryCacheBuilder extends ConstrainedCacheBuilder<InMemoryCacheBuilder> {
         InMemoryCacheBuilder() {
         }
 
-        /**
-         * The maximum number of cache entries. After reaching the limit the eldest entries will be evicted. Default is
-         * 8192.
-         *
-         * @param maxItems The maximum number of cache entries. Should be positive.
-         */
-        public InMemoryCacheBuilder maxItems(int maxItems) {
-            this.maxItems = maxItems;
-            return this;
+        @Override
+        public Cache build() {
+            return build(new InMemoryCache(maxItems, size));
+        }
+    }
+
+    /**
+     * The builder for in persistent cache.
+     */
+    class DiskCacheBuilder extends ConstrainedCacheBuilder<DiskCacheBuilder> {
+        private Path dir;
+
+        DiskCacheBuilder() {
         }
 
         /**
-         * The amount of bytes allowed to be stored. Negative value means no memory restriction is made. Note that only
-         * response body bytes are counted.
-         */
-        public InMemoryCacheBuilder size(long size) {
-            this.size = size;
-            return this;
-        }
-
-        /**
-         * Adds given predicate to predicated chain. The calls with requests that did not pass given predicate will not
-         * be subjected to caching facility. Semantically request filter is equivalent to {@code Cache-Control:
-         * no-store} header in request.
+         * Sets the directory to store cache files.
          *
-         * @param filter The request filter.
-         */
-        public InMemoryCacheBuilder requestFilter(Predicate<HttpRequest> filter) {
-            Objects.requireNonNull(filter);
-
-            if (requestFilter == null) {
-                requestFilter = filter;
-            } else {
-                requestFilter = requestFilter.and(filter);
-            }
-
-            return this;
-        }
-
-        /**
-         * Adds given predicate to predicated chain. The calls resulting with response that did not pass given predicate
-         * will not be subjected to caching facility. Semantically response filter is equivalent to {@code
-         * Cache-Control: no-store} header in response.
+         * @param dir The directory to store cache files.
          *
-         * @param filter The request filter.
+         * @return builder itself.
          */
-        public InMemoryCacheBuilder responseFilter(Predicate<ResponseInfo> filter) {
-            Objects.requireNonNull(filter);
-
-            if (responseFilter == null) {
-                responseFilter = filter;
-            } else {
-                responseFilter = responseFilter.and(filter);
-            }
-
+        public DiskCacheBuilder dir(Path dir) {
+            this.dir = Objects.requireNonNull(dir);
             return this;
         }
 
         @Override
         public Cache build() {
-            if (maxItems <= 0) {
-                throw new IllegalStateException("maxItems should be positive");
-            }
-            var memCache = new InMemoryCache(maxItems, size);
-            Cache c;
-
-            if (requestFilter != null || responseFilter != null) {
-                Predicate<HttpRequest> req = requestFilter == null ? alwaysTrue() : requestFilter;
-                Predicate<ResponseInfo> resp = responseFilter == null ? alwaysTrue() : responseFilter;
-
-                c = new FilteringCache(memCache, req, resp);
-            } else {
-                c = memCache;
+            if (dir == null) {
+                throw new IllegalStateException("dir cannot be null");
             }
 
-            return new SynchronizedCache(c);
+            return build(new DiskCache(maxItems, size, dir));
         }
     }
 }

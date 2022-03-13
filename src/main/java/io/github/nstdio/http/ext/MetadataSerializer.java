@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-module http.client.ext {
-    requires java.net.http;
-    requires lombok;
-    requires com.fasterxml.jackson.core;
-    requires com.fasterxml.jackson.databind;
+package io.github.nstdio.http.ext;
 
-    exports io.github.nstdio.http.ext;
+import java.nio.file.Path;
+
+interface MetadataSerializer {
+    void write(CacheEntryMetadata metadata, Path path);
+
+    CacheEntryMetadata read(Path path);
 }

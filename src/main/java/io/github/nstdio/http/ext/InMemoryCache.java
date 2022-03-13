@@ -16,7 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.BodySubscribers;
@@ -24,16 +23,14 @@ import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Flow;
 import java.util.function.Consumer;
-import java.util.function.ToIntFunction;
 
-class InMemoryCache implements Cache {
-    private final LruMultimap<URI, InMemoryCacheEntry> cache;
-    private final long maxBytes;
-    private long size;
+class InMemoryCache extends SizeConstrainedCache {
+
+    private static final Consumer<CacheEntry> EMPTY_CONSUMER = entry -> {
+    };
 
     InMemoryCache(int maxItems, long maxBytes) {
-        cache = new LruMultimap<>(maxItems, evictListener());
-        this.maxBytes = maxBytes;
+        super(maxItems, maxBytes, EMPTY_CONSUMER);
     }
 
     static int indexOf(HttpRequest r, List<? extends CacheEntry> es) {
@@ -55,72 +52,6 @@ class InMemoryCache implements Cache {
         }
 
         return -1;
-    }
-
-    private Consumer<InMemoryCacheEntry> evictListener() {
-        return e -> size -= e.bodySize();
-    }
-
-    int multimapSize() {
-        return cache.size();
-    }
-
-    int mapSize() {
-        return cache.mapSize();
-    }
-
-    long bytes() {
-        return size;
-    }
-
-    @Override
-    public CacheEntry get(HttpRequest request) {
-        return cache.getSingle(request.uri(), idxFn(request));
-    }
-
-    @Override
-    public void put(HttpRequest request, CacheEntry entry) {
-        var e = (InMemoryCacheEntry) entry;
-
-        if (isUnbounded()) {
-            putInternal(request, e);
-        } else if (e.bodySize() <= maxBytes) {
-            while (needSpace(e)) cache.evictEldest();
-
-            putInternal(request, e);
-        }
-    }
-
-    private void putInternal(HttpRequest k, InMemoryCacheEntry e) {
-        size += e.bodySize();
-        cache.putSingle(k.uri(), e, idxFn(k));
-    }
-
-    @Override
-    public void evict(HttpRequest request) {
-        cache.remove(request.uri(), idxFn(request));
-    }
-
-    @Override
-    public void evictAll(HttpRequest r) {
-        cache.evictAll(r.uri());
-    }
-
-    @Override
-    public void evictAll() {
-        cache.clear();
-    }
-
-    private ToIntFunction<List<InMemoryCacheEntry>> idxFn(HttpRequest r) {
-        return l -> indexOf(r, l);
-    }
-
-    private boolean needSpace(InMemoryCacheEntry e) {
-        return size + e.bodySize() > maxBytes;
-    }
-
-    private boolean isUnbounded() {
-        return maxBytes <= 0;
     }
 
     @Override
@@ -151,7 +82,8 @@ class InMemoryCache implements Cache {
             this.metadata = metadata;
         }
 
-        int bodySize() {
+        @Override
+        public long bodySize() {
             return body.length;
         }
 

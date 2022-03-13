@@ -16,21 +16,35 @@
 
 package io.github.nstdio.http.ext;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.io.TempDir;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.http.HttpClient;
-import java.nio.file.Path;
+import java.nio.file.Files;
 import java.time.Clock;
 
-public class DiskExtendedHttpClientIntegrationTest implements ExtendedHttpClientContract {
+class DiskExtendedHttpClientIntegrationTest implements ExtendedHttpClientContract {
+    private final HttpClient delegate = HttpClient.newHttpClient();
+    private File cacheDir;
     private ExtendedHttpClient client;
     private DiskCache cache;
 
     @BeforeEach
-    void setUp(@TempDir Path cacheDir) {
-        cache = new DiskCache(cacheDir);
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, Clock.systemUTC());
+    void setUp() throws IOException {
+        cacheDir = Files.createTempDirectory("diskcache").toFile();
+        cacheDir.deleteOnExit();
+
+        cache = new DiskCache(cacheDir.toPath());
+        client = new ExtendedHttpClient(delegate, cache, Clock.systemUTC());
+    }
+
+    @AfterEach
+    void tearDown() {
+        cache.evictAll();
+
+        for (File file : cacheDir.listFiles()) file.delete();
     }
 
     @Override
