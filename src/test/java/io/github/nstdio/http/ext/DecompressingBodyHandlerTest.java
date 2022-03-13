@@ -98,7 +98,7 @@ class DecompressingBodyHandlerTest {
         BodySubscriber<?> actual = handler.apply(responseInfo);
 
         //then
-        assertThat(actual).isExactlyInstanceOf(InputStreamDecompressingBodySubscriber.class);
+        assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber.class);
     }
 
     @Test

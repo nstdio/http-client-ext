@@ -92,3 +92,13 @@ HttpRequest request = HttpRequest.newBuilder(uri)
 
 HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressing(ofString()));
 ```
+
+### JSON
+We are using [Jackson](https://github.com/FasterXML/jackson-databind) to create Java objects from JSON.
+
+```java
+client.send(request, BodyHandlers.ofJson(User.class));
+
+// or some complex adhoc type
+client.send(request, BodyHandlers.ofJson(new TypeReference<Map<String, List<String>>>() {}));
+```
