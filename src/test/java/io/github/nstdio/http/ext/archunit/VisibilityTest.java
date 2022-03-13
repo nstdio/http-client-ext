@@ -27,6 +27,7 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.nstdio.http.ext.BodyHandlers;
+import io.github.nstdio.http.ext.BodySubscribers;
 import io.github.nstdio.http.ext.Cache;
 import io.github.nstdio.http.ext.CacheControl;
 import io.github.nstdio.http.ext.CacheEntryMetadata;
@@ -42,6 +43,7 @@ class VisibilityTest {
                             .and(not(ExtendedHttpClient.Builder.class))
                             .and(not(BodyHandlers.DecompressingBodyHandlerBuilder.class))
                             .and(not(BodyHandlers.class))
+                            .and(not(BodySubscribers.class))
                             .and(not(Cache.CacheBuilder.class))
                             .and(not(Cache.CacheEntry.class))
                             .and(not(Cache.InMemoryCacheBuilder.class))

@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.net.http.HttpHeaders;
+import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.ResponseInfo;
@@ -115,8 +116,9 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     }
 
     private BodySubscriber<T> directSubscriber(UnaryOperator<InputStream> reduced) {
+        BodySubscriber<InputStream> upstream = HttpResponse.BodySubscribers.ofInputStream();
         @SuppressWarnings("unchecked")
-        var directSubscriber = (BodySubscriber<T>) new InputStreamDecompressingBodySubscriber(reduced);
+        var directSubscriber = (BodySubscriber<T>) new AsyncMappingSubscriber<>(upstream, reduced);
 
         return directSubscriber;
     }

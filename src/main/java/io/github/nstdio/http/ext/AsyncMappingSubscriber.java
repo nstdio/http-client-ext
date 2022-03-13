@@ -15,46 +15,44 @@
  */
 package io.github.nstdio.http.ext;
 
-import java.io.InputStream;
 import java.net.http.HttpResponse.BodySubscriber;
-import java.net.http.HttpResponse.BodySubscribers;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow.Subscription;
-import java.util.function.UnaryOperator;
+import java.util.function.Function;
 
-final class InputStreamDecompressingBodySubscriber implements BodySubscriber<InputStream> {
+final class AsyncMappingSubscriber<T, U> implements BodySubscriber<U> {
+    private final BodySubscriber<T> upstream;
+    private final Function<? super T, ? extends U> mapper;
 
-    private final BodySubscriber<InputStream> delegate = BodySubscribers.ofInputStream();
-    private final UnaryOperator<InputStream> decompressingFn;
-
-    InputStreamDecompressingBodySubscriber(UnaryOperator<InputStream> decompressingFn) {
-        this.decompressingFn = decompressingFn;
+    AsyncMappingSubscriber(BodySubscriber<T> upstream, Function<? super T, ? extends U> mapper) {
+        this.upstream = upstream;
+        this.mapper = mapper;
     }
 
     @Override
-    public CompletionStage<InputStream> getBody() {
-        return delegate.getBody().thenApplyAsync(decompressingFn);
+    public CompletionStage<U> getBody() {
+        return upstream.getBody().thenApplyAsync(mapper);
     }
 
     @Override
     public void onSubscribe(Subscription subscription) {
-        delegate.onSubscribe(subscription);
+        upstream.onSubscribe(subscription);
     }
 
     @Override
     public void onNext(List<ByteBuffer> item) {
-        delegate.onNext(item);
+        upstream.onNext(item);
     }
 
     @Override
     public void onError(Throwable throwable) {
-        delegate.onError(throwable);
+        upstream.onError(throwable);
     }
 
     @Override
     public void onComplete() {
-        delegate.onComplete();
+        upstream.onComplete();
     }
 }

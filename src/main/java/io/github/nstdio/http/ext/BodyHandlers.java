@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.github.nstdio.http.ext.DecompressingBodyHandler.Options;
 
 import java.io.InputStream;
@@ -41,6 +42,30 @@ public final class BodyHandlers {
 
     public static <T> BodyHandler<T> ofDecompressing(BodyHandler<T> downstream) {
         return new DecompressingBodyHandlerBuilder().build(downstream);
+    }
+
+    /**
+     * Creates body handler to map JSON response to {@code targetType}.
+     *
+     * @param targetType The type.
+     * @param <T>        The required type.
+     *
+     * @return The JSON body handler.
+     */
+    public static <T> BodyHandler<T> ofJson(Class<T> targetType) {
+        return responseInfo -> BodySubscribers.ofJson(targetType);
+    }
+
+    /**
+     * Creates body handler to map JSON response to {@code targetType}.
+     *
+     * @param targetType The type.
+     * @param <T>        The required type.
+     *
+     * @return The JSON body handler.
+     */
+    public static <T> BodyHandler<T> ofJson(TypeReference<T> targetType) {
+        return responseInfo -> BodySubscribers.ofJson(targetType);
     }
 
     /**
