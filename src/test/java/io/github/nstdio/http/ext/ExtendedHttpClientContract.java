@@ -16,11 +16,13 @@
 
 package io.github.nstdio.http.ext;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.created;
 import static com.github.tomakehurst.wiremock.client.WireMock.delete;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.get;
 import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.matching;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.post;
 import static com.github.tomakehurst.wiremock.client.WireMock.put;
@@ -35,6 +37,7 @@ import static io.github.nstdio.http.ext.Assertions.awaitFor;
 import static io.github.nstdio.http.ext.Headers.HEADER_CACHE_CONTROL;
 import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
 import static io.github.nstdio.http.ext.Headers.HEADER_ETAG;
+import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Headers.HEADER_LAST_MODIFIED;
 import static io.github.nstdio.http.ext.Headers.toRFC1123;
@@ -587,9 +590,39 @@ public interface ExtendedHttpClientContract {
         Assertions.assertThat(r2Path).exists().hasContent(body);
     }
 
+    /**
+     * https://datatracker.ietf.org/doc/html/rfc5861#section-4
+     */
     @Test
-    @Disabled("https://datatracker.ietf.org/doc/html/rfc5861#section-4")
-    default void shouldRespectStaleIfError() {
+    default void shouldRespectStaleIfError() throws Exception {
+        //given
+        var clock = FixedRateTickClock.of(clock(), Duration.ofSeconds(1));
+        var client = client(clock);
+        var bodyHandler = ofString();
+        var urlPattern = urlEqualTo(path());
+
+        stubFor(get(urlPattern)
+                .willReturn(ok()
+                        .withHeader(HEADER_CACHE_CONTROL, "max-age=1,stale-if-error=10")
+                        .withBody("abc")
+                )
+        );
+        stubFor(get(urlPattern)
+                .withHeader(HEADER_IF_MODIFIED_SINCE, matching(".+"))
+                .willReturn(aResponse().withStatus(500))
+        );
+
+        //when
+        var r1 = client.send(requestBuilder().build(), bodyHandler);
+        var r2 = await().until(() -> client.send(requestBuilder().header("Cache-Control", "stale-if-error=4").build(), bodyHandler), isCached());
+        var r3 = await().until(() -> client.send(requestBuilder().header("Cache-Control", "stale-if-error=100").build(), bodyHandler), isCached());
+        var r4 = client.send(requestBuilder().header("Cache-Control", "stale-if-error=1").build(), bodyHandler);
+
+        //then
+        assertThat(r1).isNotCached().hasBody("abc");
+        assertThat(r2).isCached().hasBody("abc");
+        assertThat(r3).isCached().hasBody("abc");
+        assertThat(r4).isNotCached().hasStatusCode(500);
     }
 
     @Test
