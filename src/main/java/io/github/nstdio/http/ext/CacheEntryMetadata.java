@@ -208,6 +208,10 @@ public class CacheEntryMetadata {
         return maxAge;
     }
 
+    long staleFor() {
+        return age(MILLISECONDS) - maxAge;
+    }
+
     long requestTime() {
         return requestTimeMs;
     }

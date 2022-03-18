@@ -20,6 +20,7 @@ import static io.github.nstdio.http.ext.ExtendedHttpClient.toBuilder;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static lombok.Lombok.sneakyThrow;
 
@@ -210,9 +211,28 @@ class CachingInterceptor implements Interceptor {
 
     private <T> HttpResponse<T> possiblyCached(RequestContext ctx, Cache.CacheEntry entry, HttpResponse<T> r) {
         CacheEntryMetadata metadata = entry != null ? entry.metadata() : null;
-        if (metadata != null && r.statusCode() == 304) {
-            metadata.update(r.headers(), ctx.requestTimeLong(), ctx.responseTimeLong());
-            return createCachedResponse(ctx, entry);
+        if (metadata != null) {
+            switch (r.statusCode()) {
+                case 304: {
+                    metadata.update(r.headers(), ctx.requestTimeLong(), ctx.responseTimeLong());
+                    return createCachedResponse(ctx, entry);
+                }
+                case 500:
+                case 502:
+                case 503:
+                case 504: {
+                    long staleIfError = Math.max(
+                            ctx.cacheControl().staleIfError(MILLISECONDS),
+                            metadata.responseCacheControl().staleIfError(MILLISECONDS)
+                    );
+
+                    if (staleIfError > metadata.staleFor()) {
+                        return createCachedResponse(ctx, entry);
+                    }
+
+                    break;
+                }
+            }
         }
 
         return r;
