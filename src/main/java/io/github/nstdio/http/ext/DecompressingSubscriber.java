@@ -90,7 +90,7 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
             return;
         }
 
-        item.forEach(is::addBuffer);
+        item.forEach(is::add);
 
         if (decompressingStream == null) {
             // trying to buffer at least 10 bytes

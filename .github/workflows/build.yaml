@@ -13,8 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        env:
+          FETCH_DEPTH: ${{ env.RUN_ANALYZE == 'true' && '0' || '1' }}
         with:
-          fetch-depth: ${{ env.RUN_ANALYZE == true && '0' || '1' }}
+          fetch-depth: ${{ env.FETCH_DEPTH }}
       - name: Set up JDK 11
         uses: actions/setup-java@v2
         with:
@@ -22,7 +24,7 @@ jobs:
           java-version: 11
           cache: 'gradle'
       - name: Cache SonarCloud packages
-        if: ${{ env.RUN_ANALYZE == true }}
+        if: ${{ env.RUN_ANALYZE == 'true' }}
         uses: actions/cache@v1
         with:
           path: ~/.sonar/cache
@@ -33,7 +35,7 @@ jobs:
           IO_GITHUB_NSTDIO_HTTP_EXT_CLIENT_TEST_CACHE_WRITE_DELAY: PT2.5S
         run: ./gradlew build --stacktrace --scan
       - name: Analyze
-        if: ${{ env.RUN_ANALYZE == true }}
+        if: ${{ env.RUN_ANALYZE == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -21,6 +21,7 @@ import static org.apache.commons.lang3.RandomUtils.nextBytes;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.apache.commons.io.IOUtils;
@@ -49,7 +50,7 @@ class ByteBufferInputStreamTest {
     void fullReading(byte[] bytes) throws IOException {
         //given
         var is = new ByteBufferInputStream();
-        toBuffers(bytes, false).forEach(is::addBuffer);
+        toBuffers(bytes, false).forEach(is::add);
 
         //when
         var actual = IOUtils.toByteArray(is);
@@ -63,7 +64,7 @@ class ByteBufferInputStreamTest {
     void shouldReadAllBytes(byte[] bytes) throws IOException {
         //given
         var is = new ByteBufferInputStream();
-        toBuffers(bytes, false).forEach(is::addBuffer);
+        toBuffers(bytes, false).forEach(is::add);
 
         //when
         var actual = is.readAllBytes();
@@ -77,7 +78,7 @@ class ByteBufferInputStreamTest {
         //given
         var is = new ByteBufferInputStream();
         byte[] bytes = nextBytes(8);
-        is.addBuffer(ByteBuffer.wrap(bytes));
+        is.add(ByteBuffer.wrap(bytes));
 
         //when
         int actual = is.read(new byte[0]);
@@ -91,7 +92,7 @@ class ByteBufferInputStreamTest {
         //given
         var is = new ByteBufferInputStream();
         String randomString = RandomStringUtils.randomAlphabetic(64);
-        toBuffers(randomString.getBytes(), false).forEach(is::addBuffer);
+        toBuffers(randomString.getBytes(), false).forEach(is::add);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
         //when
@@ -113,9 +114,9 @@ class ByteBufferInputStreamTest {
         toBuffers(bytes, false)
                 .stream()
                 .map(buffer -> buffer.position(buffer.limit()))
-                .forEach(is::addBuffer);
+                .forEach(is::add);
 
-        is.addBuffer(ByteBuffer.wrap(new byte[0]));
+        is.add(ByteBuffer.wrap(new byte[0]));
 
         //when
         byte[] actual = is.readAllBytes();
@@ -146,13 +147,51 @@ class ByteBufferInputStreamTest {
         //given
         byte[] bytes = nextBytes(32);
         var is = new ByteBufferInputStream();
-        toBuffers(bytes, false).forEach(is::addBuffer);
+        toBuffers(bytes, false).forEach(is::add);
 
         //when
         int actual = is.available();
 
         //then
         assertEquals(bytes.length, actual);
+    }
+
+    @Test
+    void shouldReadAllBytes() throws Exception {
+        //given
+        byte[] bytes = nextBytes(32);
+        var is = new ByteBufferInputStream();
+        toBuffers(bytes, false).forEach(is::add);
+
+        //when
+        byte[] actual = is.readAllBytes();
+
+        //then
+        assertArrayEquals(bytes, actual);
+    }
+
+    @Test
+    void shouldThrowWhenRequestedBytesNegative() {
+        //given
+        var is = new ByteBufferInputStream();
+
+        //when + then
+        assertThrows(IllegalArgumentException.class, () -> is.readNBytes(-1));
+    }
+
+    @Test
+    void shouldReadUpToNBytes() throws IOException {
+        //given
+        var count = 16;
+        byte[] bytes = nextBytes(count);
+        var is = new ByteBufferInputStream();
+        toBuffers(bytes, false).forEach(is::add);
+
+        //when
+        byte[] actual = is.readNBytes(count + 1);
+
+        //then
+        assertArrayEquals(bytes, actual);
     }
 
     @Test
