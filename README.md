@@ -97,8 +97,13 @@ HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressin
 We are using [Jackson](https://github.com/FasterXML/jackson-databind) to create Java objects from JSON.
 
 ```java
+// simple type
 client.send(request, BodyHandlers.ofJson(User.class));
 
-// or some complex adhoc type
+// complex adhoc type
 client.send(request, BodyHandlers.ofJson(new TypeReference<Map<String, List<String>>>() {}));
+
+// with existing mapper
+ObjectMapper objectMapper = ...
+client.send(request, responseInfo -> BodySubscribers.ofJson(objectMapper, User.class));
 ```
