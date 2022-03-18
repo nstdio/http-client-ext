@@ -37,6 +37,8 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
      * 8192.
      *
      * @param maxItems The maximum number of cache entries. Should be positive.
+     *
+     * @return builder itself.
      */
     public B maxItems(int maxItems) {
         if (maxItems <= 0) {
@@ -50,6 +52,8 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
     /**
      * The amount of bytes allowed to be stored. Negative value means no memory restriction is made. Note that only
      * response body bytes are counted.
+     *
+     * @return builder itself.
      */
     public B size(long size) {
         this.size = size;
@@ -62,6 +66,8 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
      * header in request.
      *
      * @param filter The request filter.
+     *
+     * @return builder itself.
      */
     public B requestFilter(Predicate<HttpRequest> filter) {
         Objects.requireNonNull(filter);
@@ -81,6 +87,8 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
      * no-store} header in response.
      *
      * @param filter The request filter.
+     *
+     * @return builder itself.
      */
     public B responseFilter(Predicate<ResponseInfo> filter) {
         Objects.requireNonNull(filter);
