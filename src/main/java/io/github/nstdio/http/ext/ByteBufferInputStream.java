@@ -72,6 +72,11 @@ class ByteBufferInputStream extends InputStream {
         return read;
     }
 
+    @Override
+    public int read(byte[] b) throws IOException {
+        return read(b, 0, b.length);
+    }
+
     private ByteBuffer nextBuffer() {
         Deque<ByteBuffer> buffs = buffers;
         ByteBuffer buf = buffs.peek();
@@ -141,6 +146,24 @@ class ByteBufferInputStream extends InputStream {
     }
 
     @Override
+    public byte[] readAllBytes() throws IOException {
+        return readNBytes(Integer.MAX_VALUE);
+    }
+
+    @Override
+    public byte[] readNBytes(int len) throws IOException {
+        if (len < 0) {
+            throw new IllegalArgumentException("len < 0");
+        }
+
+        int available = Math.min(available(), len);
+        byte[] buf = new byte[available];
+        read(buf, 0, available);
+
+        return buf;
+    }
+
+    @Override
     public void close() {
         buffers.clear();
         mark = null;
@@ -152,7 +175,7 @@ class ByteBufferInputStream extends InputStream {
             throw new IOException("closed");
     }
 
-    void addBuffer(ByteBuffer b) {
+    void add(ByteBuffer b) {
         if (!closed) {
             b = b.duplicate().asReadOnlyBuffer();
             if (!b.hasRemaining()) {
