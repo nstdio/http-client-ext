@@ -114,9 +114,10 @@ class ByteBufferInputStream extends InputStream {
     }
 
     private void mark0(int b) {
-        if (mark != null) {
-            if (mark.hasRemaining()) {
-                mark.put((byte) b);
+        ByteBuffer m;
+        if ((m = mark) != null) {
+            if (m.hasRemaining()) {
+                m.put((byte) b);
             } else {
                 mark = null;
             }
@@ -124,12 +125,12 @@ class ByteBufferInputStream extends InputStream {
     }
 
     private void mark0(byte[] b, int off, int len) {
-        if (mark != null) {
-            int rem = mark.remaining();
-            if (len > rem) {
-                mark = null;
+        ByteBuffer m;
+        if ((m = mark) != null) {
+            if (len <= m.remaining()) {
+                m.put(b, off, len);
             } else {
-                mark.put(b, off, len);
+                mark = null;
             }
         }
     }
