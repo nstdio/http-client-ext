@@ -24,10 +24,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 import static lombok.Lombok.sneakyThrow;
 
+import io.github.nstdio.http.ext.Cache.CacheEntry;
 import lombok.RequiredArgsConstructor;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandler;
+import java.net.http.HttpResponse.BodySubscriber;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
@@ -79,7 +82,7 @@ class CachingInterceptor implements Interceptor {
         RequestContext ctx = in.ctx();
 
         if (ctx.isCacheable()) {
-            final Cache.CacheEntry entry = cacheEntry(ctx);
+            final CacheEntry entry = cacheEntry(ctx);
 
             if (ctx.cacheControl().onlyIfCached()) {
                 return in.withResponse(forcedCacheResponse(ctx, entry));
@@ -103,9 +106,9 @@ class CachingInterceptor implements Interceptor {
         }
     }
 
-    private <T> HttpResponse<T> forcedCacheResponse(RequestContext ctx, Cache.CacheEntry entry) {
+    private <T> HttpResponse<T> forcedCacheResponse(RequestContext ctx, CacheEntry entry) {
         final var request = ctx.request();
-        Cache.CacheEntry forcedEntry = entry == null ? getCacheEntry(request) : entry;
+        CacheEntry forcedEntry = entry == null ? getCacheEntry(request) : entry;
         final HttpResponse<T> response;
         if (forcedEntry == null || !forcedEntry.metadata().isFresh(ctx.cacheControl())) {
             response = gatewayTimeoutResponse(request);
@@ -117,8 +120,8 @@ class CachingInterceptor implements Interceptor {
 
     }
 
-    private <T> Chain<T> sendAndCache(Chain<T> in, Cache.CacheEntry entry) {
-        var metadata = Optional.ofNullable(entry).map(Cache.CacheEntry::metadata);
+    private <T> Chain<T> sendAndCache(Chain<T> in, CacheEntry entry) {
+        var metadata = Optional.ofNullable(entry).map(CacheEntry::metadata);
         var newCtx = metadata
                 .map(m -> applyConditions(in.ctx().request(), m))
                 .map(in.ctx()::withRequest)
@@ -143,10 +146,10 @@ class CachingInterceptor implements Interceptor {
         return Chain.of(newCtx.withBodyHandler(bodyHandler), in.futureHandler().andThen(handler));
     }
 
-    private <T> HttpResponse.BodyHandler<T> cacheAware(RequestContext ctx) {
+    private <T> BodyHandler<T> cacheAware(RequestContext ctx) {
         return info -> {
-            ctx.responseTime().set(clock.millis());
-            HttpResponse.BodySubscriber<T> sub = ctx.<T>bodyHandler().apply(info);
+            ctx.responseTime().compareAndSet(0, clock.millis());
+            BodySubscriber<T> sub = ctx.<T>bodyHandler().apply(info);
 
             if (isCacheable(info)) {
                 var metadata = CacheEntryMetadata.of(ctx.requestTime().get(), ctx.responseTime().get(),
@@ -189,7 +192,7 @@ class CachingInterceptor implements Interceptor {
                 || "DELETE".equalsIgnoreCase(method);
     }
 
-    private Cache.CacheEntry cacheEntry(RequestContext ctx) {
+    private CacheEntry cacheEntry(RequestContext ctx) {
         if (ctx.cacheControl().noCache()) {
             // TODO: check if entry is stale and remove it
             return null;
@@ -198,18 +201,18 @@ class CachingInterceptor implements Interceptor {
         return getCacheEntry(ctx.request());
     }
 
-    private Cache.CacheEntry getCacheEntry(HttpRequest request) {
+    private CacheEntry getCacheEntry(HttpRequest request) {
         return cache.get(request);
     }
 
-    private boolean isFresh(RequestContext ctx, Cache.CacheEntry entry) {
+    private boolean isFresh(RequestContext ctx, CacheEntry entry) {
         return Optional.ofNullable(entry)
-                .map(Cache.CacheEntry::metadata)
+                .map(CacheEntry::metadata)
                 .filter(m -> m.isFresh(ctx.cacheControl()))
                 .isPresent();
     }
 
-    private <T> HttpResponse<T> possiblyCached(RequestContext ctx, Cache.CacheEntry entry, HttpResponse<T> r) {
+    private <T> HttpResponse<T> possiblyCached(RequestContext ctx, CacheEntry entry, HttpResponse<T> r) {
         CacheEntryMetadata metadata = entry != null ? entry.metadata() : null;
         if (metadata != null) {
             switch (r.statusCode()) {
@@ -238,7 +241,7 @@ class CachingInterceptor implements Interceptor {
         return r;
     }
 
-    private <T> HttpResponse<T> createCachedResponse(RequestContext ctx, Cache.CacheEntry entry) {
+    private <T> HttpResponse<T> createCachedResponse(RequestContext ctx, CacheEntry entry) {
         return new CachedHttpResponse<>(ctx.bodyHandler(), ctx.request(), entry);
     }
 }

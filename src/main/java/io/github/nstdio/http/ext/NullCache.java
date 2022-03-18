@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 class NullCache implements Cache {
     static final NullCache INSTANCE = new NullCache();
 
+    private static final Consumer<Object> NOOP_CONSUMER = t -> {
+    };
     private static final Writer<Object> WRITER = new Writer<>() {
         @Override
         public HttpResponse.BodySubscriber<Object> subscriber() {
@@ -32,8 +34,7 @@ class NullCache implements Cache {
 
         @Override
         public Consumer<Object> finisher() {
-            return t -> {
-            };
+            return NOOP_CONSUMER;
         }
     };
 

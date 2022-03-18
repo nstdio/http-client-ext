@@ -16,6 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
+import io.github.nstdio.http.ext.Cache.CacheEntry;
+
 import javax.net.ssl.SSLSession;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,11 +29,11 @@ import java.util.Optional;
 final class CachedHttpResponse<T> implements HttpResponse<T> {
     private final BodyHandler<T> bodyHandler;
     private final HttpRequest request;
-    private final Cache.CacheEntry entry;
+    private final CacheEntry entry;
 
     private T body;
 
-    CachedHttpResponse(BodyHandler<T> bodyHandler, HttpRequest request, Cache.CacheEntry entry) {
+    CachedHttpResponse(BodyHandler<T> bodyHandler, HttpRequest request, CacheEntry entry) {
         this.bodyHandler = bodyHandler;
         this.request = request;
         this.entry = entry;
