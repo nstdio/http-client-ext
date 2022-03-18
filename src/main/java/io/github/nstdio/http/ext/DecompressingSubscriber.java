@@ -16,6 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,14 +67,6 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
         this.downstream = downstream;
         this.bufferSize = bufferSize;
         this.fn = fn;
-    }
-
-    private static void closeQuietly(InputStream in) {
-        if (in != null) {
-            try {
-                in.close();
-            } catch (IOException ignored) {}
-        }
     }
 
     @Override

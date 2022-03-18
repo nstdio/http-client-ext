@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -74,13 +75,7 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
     }
 
     private void close() {
-        if (out != null) {
-            try {
-                out.close();
-            } catch (IOException ignore) {
-                // ignore
-            }
-        }
+        closeQuietly(out);
     }
 
     @Override

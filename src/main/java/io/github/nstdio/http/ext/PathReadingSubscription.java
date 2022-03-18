@@ -16,6 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -75,11 +77,6 @@ class PathReadingSubscription implements Subscription {
     @Override
     public void cancel() {
         completed.set(true);
-        if (channel != null) {
-            try {
-                channel.close();
-            } catch (IOException ignored) {
-            }
-        }
+        closeQuietly(channel);
     }
 }

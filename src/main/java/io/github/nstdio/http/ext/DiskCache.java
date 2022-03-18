@@ -16,6 +16,9 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.delete;
+import static io.github.nstdio.http.ext.IOUtils.size;
+
 import lombok.Getter;
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -53,21 +56,6 @@ class DiskCache extends SizeConstrainedCache {
         this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
 
         restore();
-    }
-
-    private static long size(Path path) {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            return -1;
-        }
-    }
-
-    private static void delete(Path path) {
-        try {
-            Files.delete(path);
-        } catch (IOException ignored) {
-        }
     }
 
     private void restore() {
