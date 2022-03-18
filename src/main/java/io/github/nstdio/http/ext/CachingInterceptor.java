@@ -235,6 +235,9 @@ class CachingInterceptor implements Interceptor {
 
                     break;
                 }
+                default:
+                    // won't handle other codes
+                    break;
             }
         }
 

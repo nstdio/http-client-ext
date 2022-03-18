@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -59,6 +60,13 @@ import java.util.zip.GZIPOutputStream;
 
 class JsonMetadataSerializer implements MetadataSerializer {
 
+    private static final String FIELD_NAME_VERSION = "version";
+    private static final String FIELD_NAME_REQUEST_TIME = "requestTime";
+    private static final String FIELD_NAME_RESPONSE_TIME = "responseTime";
+    private static final String FIELD_NAME_REQUEST = "request";
+    private static final String FIELD_NAME_RESPONSE = "response";
+    private static final String FIELD_NAME_HEADERS = "headers";
+    private static final String FIELD_NAME_CODE = "code";
     private final ObjectWriter writer;
     private final ObjectReader reader;
 
@@ -66,6 +74,10 @@ class JsonMetadataSerializer implements MetadataSerializer {
         ObjectMapper mapper = createMapper();
         writer = mapper.writerFor(CacheEntryMetadata.class);
         reader = mapper.readerFor(CacheEntryMetadata.class);
+    }
+
+    private static JsonMappingException unexpectedFieldException(JsonParser p, String fieldName) {
+        return new JsonMappingException(p, "Unexpected field name: " + fieldName);
     }
 
     private ObjectMapper createMapper() {
@@ -115,10 +127,10 @@ class JsonMetadataSerializer implements MetadataSerializer {
         public void serialize(CacheEntryMetadata value, JsonGenerator gen, SerializerProvider provider) throws IOException {
             gen.writeStartObject();
 
-            gen.writeNumberField("requestTime", value.requestTime());
-            gen.writeNumberField("responseTime", value.responseTime());
-            gen.writeObjectField("request", value.request());
-            gen.writeObjectField("response", value.response());
+            gen.writeNumberField(FIELD_NAME_REQUEST_TIME, value.requestTime());
+            gen.writeNumberField(FIELD_NAME_RESPONSE_TIME, value.responseTime());
+            gen.writeObjectField(FIELD_NAME_REQUEST, value.request());
+            gen.writeObjectField(FIELD_NAME_RESPONSE, value.response());
 
             gen.writeEndObject();
         }
@@ -142,20 +154,22 @@ class JsonMetadataSerializer implements MetadataSerializer {
 
             while ((fieldName = p.nextFieldName()) != null) {
                 switch (fieldName) {
-                    case "requestTime":
+                    case FIELD_NAME_REQUEST_TIME:
                         requestTime = p.nextLongValue(-1);
                         break;
-                    case "responseTime":
+                    case FIELD_NAME_RESPONSE_TIME:
                         responseTime = p.nextLongValue(-1);
                         break;
-                    case "request":
+                    case FIELD_NAME_REQUEST:
                         p.nextToken();
                         request = (HttpRequest) ctxt.findRootValueDeserializer(requestType).deserialize(p, ctxt);
                         break;
-                    case "response":
+                    case FIELD_NAME_RESPONSE:
                         p.nextToken();
                         response = (ResponseInfo) ctxt.findRootValueDeserializer(responseType).deserialize(p, ctxt);
                         break;
+                    default:
+                        throw unexpectedFieldException(p, fieldName);
                 }
             }
 
@@ -181,10 +195,10 @@ class JsonMetadataSerializer implements MetadataSerializer {
             gen.writeStringField("uri", value.uri().toASCIIString());
             Integer versionOrd = value.version().map(Enum::ordinal).orElse(null);
             if (versionOrd != null) {
-                gen.writeNumberField("version", versionOrd);
+                gen.writeNumberField(FIELD_NAME_VERSION, versionOrd);
             }
 
-            gen.writeObjectField("headers", value.headers());
+            gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
 
             gen.writeEndObject();
         }
@@ -211,18 +225,20 @@ class JsonMetadataSerializer implements MetadataSerializer {
                         String timeout = p.nextTextValue();
                         builder.timeout(Duration.parse(timeout));
                         break;
-                    case "version":
+                    case FIELD_NAME_VERSION:
                         int version = p.nextIntValue(-1);
                         builder.version(HttpClient.Version.values()[version]);
                         break;
                     case "uri":
                         builder.uri(URI.create(p.nextTextValue()));
                         break;
-                    case "headers":
+                    case FIELD_NAME_HEADERS:
                         p.nextToken();
                         HttpHeaders headers = (HttpHeaders) ctxt.findRootValueDeserializer(headersType).deserialize(p, ctxt);
                         headers.map().forEach((name, values) -> values.forEach(value -> builder.header(name, value)));
                         break;
+                    default:
+                        throw unexpectedFieldException(p, fieldName);
                 }
             }
 
@@ -239,9 +255,9 @@ class JsonMetadataSerializer implements MetadataSerializer {
         public void serialize(ResponseInfo value, JsonGenerator gen, SerializerProvider provider) throws IOException {
             gen.writeStartObject();
 
-            gen.writeNumberField("code", value.statusCode());
-            gen.writeNumberField("version", value.version().ordinal());
-            gen.writeObjectField("headers", value.headers());
+            gen.writeNumberField(FIELD_NAME_CODE, value.statusCode());
+            gen.writeNumberField(FIELD_NAME_VERSION, value.version().ordinal());
+            gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
 
             gen.writeEndObject();
         }
@@ -262,18 +278,20 @@ class JsonMetadataSerializer implements MetadataSerializer {
             String fieldName;
             while ((fieldName = p.nextFieldName()) != null) {
                 switch (fieldName) {
-                    case "code":
+                    case FIELD_NAME_CODE:
                         builder.statusCode(p.nextIntValue(-1));
                         break;
-                    case "version":
+                    case FIELD_NAME_VERSION:
                         builder.version(values[p.nextIntValue(-1)]);
                         break;
-                    case "headers":
+                    case FIELD_NAME_HEADERS:
                         JsonDeserializer<Object> headersDeserializer = ctxt.findRootValueDeserializer(headersType);
                         p.nextToken();
                         HttpHeaders headers = (HttpHeaders) headersDeserializer.deserialize(p, ctxt);
                         builder.headers(headers);
                         break;
+                    default:
+                        throw unexpectedFieldException(p, fieldName);
                 }
             }
 
