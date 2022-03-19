@@ -35,14 +35,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.UnaryOperator;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.InflaterInputStream;
 
 class DecompressingBodyHandler<T> implements BodyHandler<T> {
     private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
     private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
     private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
+    private static final Set<String> WELL_KNOWN_DIRECTIVES = Set.of("gzip", "x-gzip", "br", "compress", "deflate", "identity");
+
     private final BodyHandler<T> original;
     private final Options options;
     private final boolean direct;
@@ -67,31 +68,28 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     }
 
     UnaryOperator<InputStream> decompressionFn(String directive) {
-        switch (directive) {
-            case "x-gzip":
-            case "gzip":
-                return in -> {
-                    try {
-                        return new GZIPInputStream(in);
-                    } catch (IOException e) {
-                        throw new UncheckedIOException(e);
-                    }
-                };
-            case "deflate":
-                return InflaterInputStream::new;
-            case "compress":
-            case "br":
-                if (options.failOnUnsupportedDirectives()) {
-                    throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
-                }
-                return IDENTITY;
-            default:
-                if (options.failOnUnknownDirectives()) {
-                    throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
-                }
+        var factory = CompressionFactories.firstSupporting(directive);
 
-                return IDENTITY;
+        if (factory != null) {
+            return in -> {
+                try {
+                    return factory.decompressing(in, directive);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            };
         }
+
+        boolean wellKnown = WELL_KNOWN_DIRECTIVES.contains(directive);
+        if (wellKnown && options.failOnUnsupportedDirectives()) {
+            throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
+        }
+
+        if (!wellKnown && options.failOnUnknownDirectives()) {
+            throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
+        }
+
+        return IDENTITY;
     }
 
     @Override

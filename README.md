@@ -92,6 +92,14 @@ HttpRequest request = HttpRequest.newBuilder(uri)
 
 HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressing(ofString()));
 ```
+Out of the box support for `gzip` and `deflate` is provided by JDK itself. For `br` (brotli) compression please add
+one of following dependencies to you project:
+
+- [org.brotli:dec](https://mvnrepository.com/artifact/org.brotli/dec/0.1.2)
+- [Brotli4j](https://github.com/hyperxpro/Brotli4j)
+
+service loader will pick up correct dependency. If none of these preferred there is always an options to extend via [SPI](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html)
+by providing [CompressionFactory](https://github.com/nstdio/http-client-ext/blob/main/src/main/java/io/github/nstdio/http/ext/spi/CompressionFactory.java)
 
 ### JSON
 We are using [Jackson](https://github.com/FasterXML/jackson-databind) to create Java objects from JSON.
