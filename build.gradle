@@ -1,6 +1,7 @@
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.Semver.SemverType
 import io.github.nstdio.http.ext.ReadmeUpdateTask
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 buildscript {
     dependencies {
@@ -16,6 +17,7 @@ plugins {
     id 'org.sonarqube' version '3.3'
     id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
     id "net.researchgate.release" version "2.8.1"
+    id "de.jjohannes.extra-java-module-info"
 }
 
 group 'io.github.nstdio'
@@ -36,6 +38,38 @@ ext {
     jsonPathAssertVersion = '2.7.0'
     slf4jVersion = '1.7.36'
     jacksonVersion = '2.13.2'
+    brotli4JVersion = "1.6.0"
+    brotliOrgVersion = "0.1.2"
+
+    spiDeps = ["org.brotli:dec:$brotliOrgVersion", "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion"]
+}
+
+java {
+    sourceSets {
+        spiTest {
+            compileClasspath += sourceSets.main.output
+            runtimeClasspath += sourceSets.main.output
+            java {}
+        }
+    }
+}
+
+configurations {
+    spiTestImplementation.extendsFrom testImplementation
+    spiTestRuntimeOnly.extendsFrom testRuntimeOnly
+
+    testRuntimeClasspath {
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
+    testCompileClasspath {
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
+    spiTestRuntimeClasspath {
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
+    spiTestCompileClasspath {
+        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
+    }
 }
 
 dependencies {
@@ -43,6 +77,8 @@ dependencies {
 
     compileOnly 'org.projectlombok:lombok:1.18.22'
     annotationProcessor 'org.projectlombok:lombok:1.18.22'
+
+    compileOnly spiDeps
 
     /** AssertJ & Friends */
     testImplementation "org.assertj:assertj-core:$assertJVersion"
@@ -59,8 +95,20 @@ dependencies {
     testImplementation 'org.mockito:mockito-core:4.4.0'
 
     testImplementation "com.github.tomakehurst:wiremock-jre8:2.32.0"
-
     testImplementation 'com.tngtech.archunit:archunit-junit5:0.23.1'
+
+    spiTestImplementation spiDeps
+    spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")
+}
+
+static def getArch() {
+    def operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
+
+    if (operatingSystem.isWindows()) "windows-x86_64"
+    else if (operatingSystem.isMacOsX()) "osx-x86_64"
+    else if (operatingSystem.isLinux())
+        if (DefaultNativePlatform.getCurrentArchitecture().isArm()) "linux-aarch64"
+        else "linux-x86_64"
 }
 
 sonarqube {
@@ -129,6 +177,8 @@ nexusPublishing {
 }
 
 signing {
+    required { !version.endsWith("SNAPSHOT") }
+
     def signingKey = findProperty("signingKey")
     def signingPassword = findProperty("signingPassword")
     useInMemoryPgpKeys(signingKey, signingPassword)
@@ -151,8 +201,9 @@ afterEvaluate {
     afterReleaseBuild.dependsOn publishToSonatype, closeAndReleaseSonatypeStagingRepository, updateReadme
 }
 
-test {
+tasks.withType(Test) {
     useJUnitPlatform()
+
     testLogging {
         events "skipped", "failed"
         exceptionFormat "full"
@@ -161,12 +212,35 @@ test {
     finalizedBy jacocoTestReport
 }
 
+task spiTest(type: Test) {
+    description = "Run SPI tests"
+    group = "verification"
+    testClassesDirs = sourceSets.spiTest.output.classesDirs
+    classpath = sourceSets.spiTest.runtimeClasspath
+}
+
+check.dependsOn spiTest
+build.dependsOn spiTest
+
+extraJavaModuleInfo {
+    module("brotli4j-${brotli4JVersion}.jar", 'com.aayushatharva.brotli4j', brotli4JVersion) {
+        exports('com.aayushatharva.brotli4j')
+        exports('com.aayushatharva.brotli4j.common')
+        exports('com.aayushatharva.brotli4j.decoder')
+        exports('com.aayushatharva.brotli4j.encoder')
+    }
+
+    module("dec-${brotliOrgVersion}.jar", 'org.brotli.dec', brotliOrgVersion) {
+        exports('org.brotli.dec')
+    }
+}
+
 jacocoTestReport {
     reports {
         xml.required = isCI
     }
 
-    dependsOn test
+    dependsOn test, spiTest
 }
 
 jacoco {
@@ -187,7 +261,7 @@ task checkGradleVersion {
 }
 
 wrapper {
-    gradleVersion = '7.4'
+    gradleVersion = '7.4.1'
 }
 
 if (hasProperty('buildScan')) {

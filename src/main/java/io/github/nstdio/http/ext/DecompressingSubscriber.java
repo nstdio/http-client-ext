@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.UnaryOperator;
 import java.util.zip.GZIPInputStream;
 
@@ -42,14 +40,7 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
     private final int bufferSize;
     private final ByteBufferInputStream is = new ByteBufferInputStream();
     private final UnaryOperator<InputStream> fn;
-    private final AtomicBoolean initError = new AtomicBoolean();
     private final AtomicBoolean completed = new AtomicBoolean();
-    private final AtomicInteger lastAvailable = new AtomicInteger(-1);
-
-    /**
-     * Created by {@code fn} having {@code is} as input.
-     */
-    private volatile InputStream decompressingStream;
 
     DecompressingSubscriber(BodySubscriber<T> downstream) {
         this(downstream, in -> {
@@ -87,56 +78,43 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
             return;
         }
 
-        if (initError.get()) {
-            pushNext(item);
-            return;
-        }
-
         item.forEach(is::add);
 
-        if (!hasEnoughBytesForInit()) {
-            return;
-        }
+        if (item == LAST_ITEM) {
+            InputStream decStream;
 
-        if (!initDecompressingStream()) {
-            pushRemainingBytes();
-            return;
-        }
-
-        try {
-            List<ByteBuffer> dec = decompress();
-            pushNext(dec);
-        } catch (IOException e) {
-            if (item == LAST_ITEM) {
-                completed.set(true);
-            } else {
-                onError(e);
+            if (!hasEnoughBytesForInit() || (decStream = initDecompressingStream()) == null) {
+                pushRemainingBytes();
+                return;
             }
 
-            onComplete();
+            try {
+                List<ByteBuffer> dec = decompress(decStream);
+                pushNext(dec);
+            } catch (IOException e) {
+                completed.set(true);
+
+                onError(e);
+                onComplete();
+            }
         }
     }
 
-    private List<ByteBuffer> decompress() throws IOException {
-        List<ByteBuffer> dec = new ArrayList<>();
+    private List<ByteBuffer> decompress(InputStream decStream) throws IOException {
+        List<ByteBuffer> dec = new ArrayList<>(1);
         ByteBuffer buf = newBuffer();
 
-        try {
-            var stream = decompressingStream;
-            while (stream.available() > 0) {
+        try (var stream = decStream) {
+            int r;
+            while ((r = stream.read()) != -1) {
                 if (!buf.hasRemaining()) {
                     add(dec, buf);
                     buf = newBuffer();
                 }
 
-                int r = stream.read();
-                if (r != -1) {
-                    buf.put((byte) r);
-                }
+                buf.put((byte) r);
             }
 
-            add(dec, buf);
-        } catch (EOFException e) {
             add(dec, buf);
         }
 
@@ -144,36 +122,14 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
     }
 
     private boolean hasEnoughBytesForInit() {
-        if (decompressingStream != null) {
-            // already initialized
-            return true;
-        }
-
         // trying to buffer at least 10 bytes
         // to normally initialize decompressingStream
 
-        int available = available();
-        if (available < MIN_BYTES_TO_INIT) {
-            // nothing changed since last execution
-            if (lastAvailable.getAndSet(available) == available) {
-                pushRemainingBytes();
-            }
-
-            return false;
-        }
-
-        return true;
+        return available() >= MIN_BYTES_TO_INIT;
     }
 
     private void pushRemainingBytes() {
-        try {
-            List<ByteBuffer> wrap = List.of(ByteBuffer.wrap(is.readAllBytes()));
-            pushNext(wrap);
-        } catch (IOException ignored) {
-            // cannot happen because using ByteBufferInputStream which
-            // is not connect to any I/O device.
-        }
-
+        pushNext(is.drainToList());
         close();
     }
 
@@ -193,24 +149,19 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
         }
     }
 
-    private boolean initDecompressingStream() {
-        if (decompressingStream != null) {
-            return true;
-        }
-
+    private InputStream initDecompressingStream() {
         try {
             is.mark(32);
-            decompressingStream = fn.apply(is);
+            return fn.apply(is);
         } catch (UncheckedIOException e) {
-            initError.set(true);
             try {
                 is.reset();
             } catch (IOException ignored) {
                 // not relevant
             }
-        }
 
-        return !initError.get();
+            return null;
+        }
     }
 
     private int available() {
@@ -231,7 +182,6 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
 
     private void close() {
         closeQuietly(is);
-        closeQuietly(decompressingStream);
     }
 
     @Override

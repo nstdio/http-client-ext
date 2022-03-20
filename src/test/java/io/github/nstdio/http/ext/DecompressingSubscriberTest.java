@@ -60,7 +60,6 @@ class DecompressingSubscriberTest {
         //when
         subscriber.onSubscribe(sub);
         sub.cancel();
-        subscriber.onComplete();
 
         byte[] actual = subscriber.getBody().toCompletableFuture().join();
 
@@ -84,7 +83,6 @@ class DecompressingSubscriberTest {
         //when
         subscriber.onSubscribe(sub);
         sub.cancel();
-        subscriber.onComplete();
 
         String actual = subscriber.getBody().toCompletableFuture().join();
 
@@ -107,7 +105,6 @@ class DecompressingSubscriberTest {
         //when
         subscriber.onSubscribe(sub);
         sub.cancel();
-        subscriber.onComplete();
 
         String actual = subscriber.getBody().toCompletableFuture().join();
 
@@ -130,7 +127,6 @@ class DecompressingSubscriberTest {
         //when
         subscriber.onSubscribe(sub);
         sub.cancel();
-        subscriber.onComplete();
 
         CompletableFuture<String> actual = subscriber.getBody().toCompletableFuture();
 

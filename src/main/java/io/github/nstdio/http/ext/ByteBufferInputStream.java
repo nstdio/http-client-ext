@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.Objects;
 
 class ByteBufferInputStream extends InputStream {
@@ -186,5 +187,17 @@ class ByteBufferInputStream extends InputStream {
                 buffers.offer(b);
             }
         }
+    }
+
+    List<ByteBuffer> drainToList() {
+        var buffs = buffers;
+        if (buffs.isEmpty()) {
+            return List.of();
+        }
+
+        var l = List.copyOf(buffs);
+        buffs.clear();
+
+        return l;
     }
 }

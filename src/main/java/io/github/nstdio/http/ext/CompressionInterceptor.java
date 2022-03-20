@@ -52,8 +52,19 @@ class CompressionInterceptor implements Interceptor {
     }
 
     private HttpRequest preProcessRequest(HttpRequest request) {
+        var supported = CompressionFactories.allSupported()
+                .stream()
+                .filter(not("identity"::equals))
+                .filter(not("x-gzip"::equals))
+                .filter(not("x-compress"::equals))
+                .collect(joining(","));
+
+        if (supported.isBlank()) {
+            return request;
+        }
+
         HttpRequest.Builder builder = toBuilder(request);
-        builder.setHeader("Accept-Encoding", "gzip,deflate");
+        builder.setHeader("Accept-Encoding", supported);
 
         return builder.build();
     }

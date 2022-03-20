@@ -105,7 +105,7 @@ class DecompressingBodyHandlerTest {
     void shouldReturnOriginalSubWhenDirectivesUnsupported() {
         //given
         ImmutableResponseInfo responseInfo = ImmutableResponseInfo.builder()
-                .headers(new HttpHeadersBuilder().add(HEADER_CONTENT_ENCODING, "compress,br,identity,abc").build())
+                .headers(new HttpHeadersBuilder().add(HEADER_CONTENT_ENCODING, "compress,br,identity1,abc").build())
                 .build();
         given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber);
 

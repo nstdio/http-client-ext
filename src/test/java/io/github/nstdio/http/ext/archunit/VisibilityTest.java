@@ -33,6 +33,10 @@ import io.github.nstdio.http.ext.CacheControl;
 import io.github.nstdio.http.ext.CacheEntryMetadata;
 import io.github.nstdio.http.ext.ExtendedHttpClient;
 import io.github.nstdio.http.ext.Predicates;
+import io.github.nstdio.http.ext.spi.CompressionFactory;
+import io.github.nstdio.http.ext.spi.IdentityCompressionFactory;
+import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
+import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
 
 @AnalyzeClasses(packages = "io.github.nstdio.http.ext", importOptions = {ImportOption.DoNotIncludeTests.class})
 class VisibilityTest {
@@ -54,6 +58,10 @@ class VisibilityTest {
                             .and(not(CacheControl.CacheControlBuilder.class))
                             .and(not(CacheControl.class))
                             .and(not(Predicates.class))
+                            .and(not(CompressionFactory.class))
+                            .and(not(JdkCompressionFactory.class))
+                            .and(not(IdentityCompressionFactory.class))
+                            .and(not(OptionalBrotliCompressionFactory.class))
                     )
                     .should()
                     .notBePublic();
