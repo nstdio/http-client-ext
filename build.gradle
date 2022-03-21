@@ -235,12 +235,12 @@ extraJavaModuleInfo {
     }
 }
 
-jacocoTestReport {
+tasks.withType(JacocoReport) {
     reports {
         xml.required = isCI
     }
 
-    dependsOn test, spiTest
+    executionData(tasks.withType(Test))
 }
 
 jacoco {

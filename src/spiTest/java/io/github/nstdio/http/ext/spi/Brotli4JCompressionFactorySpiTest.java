@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext.spi;
 
 import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.util.List;
 
 class Brotli4JCompressionFactorySpiTest {
 
@@ -35,10 +37,12 @@ class Brotli4JCompressionFactorySpiTest {
         Brotli4JCompressionFactory factory = new Brotli4JCompressionFactory();
 
         //when
+        List<String> supported = factory.supported();
         InputStream actual = factory.decompressing(inputStream, "br");
         String actualAsString = IOUtils.toString(actual, UTF_8);
 
         //then
         isJson().matches(actualAsString);
+        assertThat(supported).containsExactly("br");
     }
 }
