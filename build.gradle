@@ -58,18 +58,9 @@ configurations {
     spiTestImplementation.extendsFrom testImplementation
     spiTestRuntimeOnly.extendsFrom testRuntimeOnly
 
-    testRuntimeClasspath {
+    configure([testRuntimeClasspath, testCompileClasspath, spiTestRuntimeClasspath, spiTestCompileClasspath], {
         attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
-    testCompileClasspath {
-        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
-    spiTestRuntimeClasspath {
-        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
-    spiTestCompileClasspath {
-        attributes { attribute(Attribute.of("javaModule", Boolean), false) }
-    }
+    })
 }
 
 dependencies {
