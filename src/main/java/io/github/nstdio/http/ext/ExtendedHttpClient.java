@@ -166,7 +166,7 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     private <T> CompletableFuture<HttpResponse<T>> send0(HttpRequest request, BodyHandler<T> bodyHandler, Sender<T> sender) {
-        Chain<T> chain = buildAndExecute(request, bodyHandler);
+        Chain<T> chain = buildAndExecute(RequestContext.of(request, bodyHandler));
         FutureHandler<T> handler = chain.futureHandler();
 
         var future = chain.response()
@@ -176,7 +176,7 @@ public class ExtendedHttpClient extends HttpClient {
         return future.isDone() ? future.handle(handler) : future.handleAsync(handler);
     }
 
-    private <T> Chain<T> buildAndExecute(HttpRequest request, BodyHandler<T> bodyHandler) {
+    private <T> Chain<T> buildAndExecute(RequestContext ctx) {
         List<Interceptor> interceptors = new ArrayList<>(2);
         if (transparentEncoding) {
             interceptors.add(new CompressionInterceptor());
@@ -185,7 +185,7 @@ public class ExtendedHttpClient extends HttpClient {
             interceptors.add(new CachingInterceptor(cache, clock));
         }
 
-        Chain<T> chain = Chain.of(RequestContext.of(request, bodyHandler));
+        Chain<T> chain = Chain.of(ctx);
         if (!interceptors.isEmpty()) {
             for (var interceptor : interceptors) {
                 chain = interceptor.intercept(chain);

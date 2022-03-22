@@ -18,5 +18,4 @@ package io.github.nstdio.http.ext;
 
 interface Interceptor {
     <T> Chain<T> intercept(Chain<T> in);
-
 }
