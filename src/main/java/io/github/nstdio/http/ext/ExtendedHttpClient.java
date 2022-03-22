@@ -33,8 +33,6 @@ import java.net.http.HttpResponse.PushPromiseHandler;
 import java.net.http.WebSocket;
 import java.time.Clock;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -43,11 +41,9 @@ import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 public class ExtendedHttpClient extends HttpClient {
-    private final Cache cache;
-    private final boolean isNullCache;
+    private final CompressionInterceptor compressionInterceptor;
+    private final CachingInterceptor cachingInterceptor;
 
-    private final boolean transparentEncoding;
-    private final Clock clock;
     private final HttpClient delegate;
 
     ExtendedHttpClient(HttpClient delegate, Cache cache, Clock clock) {
@@ -56,10 +52,8 @@ public class ExtendedHttpClient extends HttpClient {
 
     ExtendedHttpClient(HttpClient delegate, Cache cache, boolean transparentEncoding, Clock clock) {
         this.delegate = delegate;
-        this.cache = cache;
-        this.isNullCache = cache instanceof NullCache;
-        this.transparentEncoding = transparentEncoding;
-        this.clock = clock;
+        this.cachingInterceptor = cache instanceof NullCache ? null : new CachingInterceptor(cache, clock);
+        this.compressionInterceptor = transparentEncoding ? new CompressionInterceptor() : null;
     }
 
     /**
@@ -177,20 +171,9 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     private <T> Chain<T> buildAndExecute(RequestContext ctx) {
-        List<Interceptor> interceptors = new ArrayList<>(2);
-        if (transparentEncoding) {
-            interceptors.add(new CompressionInterceptor());
-        }
-        if (!isNullCache) {
-            interceptors.add(new CachingInterceptor(cache, clock));
-        }
-
         Chain<T> chain = Chain.of(ctx);
-        if (!interceptors.isEmpty()) {
-            for (var interceptor : interceptors) {
-                chain = interceptor.intercept(chain);
-            }
-        }
+        chain = compressionInterceptor != null ? compressionInterceptor.intercept(chain) : chain;
+        chain = cachingInterceptor != null ? cachingInterceptor.intercept(chain) : chain;
 
         return chain;
     }
