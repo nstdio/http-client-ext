@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     env:
-      RUN_ANALYZE: ${{ github.event.pull_request.user.login != 'dependabot' }}
+      RUN_ANALYZE: false
     name: Build
     runs-on: ubuntu-latest
     steps:
