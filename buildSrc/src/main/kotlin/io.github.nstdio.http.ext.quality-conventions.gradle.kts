@@ -1,5 +1,3 @@
-import gradle.kotlin.dsl.accessors._d03f5c1f48338c7d05c8fd3014919501.jacoco
-
 /*
  * Copyright (C) 2022 Edgar Asatryan
  *
@@ -15,6 +13,8 @@ import gradle.kotlin.dsl.accessors._d03f5c1f48338c7d05c8fd3014919501.jacoco
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import gradle.kotlin.dsl.accessors._d03f5c1f48338c7d05c8fd3014919501.jacoco
 
 plugins {
     jacoco
@@ -38,7 +38,12 @@ jacoco {
 tasks.withType<JacocoReport> {
     reports {
         xml.required.set(isCI)
+        html.required.set(!isCI)
     }
 
     executionData(tasks.withType<Test>())
+}
+
+tasks.withType<Test> {
+    finalizedBy(tasks.named("jacocoTestReport"))
 }
