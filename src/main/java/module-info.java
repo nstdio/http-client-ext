@@ -22,7 +22,7 @@ import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
 module http.client.ext {
     uses CompressionFactory;
 
-    requires java.net.http;
+    requires transitive java.net.http;
 
     requires transitive com.fasterxml.jackson.core;
     requires transitive com.fasterxml.jackson.databind;
