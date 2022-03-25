@@ -16,6 +16,7 @@
 
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.lang.Boolean as JavaBoolean
 
@@ -24,6 +25,8 @@ plugins {
     jacoco
     id("de.jjohannes.extra-java-module-info")
 }
+
+val isCI = System.getenv("CI").toBoolean();
 
 group = "io.github.nstdio"
 
@@ -41,6 +44,13 @@ java {
 
 configurations.getByName("spiTestImplementation") {
     extendsFrom(configurations.testImplementation.get())
+}
+
+mapOf(
+    "spiTestImplementation" to "testImplementation",
+    "spiTestRuntimeOnly" to "testRuntimeOnly",
+).forEach { (t, u) ->
+    configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
 }
 
 val notModularConfigurations =
@@ -123,10 +133,12 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<Test> {
     useJUnitPlatform()
-
+    reports {
+        html.required.set(!isCI)
+    }
     testLogging {
         events("skipped", "failed")
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        exceptionFormat = FULL
     }
 }
 

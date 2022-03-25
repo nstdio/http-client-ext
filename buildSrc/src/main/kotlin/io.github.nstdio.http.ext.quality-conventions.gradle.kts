@@ -21,7 +21,7 @@ plugins {
     id("org.sonarqube")
 }
 
-val isCI = System.getenv("CI").toBoolean()
+
 
 sonarqube {
     properties {
@@ -37,6 +37,7 @@ jacoco {
 
 tasks.withType<JacocoReport> {
     reports {
+        val isCI = System.getenv("CI").toBoolean()
         xml.required.set(isCI)
         html.required.set(!isCI)
     }
