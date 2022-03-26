@@ -17,7 +17,7 @@
 package io.github.nstdio.http.ext;
 
 import static java.net.http.HttpResponse.BodySubscribers.mapping;
-import static java.net.http.HttpResponse.BodySubscribers.ofByteArray;
+import static java.net.http.HttpResponse.BodySubscribers.ofInputStream;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.http.HttpResponse.BodySubscriber;
+import java.util.function.Supplier;
 
 @SuppressWarnings("WeakerAccess")
 public final class BodySubscribers {
@@ -35,30 +36,30 @@ public final class BodySubscribers {
     private BodySubscribers() {
     }
 
-    public static <T> BodySubscriber<T> ofJson(Class<T> targetType) {
+    public static <T> BodySubscriber<Supplier<T>> ofJson(Class<T> targetType) {
         return ofJson(TF.constructType(targetType));
     }
 
-    public static <T> BodySubscriber<T> ofJson(TypeReference<T> targetType) {
+    public static <T> BodySubscriber<Supplier<T>> ofJson(TypeReference<T> targetType) {
         return ofJson(TF.constructType(targetType));
     }
 
-    public static <T> BodySubscriber<T> ofJson(ObjectMapper objectMapper, Class<T> targetType) {
+    public static <T> BodySubscriber<Supplier<T>> ofJson(ObjectMapper objectMapper, Class<T> targetType) {
         return ofJson(objectMapper, objectMapper.getTypeFactory().constructType(targetType));
     }
 
-    public static <T> BodySubscriber<T> ofJson(ObjectMapper mapper, TypeReference<T> targetType) {
+    public static <T> BodySubscriber<Supplier<T>> ofJson(ObjectMapper mapper, TypeReference<T> targetType) {
         return ofJson(mapper, mapper.getTypeFactory().constructType(targetType));
     }
 
-    private static <T> BodySubscriber<T> ofJson(JavaType targetType) {
+    private static <T> BodySubscriber<Supplier<T>> ofJson(JavaType targetType) {
         return ofJson(ObjectMapperHolder.INSTANCE, targetType);
     }
 
-    private static <T> BodySubscriber<T> ofJson(ObjectMapper objectMapper, JavaType targetType) {
-        return mapping(ofByteArray(), bytes -> {
-            try {
-                return objectMapper.readValue(bytes, targetType);
+    private static <T> BodySubscriber<Supplier<T>> ofJson(ObjectMapper objectMapper, JavaType targetType) {
+        return mapping(ofInputStream(), in -> () -> {
+            try (var stream = in) {
+                return objectMapper.readValue(stream, targetType);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
