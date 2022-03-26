@@ -18,8 +18,6 @@ package io.github.nstdio.http.ext;
 
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
@@ -58,22 +56,7 @@ class CachingBodySubscriber<T, C> implements BodySubscriber<T> {
     @Override
     public void onNext(List<ByteBuffer> item) {
         cachingSub.onNext(item);
-        originalSub.onNext(dup(item));
-    }
-
-    private List<ByteBuffer> dup(List<ByteBuffer> item) {
-        List<ByteBuffer> list = new ArrayList<>(item.size());
-
-        for (ByteBuffer byteBuffer : item) {
-            ByteBuffer duplicate = byteBuffer.duplicate();
-            if (!duplicate.hasRemaining()) {
-                duplicate.flip();
-            }
-
-            list.add(duplicate);
-        }
-
-        return Collections.unmodifiableList(list);
+        originalSub.onNext(Buffers.duplicate(item));
     }
 
     @Override

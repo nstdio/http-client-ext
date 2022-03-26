@@ -177,15 +177,8 @@ class ByteBufferInputStream extends InputStream {
     }
 
     void add(ByteBuffer b) {
-        if (!closed) {
-            b = b.duplicate().asReadOnlyBuffer();
-            if (!b.hasRemaining()) {
-                b.flip();
-            }
-
-            if (b.hasRemaining()) {
-                buffers.offer(b);
-            }
+        if (!closed && (b = Buffers.duplicate(b)).hasRemaining()) {
+            buffers.offer(b);
         }
     }
 
@@ -197,6 +190,7 @@ class ByteBufferInputStream extends InputStream {
 
         var l = List.copyOf(buffs);
         buffs.clear();
+        mark = null;
 
         return l;
     }

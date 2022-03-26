@@ -23,13 +23,14 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class PathReadingSubscription implements Subscription {
-    public static final int DEFAULT_BUFF_CAPACITY = 8192;
+    private static final int DEFAULT_BUFF_CAPACITY = 1 << 14;
     private final Subscriber<List<ByteBuffer>> subscriber;
     private final AtomicBoolean completed = new AtomicBoolean(false);
     private final Path path;
@@ -56,15 +57,17 @@ class PathReadingSubscription implements Subscription {
                 channel = Files.newByteChannel(path);
             }
 
+            var chan = channel;
+            var sub = subscriber;
             while (n-- > 0) {
                 ByteBuffer buff = ByteBuffer.allocate(DEFAULT_BUFF_CAPACITY);
-                int r = channel.read(buff);
-                if (r > 0) {
+                int r = chan.read(buff);
+                if (r != -1) {
                     buff.flip();
-                    subscriber.onNext(List.of(buff));
+                    sub.onNext(Collections.singletonList(buff));
                 } else {
                     completed.set(true);
-                    subscriber.onComplete();
+                    sub.onComplete();
                     break;
                 }
             }
