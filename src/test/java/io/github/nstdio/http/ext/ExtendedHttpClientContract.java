@@ -503,18 +503,19 @@ public interface ExtendedHttpClientContract {
                         .withBody("abc: Updated")
                 )
         );
+        HttpRequest request = requestBuilder().build();
 
         //when + then
-        var r1 = send(requestBuilder().build());
+        var r1 = send(request);
         assertThat(r1).isNotCached().hasBody("abc");
 
         var r2 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "no-cache").build());
         assertThat(r2).isNotCached().hasBody("abc: Updated");
 
-        awaitFor(() -> {
-            var r3 = send(requestBuilder().build());
-            assertThat(r3).isCached().hasBody("abc: Updated");
-        });
+        await().until(() -> cache().get(request) != null);
+
+        var r3 = send(request);
+        assertThat(r3).isCached().hasBody("abc: Updated");
     }
 
     @Test

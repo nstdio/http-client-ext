@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.Helpers.toBuffers;
 import static org.apache.commons.lang3.RandomUtils.nextBytes;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +36,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -198,5 +200,22 @@ class ByteBufferInputStreamTest {
     void shouldSupportMark() {
         //given + when + then
         assertTrue(new ByteBufferInputStream().markSupported());
+    }
+
+    @Test
+    void shouldDumpBuffersToList() throws IOException {
+        //given
+        var is = new ByteBufferInputStream();
+        List<ByteBuffer> buffers = toBuffers(nextBytes(96), false);
+        buffers.forEach(is::add);
+
+        //when
+        List<ByteBuffer> actual = is.drainToList();
+
+        //then
+        assertEquals(-1, is.read());
+        assertThat(actual)
+                .hasSameSizeAs(buffers)
+                .containsExactlyElementsOf(buffers);
     }
 }

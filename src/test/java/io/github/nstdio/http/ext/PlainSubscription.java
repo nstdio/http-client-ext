@@ -67,7 +67,7 @@ class PlainSubscription implements Flow.Subscription {
         }
     }
 
-    void execute(Runnable cmd) {
+    private void execute(Runnable cmd) {
         executor.ifPresentOrElse(service -> service.execute(cmd), cmd);
     }
 
@@ -90,7 +90,7 @@ class PlainSubscription implements Flow.Subscription {
             service.shutdown();
             try {
                 //noinspection ResultOfMethodCallIgnored
-                service.awaitTermination(1, TimeUnit.SECONDS);
+                service.awaitTermination(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 // noop
             }
