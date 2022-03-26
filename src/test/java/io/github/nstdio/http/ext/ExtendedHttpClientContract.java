@@ -86,6 +86,11 @@ public interface ExtendedHttpClientContract {
     ExtendedHttpClient client();
 
     /**
+     * The cache (if any) used by {@linkplain #client()}.
+     */
+    Cache cache();
+
+    /**
      * The client created with {@code clock} under the test.
      */
     ExtendedHttpClient client(Clock clock);
@@ -112,6 +117,7 @@ public interface ExtendedHttpClientContract {
     @Test
     default void shouldSupportETagForCaching() throws Exception {
         //given
+        Cache cache = cache();
         var etag = "v1";
         stubFor(get(urlEqualTo(path()))
                 .willReturn(ok()
@@ -127,6 +133,7 @@ public interface ExtendedHttpClientContract {
         //when + then
         var r1 = send(requestBuilder().build());
         assertThat(r1).isNotCached();
+        assertThat(cache).hasNoHits().hasMiss(1);
 
         awaitFor(() -> {
             var r2 = send(requestBuilder().build());
@@ -134,11 +141,13 @@ public interface ExtendedHttpClientContract {
                     .hasStatusCode(200)
                     .hasBody("abc");
         });
+        assertThat(cache).hasHits(1).hasMiss(1);
     }
 
     @Test
     default void shouldApplyHeuristicFreshness() throws Exception {
         //given
+        Cache cache = cache();
         stubFor(get(urlEqualTo(path()))
                 .willReturn(ok()
                         .withHeader(HEADER_LAST_MODIFIED, Headers.toRFC1123(Instant.now().minusSeconds(60)))
@@ -149,11 +158,10 @@ public interface ExtendedHttpClientContract {
         //when + then
         var r1 = send(requestBuilder().build());
         assertThat(r1).isNotCached();
+        assertThat(cache).hasNoHits().hasMiss(1);
 
-        awaitFor(() -> {
-            var r2 = send(requestBuilder().build());
-            assertThat(r2).isCached();
-        });
+        awaitFor(() -> assertThat(send(requestBuilder().build())).isCached());
+        assertThat(cache).hasHits(1).hasAtLeastMiss(1);
     }
 
     @Test
@@ -263,6 +271,7 @@ public interface ExtendedHttpClientContract {
     })
     default void shouldNotRespondWithCacheWhenNoCacheProvided(String cacheControl) throws IOException, InterruptedException {
         //given
+        var cache = cache();
         var urlPattern = urlEqualTo(path());
         stubFor(get(urlPattern)
                 .willReturn(ok()
@@ -280,6 +289,8 @@ public interface ExtendedHttpClientContract {
             var noCacheControlRequest = requestBuilder().build();
 
             //when + then
+            assertThat(cache).hasHits(i).hasMiss(i);
+
             var r1 = send(request);
             assertThat(r1).isNotCached().hasBody("abc");
 
@@ -287,6 +298,8 @@ public interface ExtendedHttpClientContract {
                 var r2 = send(noCacheControlRequest);
                 assertThat(r2).isCached().hasBody("abc");
             });
+
+            assertThat(cache).hasHits(i + 1).hasAtLeastMiss(i + 1);
         }
 
         verify(count, getRequestedFor(urlPattern).withHeader(HEADER_CACHE_CONTROL, equalTo(cacheControl)));

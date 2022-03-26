@@ -16,17 +16,29 @@
 
 package io.github.nstdio.http.ext;
 
-class Throwables {
-    private Throwables() {
+import java.util.concurrent.atomic.LongAdder;
+
+class DefaultCacheStats implements TrackableCacheStats {
+    private final LongAdder hit = new LongAdder();
+    private final LongAdder miss = new LongAdder();
+
+    @Override
+    public long hit() {
+        return hit.longValue();
     }
 
-    static RuntimeException sneakyThrow(Throwable th) {
-        return sneakyThrow0(th);
+    @Override
+    public long miss() {
+        return miss.longValue();
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> T sneakyThrow0(Throwable t) throws T {
-        throw (T) t;
+    @Override
+    public void trackHit() {
+        hit.increment();
     }
 
+    @Override
+    public void trackMiss() {
+        miss.increment();
+    }
 }

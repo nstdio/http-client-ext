@@ -16,17 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-class Throwables {
-    private Throwables() {
-    }
-
-    static RuntimeException sneakyThrow(Throwable th) {
-        return sneakyThrow0(th);
-    }
-
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> T sneakyThrow0(Throwable t) throws T {
-        throw (T) t;
-    }
+class NullCacheTest {
 
 }

@@ -72,6 +72,11 @@ class NullCache implements Cache {
     }
 
     @Override
+    public CacheStats stats() {
+        return null;
+    }
+
+    @Override
     public <T> Writer<T> writer(CacheEntryMetadata metadata) {
         return writer();
     }
