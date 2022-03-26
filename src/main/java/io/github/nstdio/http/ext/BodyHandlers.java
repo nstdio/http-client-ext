@@ -22,6 +22,7 @@ import io.github.nstdio.http.ext.DecompressingBodyHandler.Options;
 import java.io.InputStream;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
+import java.util.function.Supplier;
 
 /**
  * Implementations of {@code BodyHandler}'s.
@@ -51,7 +52,7 @@ public final class BodyHandlers {
    * @param <T>        The required type.
    * @return The JSON body handler.
    */
-  public static <T> BodyHandler<T> ofJson(Class<T> targetType) {
+  public static <T> BodyHandler<Supplier<T>> ofJson(Class<T> targetType) {
     return responseInfo -> BodySubscribers.ofJson(targetType);
   }
 
@@ -62,7 +63,7 @@ public final class BodyHandlers {
    * @param <T>        The required type.
    * @return The JSON body handler.
    */
-  public static <T> BodyHandler<T> ofJson(TypeReference<T> targetType) {
+  public static <T> BodyHandler<Supplier<T>> ofJson(TypeReference<T> targetType) {
     return responseInfo -> BodySubscribers.ofJson(targetType);
   }
 
