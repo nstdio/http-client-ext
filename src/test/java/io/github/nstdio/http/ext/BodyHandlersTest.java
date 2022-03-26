@@ -17,7 +17,9 @@
 package io.github.nstdio.http.ext;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,6 +54,17 @@ class BodyHandlersTest {
             //then
             assertThat(body1).isNotEmpty();
             assertThat(body2).isNotNull();
+        }
+
+        @Test
+        void shouldThrowUncheckedExceptionIfCannotRead() {
+            //given
+            var request = HttpRequest.newBuilder(URI.create("https://httpbin.org/html")).build();
+
+            //when
+            assertThatIOException()
+                    .isThrownBy(() -> client.send(request, BodyHandlers.ofJson(Object.class)))
+                    .withRootCauseExactlyInstanceOf(JsonParseException.class);
         }
     }
 }
