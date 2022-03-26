@@ -17,13 +17,14 @@
 package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
-import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.channels.GatheringByteChannel;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -34,7 +35,7 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
     private static final ByteBuffer[] EMPTY = new ByteBuffer[0];
     private final Path path;
     private final CompletableFuture<Path> future = new CompletableFuture<>();
-    private volatile FileChannel out;
+    private GatheringByteChannel out;
 
     PathSubscriber(Path path) {
         this.path = path;
@@ -56,7 +57,7 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
         }
 
         try {
-            out = FileChannel.open(path, CREATE, WRITE);
+            out = FileChannel.open(path, WRITE, TRUNCATE_EXISTING);
         } catch (IOException e) {
             future.completeExceptionally(e);
         }
@@ -64,22 +65,21 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
 
     @Override
     public void onNext(List<ByteBuffer> item) {
-        createChannel();
-
         try {
             out.write(item.toArray(EMPTY));
         } catch (IOException ex) {
-            close();
-            future.completeExceptionally(ex);
+            onError(ex);
         }
     }
 
-    private void close() {
+    private synchronized void close() {
         closeQuietly(out);
+        out = null;
     }
 
     @Override
     public void onError(Throwable throwable) {
+        close();
         future.completeExceptionally(throwable);
     }
 

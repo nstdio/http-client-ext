@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.With;
 import lombok.experimental.Accessors;
 
 import java.net.http.HttpRequest;
@@ -29,9 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Accessors(fluent = true)
 @AllArgsConstructor
 final class RequestContext {
-    @With
     private final HttpRequest request;
-    @With
     private final BodyHandler<?> bodyHandler;
     private final CacheControl cacheControl;
     private final AtomicLong requestTime = new AtomicLong();
@@ -58,5 +55,13 @@ final class RequestContext {
     @SuppressWarnings("unchecked")
     <T> BodyHandler<T> bodyHandler() {
         return (BodyHandler<T>) bodyHandler;
+    }
+
+    RequestContext withRequest(HttpRequest request) {
+        return new RequestContext(request, this.bodyHandler, this.cacheControl);
+    }
+
+    RequestContext withBodyHandler(BodyHandler<?> bodyHandler) {
+        return new RequestContext(this.request, bodyHandler, this.cacheControl);
     }
 }

@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext;
 
 import static io.github.nstdio.http.ext.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -27,10 +28,24 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Duration;
 
 class JsonMetadataSerializerTest {
     @TempDir
     private Path dir;
+
+    @Test
+    void shouldReturnNullWhenCannotRead() {
+        //given
+        var file = dir.resolve("abc");
+        var ser = new JsonMetadataSerializer();
+
+        //when
+        CacheEntryMetadata metadata = ser.read(file);
+
+        //then
+        assertNull(metadata);
+    }
 
     @Test
     void shouldWriteAndRead() {
@@ -50,6 +65,7 @@ class JsonMetadataSerializerTest {
                 .header("abcd", "11")
                 .header("abcd", "22")
                 .version(HttpClient.Version.HTTP_2)
+                .timeout(Duration.ofSeconds(30))
                 .build();
 
         var metadata = new CacheEntryMetadata(10, 15, responseInfo, request, Clock.systemUTC());

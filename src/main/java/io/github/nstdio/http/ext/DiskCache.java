@@ -16,11 +16,12 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.createFile;
 import static io.github.nstdio.http.ext.IOUtils.delete;
 import static io.github.nstdio.http.ext.IOUtils.size;
 
 import lombok.Getter;
-import lombok.Value;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
 
 import java.io.IOException;
@@ -112,6 +113,10 @@ class DiskCache extends SizeConstrainedCache {
     @SuppressWarnings("unchecked")
     public Writer<Path> writer(CacheEntryMetadata metadata) {
         EntryPaths entryPaths = pathsFor();
+        if (!createFile(entryPaths.body())) {
+            return NullCache.writer();
+        }
+
         return new Writer<>() {
             @Override
             public BodySubscriber<Path> subscriber() {
@@ -125,11 +130,12 @@ class DiskCache extends SizeConstrainedCache {
         };
     }
 
-    @Value(staticConstructor = "of")
+    @Getter
     @Accessors(fluent = true)
+    @RequiredArgsConstructor(staticName = "of")
     private static class EntryPaths {
-        Path body;
-        Path metadata;
+        private final Path body;
+        private final Path metadata;
     }
 
     @Getter
