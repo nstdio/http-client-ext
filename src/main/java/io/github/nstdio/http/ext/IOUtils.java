@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -44,6 +45,17 @@ class IOUtils {
             return Files.size(path);
         } catch (IOException e) {
             return -1;
+        }
+    }
+
+    static boolean createFile(Path path) {
+        try {
+            Files.createFile(path);
+            return true;
+        } catch (FileAlreadyExistsException e) {
+            return true;
+        } catch (IOException e) {
+            return false;
         }
     }
 }

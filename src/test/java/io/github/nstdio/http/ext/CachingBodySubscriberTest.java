@@ -16,6 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
@@ -25,9 +27,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InOrder;
 
+import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Consumer;
@@ -35,11 +39,29 @@ import java.util.function.Consumer;
 class CachingBodySubscriberTest {
 
     @Test
-    void shouldResetInputBuffers(@TempDir Path dir) {
+    void shouldWriteAndReadFromEmptyFile(@TempDir Path dir) throws IOException {
         //given
         Path p1 = dir.resolve("p1");
         Path p2 = dir.resolve("p2");
+        Files.createFile(p2);
 
+        assertThat(p2).isEmptyFile();
+        assertShouldReadAndWriteResponse(p1, p2);
+    }
+
+    @Test
+    void shouldWriteAndReadFromNotEmptyFile(@TempDir Path dir) throws IOException {
+        //given
+        Path p1 = dir.resolve("p1");
+        Path p2 = dir.resolve("p2");
+        Files.write(p2, "random-stuff".repeat(300).getBytes(), CREATE, WRITE);
+
+        assertThat(p2).isNotEmptyFile();
+        assertShouldReadAndWriteResponse(p1, p2);
+    }
+
+    private void assertShouldReadAndWriteResponse(Path p1, Path p2) {
+        //given
         String body = Helpers.randomString(32, 128);
         var original = HttpResponse.BodySubscribers.ofFile(p1);
         var other = new PathSubscriber(p2);
@@ -52,7 +74,7 @@ class CachingBodySubscriberTest {
         List<ByteBuffer> buffers = Helpers.toBuffers(body);
         var subscription = new PlainSubscription(subscriber, buffers, false);
         subscriber.onSubscribe(subscription);
-        subscription.cancel();
+
         var actual1 = subscriber.getBody().toCompletableFuture().join();
         var actual2 = other.getBody().toCompletableFuture().join();
 

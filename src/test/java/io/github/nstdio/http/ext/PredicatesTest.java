@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
-plugins {
-    jacoco
-    id("org.sonarqube")
-}
+package io.github.nstdio.http.ext;
 
-sonarqube {
-    properties {
-        property("sonar.projectKey", "nstdio_http-client-ext")
-        property("sonar.organization", "nstdio")
-        property("sonar.host.url", "https://sonarcloud.io")
+import static org.assertj.core.api.Assertions.assertThat;
+
+import org.junit.jupiter.api.Test;
+
+import java.net.URI;
+import java.net.http.HttpRequest;
+
+class PredicatesTest {
+    @Test
+    void shouldMatchGivenUri() {
+        //given
+        URI uri = URI.create("http://example.com");
+        HttpRequest r1 = HttpRequest.newBuilder(uri).build();
+        HttpRequest r2 = HttpRequest.newBuilder(uri.resolve("/path")).build();
+
+        //when + then
+        assertThat(Predicates.uri(uri))
+                .accepts(r1)
+                .rejects(r2);
     }
-}
-
-jacoco {
-    toolVersion = "0.8.7"
-}
-
-tasks.withType<JacocoReport> {
-    reports {
-        val isCI = System.getenv("CI").toBoolean()
-        xml.required.set(isCI)
-        html.required.set(!isCI)
-    }
-
-    executionData(tasks.withType<Test>())
-}
-
-tasks.withType<Test> {
-    finalizedBy(tasks.named("jacocoTestReport"))
 }

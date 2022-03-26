@@ -33,9 +33,6 @@ import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
 class LruMultimapTest {
-
-    private static final Consumer<String> NOOP = s -> {
-    };
     private static final ToIntFunction<List<String>> ADD_FN = s -> -1;
     private static final ToIntFunction<List<String>> THROWING_FN = s -> {
         throw new IllegalStateException("Should not be invoked!");
@@ -69,8 +66,7 @@ class LruMultimapTest {
     @Test
     void shouldMaintainLruForLists() {
         //given
-        var map = new LruMultimap<String, String>(512, s -> {
-        });
+        var map = new LruMultimap<String, String>(512, null);
 
         //when + then
         map.putSingle("a", "1", ADD_FN);
@@ -87,7 +83,7 @@ class LruMultimapTest {
     @Test
     void shouldNotEvictEldestWhenEmpty() {
         //given
-        var map = new LruMultimap<String, String>(512, NOOP);
+        var map = new LruMultimap<String, String>(512, null);
 
         //when + then
         for (int i = 0; i < 32; i++) {
@@ -125,7 +121,8 @@ class LruMultimapTest {
         //given
         @SuppressWarnings("unchecked")
         Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(512, mockEvictionListener);
+        var map = new LruMultimap<String, String>(512, null);
+        map.addEvictionListener(mockEvictionListener);
 
         //when
         map.putSingle("a", "1", ADD_FN);
@@ -209,7 +206,7 @@ class LruMultimapTest {
 
     @Test
     void shouldNotGetWhenIndexIncorrect() {
-        var map = new LruMultimap<String, String>(23, NOOP);
+        var map = new LruMultimap<String, String>(23, null);
 
         //when
         map.putSingle("a", "2", ADD_FN);

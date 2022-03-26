@@ -22,7 +22,6 @@ import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
-import static lombok.Lombok.sneakyThrow;
 
 import io.github.nstdio.http.ext.Cache.CacheEntry;
 import lombok.RequiredArgsConstructor;
@@ -92,15 +91,7 @@ class CachingInterceptor implements Interceptor {
                 return sendAndCache(in, entry);
             }
         } else {
-            FutureHandler<T> fn = (r, th) -> {
-                if (r != null) {
-                    if (shouldInvalidate(r)) {
-                        invalidate(r);
-                    }
-                    return r;
-                }
-                throw sneakyThrow(th);
-            };
+            FutureHandler<T> fn = FutureHandler.of(r -> shouldInvalidate(r) ? invalidate(r) : r);
 
             return Chain.of(ctx, in.futureHandler().andThen(fn));
         }
@@ -165,7 +156,7 @@ class CachingInterceptor implements Interceptor {
         };
     }
 
-    private <T> void invalidate(HttpResponse<T> response) {
+    private <T> HttpResponse<T> invalidate(HttpResponse<T> response) {
         List<HttpRequest> toEvict = Stream.of("Location", "Content-Location")
                 .flatMap(s -> Headers.effectiveUri(response.headers(), s, response.uri()).stream())
                 .filter(uri -> response.uri().getHost().equals(uri.getHost()))
@@ -174,6 +165,8 @@ class CachingInterceptor implements Interceptor {
         toEvict.add(response.request());
 
         toEvict.forEach(cache::evictAll);
+
+        return response;
     }
 
     private <T> boolean shouldInvalidate(HttpResponse<T> response) {

@@ -297,7 +297,7 @@ public interface ExtendedHttpClientContract {
             "no-store",
             "no-store, no-cache"
     })
-    default void shouldNotCacheWhenNoStoreProvided(String cacheControl) throws IOException, InterruptedException {
+    default void shouldNotCacheWhenRequestNoStoreProvided(String cacheControl) throws IOException, InterruptedException {
         //given
         var urlPattern = urlEqualTo(path());
         stubFor(get(urlPattern)
@@ -327,6 +327,33 @@ public interface ExtendedHttpClientContract {
 
         verify(count, getRequestedFor(urlPattern).withHeader(HEADER_CACHE_CONTROL, equalTo(cacheControl)));
         verify(1, getRequestedFor(urlPattern).withoutHeader(HEADER_CACHE_CONTROL));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "no-store",
+            "no-store, no-cache"
+    })
+    default void shouldNotCacheWhenResponseNoStoreProvided(String cacheControl) throws IOException, InterruptedException {
+        //given
+        var urlPattern = urlEqualTo(path());
+        stubFor(get(urlPattern)
+                .willReturn(ok()
+                        .withHeader(HEADER_CACHE_CONTROL, cacheControl)
+                        .withHeader("Content-Type", "text/plain")
+                        .withBody("abc")
+                )
+        );
+
+        var count = 5;
+        for (int i = 0; i < count; i++) {
+
+            //when + then
+            var r1 = send(requestBuilder().build());
+            assertThat(r1).isNotCached().hasBody("abc");
+        }
+
+        verify(count, getRequestedFor(urlPattern));
     }
 
     @Test

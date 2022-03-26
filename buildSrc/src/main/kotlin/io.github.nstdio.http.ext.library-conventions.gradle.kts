@@ -53,10 +53,8 @@ mapOf(
     configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
 }
 
-val notModularConfigurations =
-    setOf("testRuntimeClasspath", "testCompileClasspath", "spiTestRuntimeClasspath", "spiTestCompileClasspath")
 configurations.names
-    .filter { notModularConfigurations.contains(it) }
+    .filter { !setOf("compileClasspath", "runtimeClasspath").contains(it) }
     .map { configurations.getByName(it) }
     .forEach {
         configure(listOf(it)) {

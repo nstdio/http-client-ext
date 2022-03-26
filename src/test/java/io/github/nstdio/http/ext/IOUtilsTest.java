@@ -16,42 +16,52 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
 
-class PathSubscriberTest {
+class IOUtilsTest {
 
     @Test
-    void shouldBeCompletedWhenOnError() {
+    void shouldNotRethrowClosingException() {
         //given
-        PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
-        IOException th = new IOException();
+        Closeable c = () -> {
+            throw new IOException();
+        };
 
-        //when
-        subscriber.onError(th);
-
-        //then
-        assertThat(subscriber.getBody())
-                .isCompletedExceptionally();
+        //when + then
+        IOUtils.closeQuietly(c);
     }
 
     @Test
-    void shouldCompleteExceptionallyWhenPathDoesNotExist() {
+    void shouldReturnNegativeWhenFileNotExists() {
         //given
-        PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
+        Path path = Path.of("abc");
 
         //when
-        subscriber.onSubscribe(new PlainSubscription(subscriber, List.of(), false));
-        CompletionStage<Path> body = subscriber.getBody();
+        long size = IOUtils.size(path);
 
         //then
-        assertThat(body)
-                .isCompletedExceptionally();
+        assertEquals(-1, size);
+    }
+
+    @Test
+    void shouldReturnTrueIfFileExists(@TempDir Path temp) throws IOException {
+        //given
+        Path path = temp.resolve("abc");
+        Files.createFile(path);
+
+        //when
+        boolean created = IOUtils.createFile(path);
+
+        //then
+        assertTrue(created);
     }
 }

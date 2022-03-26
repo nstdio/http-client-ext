@@ -42,12 +42,14 @@ interface FutureHandler<T> extends BiFunction<HttpResponse<T>, Throwable, HttpRe
 
     default FutureHandler<T> andThen(FutureHandler<T> other) {
         return (r, th) -> {
+            HttpResponse<T> result;
             try {
-                HttpResponse<T> result = apply(r, th);
-                return other.apply(result, th);
+                result = apply(r, th);
             } catch (Exception e) {
                 return other.apply(null, e);
             }
+
+            return other.apply(result, th);
         };
     }
 }
