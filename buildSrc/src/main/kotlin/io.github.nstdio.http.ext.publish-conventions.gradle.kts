@@ -25,8 +25,6 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             from(components["java"])
-            artifact(tasks["sourcesJar"])
-            artifact(tasks["javadocJar"])
 
             pom {
                 name.set("JDK Http Client Extensions")
