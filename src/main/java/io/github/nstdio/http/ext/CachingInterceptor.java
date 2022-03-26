@@ -24,6 +24,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
 import io.github.nstdio.http.ext.Cache.CacheEntry;
+import io.github.nstdio.http.ext.Cache.CacheStats;
 import lombok.RequiredArgsConstructor;
 
 import java.net.http.HttpRequest;
@@ -33,6 +34,7 @@ import java.net.http.HttpResponse.BodySubscriber;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 @RequiredArgsConstructor
@@ -147,6 +149,7 @@ class CachingInterceptor implements Interceptor {
                         info, ctx.request(), clock);
 
                 if (metadata.isApplicable()) {
+                    trackMiss();
                     var writer = cache.writer(metadata);
                     sub = new CachingBodySubscriber<>(sub, writer.subscriber(), writer.finisher());
                 }
@@ -238,6 +241,23 @@ class CachingInterceptor implements Interceptor {
     }
 
     private <T> HttpResponse<T> createCachedResponse(RequestContext ctx, CacheEntry entry) {
+        trackHit();
         return new CachedHttpResponse<>(ctx.bodyHandler(), ctx.request(), entry);
+    }
+
+
+    private void trackMiss() {
+        executeIfTrackable(TrackableCacheStats::trackMiss);
+    }
+
+    private void trackHit() {
+        executeIfTrackable(TrackableCacheStats::trackHit);
+    }
+
+    private void executeIfTrackable(Consumer<TrackableCacheStats> action) {
+        CacheStats stats = cache.stats();
+        if (stats instanceof TrackableCacheStats) {
+            action.accept((TrackableCacheStats) stats);
+        }
     }
 }

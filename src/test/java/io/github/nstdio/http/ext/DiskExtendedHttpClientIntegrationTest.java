@@ -53,6 +53,11 @@ class DiskExtendedHttpClientIntegrationTest implements ExtendedHttpClientContrac
     }
 
     @Override
+    public Cache cache() {
+        return cache;
+    }
+
+    @Override
     public ExtendedHttpClient client(Clock clock) {
         return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
     }

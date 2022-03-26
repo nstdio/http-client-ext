@@ -77,6 +77,11 @@ class InMemoryExtendedHttpClientIntegrationTest implements ExtendedHttpClientCon
     }
 
     @Override
+    public Cache cache() {
+        return cache;
+    }
+
+    @Override
     public ExtendedHttpClient client(Clock clock) {
         return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
     }

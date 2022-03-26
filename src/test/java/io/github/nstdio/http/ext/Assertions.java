@@ -49,6 +49,10 @@ public final class Assertions {
         return new HttpHeadersAssertion(h);
     }
 
+    public static CacheAssertion assertThat(Cache c) {
+        return new CacheAssertion(c);
+    }
+
     public static <K, V> LruMultimapAssertion<K, V> assertThat(LruMultimap<K, V> m) {
         return new LruMultimapAssertion<>(m);
     }
@@ -231,6 +235,37 @@ public final class Assertions {
         public HttpResponseAssertion<T> hasNoHeader(String headers) {
             assertThat(actual.headers())
                     .hasNoHeader(headers);
+            return this;
+        }
+    }
+
+    public static class CacheAssertion extends ObjectAssert<Cache> {
+        public CacheAssertion(Cache cache) {
+            super(cache);
+        }
+
+        public CacheAssertion hasHits(long expectedHit) {
+            assertEquals(expectedHit, stats().hit(), "cache does not have expected hit count");
+            return this;
+        }
+
+        private Cache.CacheStats stats() {
+            return actual.stats();
+        }
+
+        public CacheAssertion hasNoHits() {
+            assertEquals(0, stats().hit(), "cache does expected to have hits, but there is some");
+            return this;
+        }
+
+        public CacheAssertion hasMiss(long expectedMiss) {
+            assertEquals(expectedMiss, stats().miss(), "cache does not have expected miss count");
+            return this;
+        }
+
+        public CacheAssertion hasAtLeastMiss(long expectedMiss) {
+            org.assertj.core.api.Assertions.assertThat(stats().miss())
+                            .isGreaterThanOrEqualTo(expectedMiss);
             return this;
         }
     }

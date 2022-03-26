@@ -67,6 +67,11 @@ class FilteringCache implements Cache {
     }
 
     @Override
+    public CacheStats stats() {
+        return delegate.stats();
+    }
+
+    @Override
     public <T> Writer<T> writer(CacheEntryMetadata metadata) {
         if (responseFilter.test(metadata.response()) && requestFilter.test(metadata.request())) {
             return delegate.writer(metadata);

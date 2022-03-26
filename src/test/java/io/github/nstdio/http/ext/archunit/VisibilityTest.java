@@ -55,6 +55,7 @@ class VisibilityTest {
                             .and(not(Cache.Writer.class))
                             .and(not(CacheEntryMetadata.class))
                             .and(not(Cache.class))
+                            .and(not(Cache.CacheStats.class))
                             .and(not(CacheControl.CacheControlBuilder.class))
                             .and(not(CacheControl.class))
                             .and(not(Predicates.class))

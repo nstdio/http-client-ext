@@ -53,6 +53,11 @@ class SynchronizedCache implements Cache {
     }
 
     @Override
+    public /* synchronized */ CacheStats stats() {
+        return delegate.stats();
+    }
+
+    @Override
     public <T> Writer<T> writer(CacheEntryMetadata metadata) {
         Writer<T> writer = delegate.writer(metadata);
         return new Writer<>() {

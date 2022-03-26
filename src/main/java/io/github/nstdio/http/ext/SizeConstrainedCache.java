@@ -26,6 +26,7 @@ import java.util.function.ToIntFunction;
 
 abstract class SizeConstrainedCache implements Cache {
     private final LruMultimap<URI, CacheEntry> cache;
+    private final CacheStats stats = new DefaultCacheStats();
     private final long maxBytes;
     private long size;
 
@@ -66,6 +67,11 @@ abstract class SizeConstrainedCache implements Cache {
     @Override
     public void evictAll() {
         cache.clear();
+    }
+
+    @Override
+    public CacheStats stats() {
+        return stats;
     }
 
     private void putInternal(HttpRequest k, CacheEntry e) {

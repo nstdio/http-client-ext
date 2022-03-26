@@ -16,17 +16,10 @@
 
 package io.github.nstdio.http.ext;
 
-class Throwables {
-    private Throwables() {
-    }
+import io.github.nstdio.http.ext.Cache.CacheStats;
 
-    static RuntimeException sneakyThrow(Throwable th) {
-        return sneakyThrow0(th);
-    }
+interface TrackableCacheStats extends CacheStats {
+    void trackHit();
 
-    @SuppressWarnings("unchecked")
-    private static <T extends Throwable> T sneakyThrow0(Throwable t) throws T {
-        throw (T) t;
-    }
-
+    void trackMiss();
 }

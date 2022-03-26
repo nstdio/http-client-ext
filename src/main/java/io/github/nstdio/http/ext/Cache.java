@@ -92,6 +92,14 @@ public interface Cache {
     void evictAll();
 
     /**
+     * Gets the statistics for this cache.
+     *
+     * @return The statistics for this cache.
+     * @see CacheStats
+     */
+    CacheStats stats();
+
+    /**
      * Creates a {@code Writer}.
      *
      * @param metadata The metadata.
@@ -129,6 +137,22 @@ public interface Cache {
 
     interface CacheBuilder {
         Cache build();
+    }
+
+    interface CacheStats {
+        /**
+         * The number the cache serves stored response.
+         *
+         * @return The number of times the cache serves stored response.
+         */
+        long hit();
+
+        /**
+         * The number the cache does not have stored response which resulted in network call.
+         *
+         * @return The number the cache does not have stored response which resulted in network call.
+         */
+        long miss();
     }
 
     /**
