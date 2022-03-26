@@ -16,7 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
-import static java.net.http.HttpResponse.BodySubscribers.ofInputStream;
+import static java.net.http.HttpResponse.BodySubscribers.mapping;
+import static java.net.http.HttpResponse.BodySubscribers.ofByteArray;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
@@ -55,9 +56,9 @@ public final class BodySubscribers {
     }
 
     private static <T> BodySubscriber<T> ofJson(ObjectMapper objectMapper, JavaType targetType) {
-        return new AsyncMappingSubscriber<>(ofInputStream(), is -> {
-            try (var stream = is) {
-                return objectMapper.readValue(stream, targetType);
+        return mapping(ofByteArray(), bytes -> {
+            try {
+                return objectMapper.readValue(bytes, targetType);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
