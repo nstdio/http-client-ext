@@ -16,11 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -29,11 +24,10 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Map;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIOException;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class BodyHandlersTest {
 
@@ -45,22 +39,15 @@ class BodyHandlersTest {
     void shouldProperlyReadJson() {
       //given
       var request = HttpRequest.newBuilder(URI.create("https://httpbin.org/get")).build();
-      TypeReference<Map<String, Object>> typeReference = new TypeReference<>() {
-      };
 
       //when
-      var body1 = client.sendAsync(request, BodyHandlers.ofJson(typeReference))
+      var body1 = client.sendAsync(request, BodyHandlers.ofJson(Object.class))
           .thenApply(HttpResponse::body)
           .thenApply(Supplier::get)
-                    .join();
-      var body2 = client.sendAsync(request, BodyHandlers.ofJson(Object.class))
-          .thenApply(HttpResponse::body)
-                    .thenApply(Supplier::get)
           .join();
 
       //then
-      assertThat(body1).isNotEmpty();
-      assertThat(body2).isNotNull();
+      assertThat(body1).isNotNull();
     }
 
     @Test
@@ -71,7 +58,7 @@ class BodyHandlersTest {
       //when
       assertThatExceptionOfType(UncheckedIOException.class)
           .isThrownBy(() -> client.send(request, BodyHandlers.ofJson(Object.class)).body().get())
-          .withRootCauseExactlyInstanceOf(JsonParseException.class);
+          .havingRootCause();
     }
   }
 }

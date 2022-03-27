@@ -14,25 +14,22 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext.spi;
 
-plugins {
-    `kotlin-dsl`
-}
+import org.junit.jupiter.api.Test;
 
-repositories {
-    gradlePluginPortal()
-}
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-}
+class JsonMappingProviderTest {
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+  @Test
+  void shouldThrowWhenProviderNotFound() {
+    //given
+    String providerName = "abc";
+
+    //when + then
+    assertThatExceptionOfType(RuntimeException.class)
+        .isThrownBy(() -> JsonMappingProvider.provider(providerName))
+        .withMessageEndingWith(providerName);
+  }
 }

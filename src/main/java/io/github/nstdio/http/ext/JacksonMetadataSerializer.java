@@ -48,7 +48,7 @@ import java.util.zip.GZIPOutputStream;
 import static java.net.http.HttpRequest.BodyPublishers.noBody;
 import static java.nio.file.StandardOpenOption.*;
 
-class JsonMetadataSerializer implements MetadataSerializer {
+class JacksonMetadataSerializer implements MetadataSerializer {
 
   private static final String FIELD_NAME_VERSION = "version";
   private static final String FIELD_NAME_REQUEST_TIME = "requestTime";
@@ -60,7 +60,7 @@ class JsonMetadataSerializer implements MetadataSerializer {
   private final ObjectWriter writer;
   private final ObjectReader reader;
 
-  JsonMetadataSerializer() {
+  JacksonMetadataSerializer() {
     ObjectMapper mapper = createMapper();
     writer = mapper.writerFor(CacheEntryMetadata.class);
     reader = mapper.readerFor(CacheEntryMetadata.class);
@@ -109,6 +109,8 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class CacheMetadataSerializer extends StdSerializer<CacheEntryMetadata> {
+    private static final long serialVersionUID = 1L;
+
     CacheMetadataSerializer() {
       super(CacheEntryMetadata.class);
     }
@@ -126,7 +128,8 @@ class JsonMetadataSerializer implements MetadataSerializer {
     }
   }
 
-  static class CacheMetadataDeserializer extends StdDeserializer<CacheEntryMetadata> {
+  private static class CacheMetadataDeserializer extends StdDeserializer<CacheEntryMetadata> {
+    private static final long serialVersionUID = 1L;
     private final JavaType requestType = TypeFactory.defaultInstance().constructType(HttpRequest.class);
     private final JavaType responseType = TypeFactory.defaultInstance().constructType(ResponseInfo.class);
 
@@ -168,6 +171,8 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class HttpRequestSerializer extends StdSerializer<HttpRequest> {
+    private static final long serialVersionUID = 1L;
+
     HttpRequestSerializer() {
       super(HttpRequest.class);
     }
@@ -195,6 +200,7 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class HttpRequestDeserializer extends StdDeserializer<HttpRequest> {
+    private static final long serialVersionUID = 1L;
     private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
 
     HttpRequestDeserializer() {
@@ -237,6 +243,8 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class ResponseInfoSerializer extends StdSerializer<ResponseInfo> {
+    private static final long serialVersionUID = 1L;
+
     ResponseInfoSerializer() {
       super(ResponseInfo.class);
     }
@@ -254,6 +262,7 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class ResponseInfoDeserializer extends StdDeserializer<ResponseInfo> {
+    private static final long serialVersionUID = 1L;
     private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
     private final HttpClient.Version[] values = HttpClient.Version.values();
 
@@ -290,6 +299,8 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class HttpHeadersSerializer extends StdSerializer<HttpHeaders> {
+    private static final long serialVersionUID = 1L;
+
     HttpHeadersSerializer() {
       super(HttpHeaders.class);
     }
@@ -311,6 +322,7 @@ class JsonMetadataSerializer implements MetadataSerializer {
   }
 
   static class HttpHeadersDeserializer extends StdDeserializer<HttpHeaders> {
+    private static final long serialVersionUID = 1L;
     private final MapType mapType;
 
     HttpHeadersDeserializer() {
