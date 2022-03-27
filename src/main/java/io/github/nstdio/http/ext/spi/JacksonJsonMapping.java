@@ -16,10 +16,12 @@
 
 package io.github.nstdio.http.ext.spi;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 
 public class JacksonJsonMapping implements JsonMapping {
   private final ObjectMapper mapper;
@@ -41,7 +43,24 @@ public class JacksonJsonMapping implements JsonMapping {
   }
 
   @Override
+  public <T> T read(InputStream in, Type targetType) throws IOException {
+    try (var stream = in) {
+      return mapper.readValue(stream, constructType(targetType));
+    }
+  }
+
+  @Override
   public <T> T read(byte[] bytes, Class<T> targetType) throws IOException {
     return mapper.readValue(bytes, targetType);
+  }
+
+  @Override
+  public <T> T read(byte[] bytes, Type targetType) throws IOException {
+    return mapper.readValue(bytes, constructType(targetType));
+  }
+
+
+  private JavaType constructType(Type targetType) {
+    return mapper.constructType(targetType);
   }
 }

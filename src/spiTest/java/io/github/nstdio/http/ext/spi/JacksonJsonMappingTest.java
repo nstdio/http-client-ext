@@ -18,12 +18,12 @@ package io.github.nstdio.http.ext.spi;
 
 import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath;
 
-import static io.github.nstdio.http.ext.OptionalDependencies.GSON;
+import static io.github.nstdio.http.ext.OptionalDependencies.JACKSON;
 
-@EnabledIfOnClasspath(GSON)
-public class GsonJsonMappingTest implements JsonMappingContract {
+@EnabledIfOnClasspath(JACKSON)
+public class JacksonJsonMappingTest implements JsonMappingContract {
   @Override
   public JsonMapping get() {
-    return new GsonJsonMapping();
+    return new JacksonJsonMapping();
   }
 }
