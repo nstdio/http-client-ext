@@ -29,12 +29,20 @@ class CompositeJsonMappingProvider extends JsonMappingProvider {
   @Override
   public JsonMapping get() {
     if (isJacksonPresent()) {
-      return new JacksonJsonMapping();
+      return JacksonMappingHolder.INSTANCE;
     }
     if (isGsonPresent()) {
-      return new GsonJsonMapping();
+      return GsonMappingHolder.INSTANCE;
     }
 
     throw new JsonMappingProviderNotFoundException(NO_JSON_MAPPING_FOUND);
+  }
+
+  private static class JacksonMappingHolder {
+    private static final JacksonJsonMapping INSTANCE = new JacksonJsonMapping();
+  }
+
+  private static class GsonMappingHolder {
+    private static final GsonJsonMapping INSTANCE = new GsonJsonMapping();
   }
 }
