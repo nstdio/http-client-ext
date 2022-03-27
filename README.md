@@ -9,7 +9,7 @@ JDK's [HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.h
 ### Gradle
 
 ```
-implementation 'io.github.nstdio:http-client-ext:1.5.1'
+implementation 'io.github.nstdio:http-client-ext:2.0.0'
 ```
 
 ### Maven
@@ -18,7 +18,7 @@ implementation 'io.github.nstdio:http-client-ext:1.5.1'
 <dependency>
     <groupId>io.github.nstdio</groupId>
     <artifactId>http-client-ext</artifactId>
-    <version>1.5.1</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
