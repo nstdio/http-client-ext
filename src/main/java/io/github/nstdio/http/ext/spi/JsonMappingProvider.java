@@ -48,6 +48,7 @@ public abstract class JsonMappingProvider {
    * Finds the {@code JsonMappingProvider} with given name.
    *
    * @return The {@code JsonMappingProvider} with given name.
+   *
    * @throws JsonMappingProviderNotFoundException When requested provider is not found.
    */
   public static JsonMappingProvider provider(String name) {
@@ -73,9 +74,9 @@ public abstract class JsonMappingProvider {
   }
 
   /**
-   * Creates a new {@code JsonMapping} instance.
+   * Returns an instance of {@code JsonMapping}.
    *
-   * @return The new {@code JsonMapping} instance.
+   * @return The {@code JsonMapping} instance.
    */
   public abstract JsonMapping get();
 
