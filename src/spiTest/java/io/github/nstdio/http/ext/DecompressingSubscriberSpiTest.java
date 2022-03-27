@@ -16,9 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
-import static java.net.http.HttpResponse.BodyHandlers.ofString;
-
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -28,20 +25,23 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
+
 class DecompressingSubscriberSpiTest {
-    private final HttpClient client = HttpClient.newHttpClient();
+  private final HttpClient client = HttpClient.newHttpClient();
 
-    @ParameterizedTest
-    @ValueSource(strings = {"brotli", "gzip", "deflate"})
-    void shouldDecompress(String in) throws IOException, InterruptedException {
-        //given
-        URI uri = URI.create("https://httpbin.org/").resolve(in);
+  @ParameterizedTest
+  @ValueSource(strings = {"brotli", "gzip", "deflate"})
+  void shouldDecompress(String in) throws IOException, InterruptedException {
+    //given
+    URI uri = URI.create("https://httpbin.org/").resolve(in);
 
-        //when
-        HttpResponse<String> response = client.send(HttpRequest.newBuilder(uri).build(), BodyHandlers.ofDecompressing(ofString()));
-        String body = response.body();
+    //when
+    HttpResponse<String> response = client.send(HttpRequest.newBuilder(uri).build(), BodyHandlers.ofDecompressing(ofString()));
+    String body = response.body();
 
-        //then
-        isJson().matches(body);
-    }
+    //then
+    isJson().matches(body);
+  }
 }

@@ -24,50 +24,50 @@ import java.util.concurrent.Flow;
 import java.util.function.Consumer;
 
 class CachingBodySubscriber<T, C> implements BodySubscriber<T> {
-    private final BodySubscriber<T> originalSub;
-    private final Consumer<C> finisher;
-    private final BodySubscriber<C> cachingSub;
+  private final BodySubscriber<T> originalSub;
+  private final Consumer<C> finisher;
+  private final BodySubscriber<C> cachingSub;
 
-    CachingBodySubscriber(BodySubscriber<T> originalSub, BodySubscriber<C> sub, Consumer<C> finisher) {
-        this.originalSub = originalSub;
-        this.cachingSub = sub;
-        this.finisher = finisher;
-    }
+  CachingBodySubscriber(BodySubscriber<T> originalSub, BodySubscriber<C> sub, Consumer<C> finisher) {
+    this.originalSub = originalSub;
+    this.cachingSub = sub;
+    this.finisher = finisher;
+  }
 
-    @Override
-    public CompletionStage<T> getBody() {
-        return originalSub.getBody()
-                .thenApplyAsync(t -> {
-                    cachingSub.getBody()
-                            .thenApplyAsync(body -> {
-                                finisher.accept(body);
-                                return body;
-                            });
-                    return t;
-                });
-    }
+  @Override
+  public CompletionStage<T> getBody() {
+    return originalSub.getBody()
+        .thenApplyAsync(t -> {
+          cachingSub.getBody()
+              .thenApplyAsync(body -> {
+                finisher.accept(body);
+                return body;
+              });
+          return t;
+        });
+  }
 
-    @Override
-    public void onSubscribe(Flow.Subscription subscription) {
-        cachingSub.onSubscribe(subscription);
-        originalSub.onSubscribe(subscription);
-    }
+  @Override
+  public void onSubscribe(Flow.Subscription subscription) {
+    cachingSub.onSubscribe(subscription);
+    originalSub.onSubscribe(subscription);
+  }
 
-    @Override
-    public void onNext(List<ByteBuffer> item) {
-        cachingSub.onNext(item);
-        originalSub.onNext(Buffers.duplicate(item));
-    }
+  @Override
+  public void onNext(List<ByteBuffer> item) {
+    cachingSub.onNext(item);
+    originalSub.onNext(Buffers.duplicate(item));
+  }
 
-    @Override
-    public void onError(Throwable throwable) {
-        cachingSub.onError(throwable);
-        originalSub.onError(throwable);
-    }
+  @Override
+  public void onError(Throwable throwable) {
+    cachingSub.onError(throwable);
+    originalSub.onError(throwable);
+  }
 
-    @Override
-    public void onComplete() {
-        cachingSub.onComplete();
-        originalSub.onComplete();
-    }
+  @Override
+  public void onComplete() {
+    cachingSub.onComplete();
+    originalSub.onComplete();
+  }
 }

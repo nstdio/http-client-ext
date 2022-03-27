@@ -20,15 +20,15 @@ import java.io.InputStream;
 import java.util.List;
 
 public class IdentityCompressionFactory extends CompressionFactoryBase {
-    private final List<String> supported = List.of("identity");
+  private final List<String> supported = List.of("identity");
 
-    @Override
-    public List<String> supported() {
-        return supported;
-    }
+  @Override
+  public List<String> supported() {
+    return supported;
+  }
 
-    @Override
-    InputStream doDecompressing(InputStream in, String type) {
-        return in;
-    }
+  @Override
+  InputStream doDecompressing(InputStream in, String type) {
+    return in;
+  }
 }

@@ -16,11 +16,11 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.Throwables.sneakyThrow;
-
 import java.net.http.HttpResponse;
 import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
+
+import static io.github.nstdio.http.ext.Throwables.sneakyThrow;
 
 /**
  * The function to pass to {@link java.util.concurrent.CompletableFuture#handleAsync(BiFunction)} or {@link
@@ -31,25 +31,25 @@ import java.util.function.UnaryOperator;
  */
 @FunctionalInterface
 interface FutureHandler<T> extends BiFunction<HttpResponse<T>, Throwable, HttpResponse<T>> {
-    static <T> FutureHandler<T> of(UnaryOperator<HttpResponse<T>> op) {
-        return (r, th) -> {
-            if (r != null) {
-                return op.apply(r);
-            }
-            throw sneakyThrow(th);
-        };
-    }
+  static <T> FutureHandler<T> of(UnaryOperator<HttpResponse<T>> op) {
+    return (r, th) -> {
+      if (r != null) {
+        return op.apply(r);
+      }
+      throw sneakyThrow(th);
+    };
+  }
 
-    default FutureHandler<T> andThen(FutureHandler<T> other) {
-        return (r, th) -> {
-            HttpResponse<T> result;
-            try {
-                result = apply(r, th);
-            } catch (Exception e) {
-                return other.apply(null, e);
-            }
+  default FutureHandler<T> andThen(FutureHandler<T> other) {
+    return (r, th) -> {
+      HttpResponse<T> result;
+      try {
+        result = apply(r, th);
+      } catch (Exception e) {
+        return other.apply(null, e);
+      }
 
-            return other.apply(result, th);
-        };
-    }
+      return other.apply(result, th);
+    };
+  }
 }

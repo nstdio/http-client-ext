@@ -16,10 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.IOUtils.createFile;
-import static io.github.nstdio.http.ext.IOUtils.delete;
-import static io.github.nstdio.http.ext.IOUtils.size;
-
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.Accessors;
@@ -40,127 +36,129 @@ import java.util.concurrent.Flow.Subscription;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
+import static io.github.nstdio.http.ext.IOUtils.*;
+
 class DiskCache extends SizeConstrainedCache {
-    private final MetadataSerializer metadataSerializer = new JsonMetadataSerializer();
-    private final Executor executor;
-    private final Path dir;
+  private final MetadataSerializer metadataSerializer = new JsonMetadataSerializer();
+  private final Executor executor;
+  private final Path dir;
 
-    DiskCache(Path dir) {
-        this(1 << 13, -1, dir);
+  DiskCache(Path dir) {
+    this(1 << 13, -1, dir);
+  }
+
+  DiskCache(int maxItems, long maxBytes, Path dir) {
+    super(maxItems, maxBytes, null);
+    addEvictionListener(this::deleteQuietly);
+
+    this.dir = dir;
+    this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
+
+    restore();
+  }
+
+  private void restore() {
+    var namePredicate = Pattern.compile("[a-f0-9]{32}_m").asMatchPredicate();
+
+    try (var stream = Files.list(dir)) {
+      stream
+          .filter(path -> namePredicate.test(path.getFileName().toString()))
+          .filter(Files::isRegularFile)
+          .map(metadataPath -> {
+            Path bodyPath = metadataPath.resolveSibling(metadataPath.getFileName().toString().substring(0, 32));
+            return EntryPaths.of(bodyPath, metadataPath);
+          })
+          .filter(entryPaths -> Files.exists(entryPaths.body()))
+          .map(entryPaths -> {
+            var metadata = metadataSerializer.read(entryPaths.metadata());
+            return metadata != null ? new DiskCacheEntry(entryPaths, metadata) : null;
+          })
+          .filter(Objects::nonNull)
+          .forEach(entry -> put(entry.metadata().request(), entry));
+    } catch (IOException ignored) {
+      // noop
+    }
+  }
+
+  @Override
+  public void put(HttpRequest request, CacheEntry entry) {
+    super.put(request, entry);
+
+    writeMetadata((DiskCacheEntry) entry);
+  }
+
+  private void writeMetadata(DiskCacheEntry diskEntry) {
+    executor.execute(() -> metadataSerializer.write(diskEntry.metadata(), diskEntry.path().metadata()));
+  }
+
+  private void deleteQuietly(CacheEntry entry) {
+    EntryPaths paths = ((DiskCacheEntry) entry).path();
+
+    executor.execute(() -> delete(paths.body()));
+    executor.execute(() -> delete(paths.metadata()));
+  }
+
+  private EntryPaths pathsFor() {
+    String s = UUID.randomUUID().toString().replace("-", "");
+
+    Path bodyPath = dir.resolve(s);
+    Path metadataPath = dir.resolve(s + "_m");
+
+    return EntryPaths.of(bodyPath, metadataPath);
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public Writer<Path> writer(CacheEntryMetadata metadata) {
+    EntryPaths entryPaths = pathsFor();
+    if (!createFile(entryPaths.body())) {
+      return NullCache.writer();
     }
 
-    DiskCache(int maxItems, long maxBytes, Path dir) {
-        super(maxItems, maxBytes, null);
-        addEvictionListener(this::deleteQuietly);
+    return new Writer<>() {
+      @Override
+      public BodySubscriber<Path> subscriber() {
+        return new PathSubscriber(entryPaths.body());
+      }
 
-        this.dir = dir;
-        this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
+      @Override
+      public Consumer<Path> finisher() {
+        return path -> put(metadata.request(), new DiskCacheEntry(entryPaths, metadata));
+      }
+    };
+  }
 
-        restore();
-    }
+  @Getter
+  @Accessors(fluent = true)
+  @RequiredArgsConstructor(staticName = "of")
+  private static class EntryPaths {
+    private final Path body;
+    private final Path metadata;
+  }
 
-    private void restore() {
-        var namePredicate = Pattern.compile("[a-f0-9]{32}_m").asMatchPredicate();
+  @Getter
+  @Accessors(fluent = true)
+  private static class DiskCacheEntry implements CacheEntry {
+    private final EntryPaths path;
+    private final CacheEntryMetadata metadata;
 
-        try (var stream = Files.list(dir)) {
-            stream
-                    .filter(path -> namePredicate.test(path.getFileName().toString()))
-                    .filter(Files::isRegularFile)
-                    .map(metadataPath -> {
-                        Path bodyPath = metadataPath.resolveSibling(metadataPath.getFileName().toString().substring(0, 32));
-                        return EntryPaths.of(bodyPath, metadataPath);
-                    })
-                    .filter(entryPaths -> Files.exists(entryPaths.body()))
-                    .map(entryPaths -> {
-                        var metadata = metadataSerializer.read(entryPaths.metadata());
-                        return metadata != null ? new DiskCacheEntry(entryPaths, metadata) : null;
-                    })
-                    .filter(Objects::nonNull)
-                    .forEach(entry -> put(entry.metadata().request(), entry));
-        } catch (IOException ignored) {
-            // noop
-        }
+    private final long bodySize;
+
+    private DiskCacheEntry(EntryPaths path, CacheEntryMetadata metadata) {
+      this.path = path;
+      this.metadata = metadata;
+      this.bodySize = size(path.body());
     }
 
     @Override
-    public void put(HttpRequest request, CacheEntry entry) {
-        super.put(request, entry);
-
-        writeMetadata((DiskCacheEntry) entry);
-    }
-
-    private void writeMetadata(DiskCacheEntry diskEntry) {
-        executor.execute(() -> metadataSerializer.write(diskEntry.metadata(), diskEntry.path().metadata()));
-    }
-
-    private void deleteQuietly(CacheEntry entry) {
-        EntryPaths paths = ((DiskCacheEntry) entry).path();
-
-        executor.execute(() -> delete(paths.body()));
-        executor.execute(() -> delete(paths.metadata()));
-    }
-
-    private EntryPaths pathsFor() {
-        String s = UUID.randomUUID().toString().replace("-", "");
-
-        Path bodyPath = dir.resolve(s);
-        Path metadataPath = dir.resolve(s + "_m");
-
-        return EntryPaths.of(bodyPath, metadataPath);
+    public void subscribeTo(Subscriber<List<ByteBuffer>> sub) {
+      Subscription subscription = new PathReadingSubscription(sub, path.body());
+      sub.onSubscribe(subscription);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Writer<Path> writer(CacheEntryMetadata metadata) {
-        EntryPaths entryPaths = pathsFor();
-        if (!createFile(entryPaths.body())) {
-            return NullCache.writer();
-        }
-
-        return new Writer<>() {
-            @Override
-            public BodySubscriber<Path> subscriber() {
-                return new PathSubscriber(entryPaths.body());
-            }
-
-            @Override
-            public Consumer<Path> finisher() {
-                return path -> put(metadata.request(), new DiskCacheEntry(entryPaths, metadata));
-            }
-        };
+    public long bodySize() {
+      return bodySize;
     }
-
-    @Getter
-    @Accessors(fluent = true)
-    @RequiredArgsConstructor(staticName = "of")
-    private static class EntryPaths {
-        private final Path body;
-        private final Path metadata;
-    }
-
-    @Getter
-    @Accessors(fluent = true)
-    private static class DiskCacheEntry implements CacheEntry {
-        private final EntryPaths path;
-        private final CacheEntryMetadata metadata;
-
-        private final long bodySize;
-
-        private DiskCacheEntry(EntryPaths path, CacheEntryMetadata metadata) {
-            this.path = path;
-            this.metadata = metadata;
-            this.bodySize = size(path.body());
-        }
-
-        @Override
-        public void subscribeTo(Subscriber<List<ByteBuffer>> sub) {
-            Subscription subscription = new PathReadingSubscription(sub, path.body());
-            sub.onSubscribe(subscription);
-        }
-
-        @Override
-        public long bodySize() {
-            return bodySize;
-        }
-    }
+  }
 }

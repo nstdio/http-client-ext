@@ -19,7 +19,7 @@ package io.github.nstdio.http.ext;
 import io.github.nstdio.http.ext.Cache.CacheStats;
 
 interface TrackableCacheStats extends CacheStats {
-    void trackHit();
+  void trackHit();
 
-    void trackMiss();
+  void trackMiss();
 }

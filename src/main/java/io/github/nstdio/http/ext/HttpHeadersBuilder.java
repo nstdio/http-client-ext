@@ -22,79 +22,79 @@ import java.util.Map;
 import java.util.TreeMap;
 
 class HttpHeadersBuilder {
-    private final TreeMap<String, List<String>> headersMap;
+  private final TreeMap<String, List<String>> headersMap;
 
-    HttpHeadersBuilder() {
-        headersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  HttpHeadersBuilder() {
+    headersMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  }
+
+  HttpHeadersBuilder(HttpHeaders headers) {
+    this();
+    copyTo(this, headers.map());
+  }
+
+  private void copyTo(HttpHeadersBuilder builder, Map<String, List<String>> source) {
+    for (Map.Entry<String, List<String>> entry : source.entrySet()) {
+      List<String> valuesCopy = new ArrayList<>(entry.getValue());
+      builder.headersMap.put(entry.getKey(), valuesCopy);
     }
+  }
 
-    HttpHeadersBuilder(HttpHeaders headers) {
-        this();
-        copyTo(this, headers.map());
+  HttpHeadersBuilder add(String name, String value) {
+    headersMap.computeIfAbsent(name, k -> new ArrayList<>(1))
+        .add(value);
+    return this;
+  }
+
+  HttpHeadersBuilder add(String name, List<String> values) {
+    if (!values.isEmpty()) {
+      headersMap.computeIfAbsent(name, k -> new ArrayList<>(values.size()))
+          .addAll(values);
     }
+    return this;
+  }
 
-    private void copyTo(HttpHeadersBuilder builder, Map<String, List<String>> source) {
-        for (Map.Entry<String, List<String>> entry : source.entrySet()) {
-            List<String> valuesCopy = new ArrayList<>(entry.getValue());
-            builder.headersMap.put(entry.getKey(), valuesCopy);
-        }
-    }
+  HttpHeadersBuilder set(String name, String value) {
+    List<String> values = new ArrayList<>(1);
+    values.add(value);
+    headersMap.put(name, values);
 
-    HttpHeadersBuilder add(String name, String value) {
-        headersMap.computeIfAbsent(name, k -> new ArrayList<>(1))
-                .add(value);
-        return this;
-    }
+    return this;
+  }
 
-    HttpHeadersBuilder add(String name, List<String> values) {
-        if (!values.isEmpty()) {
-            headersMap.computeIfAbsent(name, k -> new ArrayList<>(values.size()))
-                    .addAll(values);
-        }
-        return this;
-    }
+  HttpHeadersBuilder set(String name, List<String> value) {
+    List<String> values = new ArrayList<>(value);
+    headersMap.put(name, values);
 
-    HttpHeadersBuilder set(String name, String value) {
-        List<String> values = new ArrayList<>(1);
-        values.add(value);
-        headersMap.put(name, values);
+    return this;
+  }
 
-        return this;
-    }
-
-    HttpHeadersBuilder set(String name, List<String> value) {
-        List<String> values = new ArrayList<>(value);
-        headersMap.put(name, values);
-
-        return this;
-    }
-
-    HttpHeadersBuilder remove(String name, String value) {
-        List<String> values = headersMap.get(name);
-        if (value != null) {
-            values.remove(value);
-            if (values.isEmpty()) {
-                headersMap.remove(name);
-            }
-        }
-        return this;
-    }
-
-    HttpHeadersBuilder remove(String name) {
+  HttpHeadersBuilder remove(String name, String value) {
+    List<String> values = headersMap.get(name);
+    if (value != null) {
+      values.remove(value);
+      if (values.isEmpty()) {
         headersMap.remove(name);
-        return this;
+      }
     }
+    return this;
+  }
 
-    HttpHeaders build() {
-        return HttpHeaders.of(headersMap, (s, s2) -> true);
-    }
+  HttpHeadersBuilder remove(String name) {
+    headersMap.remove(name);
+    return this;
+  }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(super.toString()).append(" { ");
-        sb.append(headersMap);
-        sb.append(" }");
-        return sb.toString();
-    }
+  HttpHeaders build() {
+    return HttpHeaders.of(headersMap, (s, s2) -> true);
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(super.toString()).append(" { ");
+    sb.append(headersMap);
+    sb.append(" }");
+    return sb.toString();
+  }
 }

@@ -16,22 +16,9 @@
 
 package io.github.nstdio.http.ext;
 
-import static java.net.http.HttpRequest.BodyPublishers.noBody;
-import static java.nio.file.StandardOpenOption.CREATE;
-import static java.nio.file.StandardOpenOption.READ;
-import static java.nio.file.StandardOpenOption.WRITE;
-
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
-import com.fasterxml.jackson.databind.ObjectWriter;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -58,286 +45,289 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static java.net.http.HttpRequest.BodyPublishers.noBody;
+import static java.nio.file.StandardOpenOption.*;
+
 class JsonMetadataSerializer implements MetadataSerializer {
 
-    private static final String FIELD_NAME_VERSION = "version";
-    private static final String FIELD_NAME_REQUEST_TIME = "requestTime";
-    private static final String FIELD_NAME_RESPONSE_TIME = "responseTime";
-    private static final String FIELD_NAME_REQUEST = "request";
-    private static final String FIELD_NAME_RESPONSE = "response";
-    private static final String FIELD_NAME_HEADERS = "headers";
-    private static final String FIELD_NAME_CODE = "code";
-    private final ObjectWriter writer;
-    private final ObjectReader reader;
+  private static final String FIELD_NAME_VERSION = "version";
+  private static final String FIELD_NAME_REQUEST_TIME = "requestTime";
+  private static final String FIELD_NAME_RESPONSE_TIME = "responseTime";
+  private static final String FIELD_NAME_REQUEST = "request";
+  private static final String FIELD_NAME_RESPONSE = "response";
+  private static final String FIELD_NAME_HEADERS = "headers";
+  private static final String FIELD_NAME_CODE = "code";
+  private final ObjectWriter writer;
+  private final ObjectReader reader;
 
-    JsonMetadataSerializer() {
-        ObjectMapper mapper = createMapper();
-        writer = mapper.writerFor(CacheEntryMetadata.class);
-        reader = mapper.readerFor(CacheEntryMetadata.class);
+  JsonMetadataSerializer() {
+    ObjectMapper mapper = createMapper();
+    writer = mapper.writerFor(CacheEntryMetadata.class);
+    reader = mapper.readerFor(CacheEntryMetadata.class);
+  }
+
+  private static JsonMappingException unexpectedFieldException(JsonParser p, String fieldName) {
+    return new JsonMappingException(p, "Unexpected field name: " + fieldName);
+  }
+
+  private ObjectMapper createMapper() {
+    ObjectMapper mapper = new ObjectMapper();
+    SimpleModule simpleModule = new SimpleModule("JsonMetadataSerializer");
+
+    simpleModule.addSerializer(CacheEntryMetadata.class, new CacheMetadataSerializer());
+    simpleModule.addDeserializer(CacheEntryMetadata.class, new CacheMetadataDeserializer());
+
+    simpleModule.addSerializer(HttpRequest.class, new HttpRequestSerializer());
+    simpleModule.addDeserializer(HttpRequest.class, new HttpRequestDeserializer());
+
+    simpleModule.addSerializer(ResponseInfo.class, new ResponseInfoSerializer());
+    simpleModule.addDeserializer(ResponseInfo.class, new ResponseInfoDeserializer());
+
+    simpleModule.addSerializer(HttpHeaders.class, new HttpHeadersSerializer());
+    simpleModule.addDeserializer(HttpHeaders.class, new HttpHeadersDeserializer());
+
+    mapper.registerModule(simpleModule);
+    return mapper;
+  }
+
+  @Override
+  public void write(CacheEntryMetadata metadata, Path path) {
+    try (var out = new GZIPOutputStream(Files.newOutputStream(path, WRITE, CREATE))) {
+      writer.writeValue(out, metadata);
+    } catch (IOException ignore) {
+      // noop
     }
+  }
 
-    private static JsonMappingException unexpectedFieldException(JsonParser p, String fieldName) {
-        return new JsonMappingException(p, "Unexpected field name: " + fieldName);
+  @Override
+  public CacheEntryMetadata read(Path path) {
+    try (var in = new GZIPInputStream(Files.newInputStream(path, READ))) {
+      return reader.readValue(in);
+    } catch (IOException e) {
+      return null;
     }
+  }
 
-    private ObjectMapper createMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule simpleModule = new SimpleModule("JsonMetadataSerializer");
-
-        simpleModule.addSerializer(CacheEntryMetadata.class, new CacheMetadataSerializer());
-        simpleModule.addDeserializer(CacheEntryMetadata.class, new CacheMetadataDeserializer());
-
-        simpleModule.addSerializer(HttpRequest.class, new HttpRequestSerializer());
-        simpleModule.addDeserializer(HttpRequest.class, new HttpRequestDeserializer());
-
-        simpleModule.addSerializer(ResponseInfo.class, new ResponseInfoSerializer());
-        simpleModule.addDeserializer(ResponseInfo.class, new ResponseInfoDeserializer());
-
-        simpleModule.addSerializer(HttpHeaders.class, new HttpHeadersSerializer());
-        simpleModule.addDeserializer(HttpHeaders.class, new HttpHeadersDeserializer());
-
-        mapper.registerModule(simpleModule);
-        return mapper;
+  static class CacheMetadataSerializer extends StdSerializer<CacheEntryMetadata> {
+    CacheMetadataSerializer() {
+      super(CacheEntryMetadata.class);
     }
 
     @Override
-    public void write(CacheEntryMetadata metadata, Path path) {
-        try (var out = new GZIPOutputStream(Files.newOutputStream(path, WRITE, CREATE))) {
-            writer.writeValue(out, metadata);
-        } catch (IOException ignore) {
-            // noop
-        }
+    public void serialize(CacheEntryMetadata value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+      gen.writeStartObject();
+
+      gen.writeNumberField(FIELD_NAME_REQUEST_TIME, value.requestTime());
+      gen.writeNumberField(FIELD_NAME_RESPONSE_TIME, value.responseTime());
+      gen.writeObjectField(FIELD_NAME_REQUEST, value.request());
+      gen.writeObjectField(FIELD_NAME_RESPONSE, value.response());
+
+      gen.writeEndObject();
+    }
+  }
+
+  static class CacheMetadataDeserializer extends StdDeserializer<CacheEntryMetadata> {
+    private final JavaType requestType = TypeFactory.defaultInstance().constructType(HttpRequest.class);
+    private final JavaType responseType = TypeFactory.defaultInstance().constructType(ResponseInfo.class);
+
+    CacheMetadataDeserializer() {
+      super(CacheEntryMetadata.class);
     }
 
     @Override
-    public CacheEntryMetadata read(Path path) {
-        try (var in = new GZIPInputStream(Files.newInputStream(path, READ))) {
-            return reader.readValue(in);
-        } catch (IOException e) {
-            return null;
+    public CacheEntryMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      long requestTime = -1;
+      long responseTime = -1;
+      HttpRequest request = null;
+      ResponseInfo response = null;
+      String fieldName;
+
+      while ((fieldName = p.nextFieldName()) != null) {
+        switch (fieldName) {
+          case FIELD_NAME_REQUEST_TIME:
+            requestTime = p.nextLongValue(-1);
+            break;
+          case FIELD_NAME_RESPONSE_TIME:
+            responseTime = p.nextLongValue(-1);
+            break;
+          case FIELD_NAME_REQUEST:
+            p.nextToken();
+            request = (HttpRequest) ctxt.findRootValueDeserializer(requestType).deserialize(p, ctxt);
+            break;
+          case FIELD_NAME_RESPONSE:
+            p.nextToken();
+            response = (ResponseInfo) ctxt.findRootValueDeserializer(responseType).deserialize(p, ctxt);
+            break;
+          default:
+            throw unexpectedFieldException(p, fieldName);
         }
+      }
+
+      return CacheEntryMetadata.of(requestTime, responseTime, response, request, Clock.systemUTC());
+    }
+  }
+
+  static class HttpRequestSerializer extends StdSerializer<HttpRequest> {
+    HttpRequestSerializer() {
+      super(HttpRequest.class);
     }
 
-    static class CacheMetadataSerializer extends StdSerializer<CacheEntryMetadata> {
-        CacheMetadataSerializer() {
-            super(CacheEntryMetadata.class);
-        }
+    @Override
+    public void serialize(HttpRequest value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+      gen.writeStartObject();
+      gen.writeStringField("method", value.method());
 
-        @Override
-        public void serialize(CacheEntryMetadata value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeStartObject();
+      String timeoutString = value.timeout().map(Duration::toString).orElse(null);
+      if (timeoutString != null) {
+        gen.writeStringField("timeout", timeoutString);
+      }
 
-            gen.writeNumberField(FIELD_NAME_REQUEST_TIME, value.requestTime());
-            gen.writeNumberField(FIELD_NAME_RESPONSE_TIME, value.responseTime());
-            gen.writeObjectField(FIELD_NAME_REQUEST, value.request());
-            gen.writeObjectField(FIELD_NAME_RESPONSE, value.response());
+      gen.writeStringField("uri", value.uri().toASCIIString());
+      Integer versionOrd = value.version().map(Enum::ordinal).orElse(null);
+      if (versionOrd != null) {
+        gen.writeNumberField(FIELD_NAME_VERSION, versionOrd);
+      }
 
-            gen.writeEndObject();
-        }
+      gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
+
+      gen.writeEndObject();
+    }
+  }
+
+  static class HttpRequestDeserializer extends StdDeserializer<HttpRequest> {
+    private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
+
+    HttpRequestDeserializer() {
+      super(HttpRequest.class);
     }
 
-    static class CacheMetadataDeserializer extends StdDeserializer<CacheEntryMetadata> {
-        private final JavaType requestType = TypeFactory.defaultInstance().constructType(HttpRequest.class);
-        private final JavaType responseType = TypeFactory.defaultInstance().constructType(ResponseInfo.class);
+    @Override
+    public HttpRequest deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      Builder builder = HttpRequest.newBuilder();
+      String fieldName;
 
-        CacheMetadataDeserializer() {
-            super(CacheEntryMetadata.class);
+      while ((fieldName = p.nextFieldName()) != null) {
+        switch (fieldName) {
+          case "method":
+            builder.method(p.nextTextValue(), noBody());
+            break;
+          case "timeout":
+            String timeout = p.nextTextValue();
+            builder.timeout(Duration.parse(timeout));
+            break;
+          case FIELD_NAME_VERSION:
+            int version = p.nextIntValue(-1);
+            builder.version(HttpClient.Version.values()[version]);
+            break;
+          case "uri":
+            builder.uri(URI.create(p.nextTextValue()));
+            break;
+          case FIELD_NAME_HEADERS:
+            p.nextToken();
+            HttpHeaders headers = (HttpHeaders) ctxt.findRootValueDeserializer(headersType).deserialize(p, ctxt);
+            headers.map().forEach((name, values) -> values.forEach(value -> builder.header(name, value)));
+            break;
+          default:
+            throw unexpectedFieldException(p, fieldName);
         }
+      }
 
-        @Override
-        public CacheEntryMetadata deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            long requestTime = -1;
-            long responseTime = -1;
-            HttpRequest request = null;
-            ResponseInfo response = null;
-            String fieldName;
+      return builder.build();
+    }
+  }
 
-            while ((fieldName = p.nextFieldName()) != null) {
-                switch (fieldName) {
-                    case FIELD_NAME_REQUEST_TIME:
-                        requestTime = p.nextLongValue(-1);
-                        break;
-                    case FIELD_NAME_RESPONSE_TIME:
-                        responseTime = p.nextLongValue(-1);
-                        break;
-                    case FIELD_NAME_REQUEST:
-                        p.nextToken();
-                        request = (HttpRequest) ctxt.findRootValueDeserializer(requestType).deserialize(p, ctxt);
-                        break;
-                    case FIELD_NAME_RESPONSE:
-                        p.nextToken();
-                        response = (ResponseInfo) ctxt.findRootValueDeserializer(responseType).deserialize(p, ctxt);
-                        break;
-                    default:
-                        throw unexpectedFieldException(p, fieldName);
-                }
-            }
-
-            return CacheEntryMetadata.of(requestTime, responseTime, response, request, Clock.systemUTC());
-        }
+  static class ResponseInfoSerializer extends StdSerializer<ResponseInfo> {
+    ResponseInfoSerializer() {
+      super(ResponseInfo.class);
     }
 
-    static class HttpRequestSerializer extends StdSerializer<HttpRequest> {
-        HttpRequestSerializer() {
-            super(HttpRequest.class);
-        }
+    @Override
+    public void serialize(ResponseInfo value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+      gen.writeStartObject();
 
-        @Override
-        public void serialize(HttpRequest value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeStartObject();
-            gen.writeStringField("method", value.method());
+      gen.writeNumberField(FIELD_NAME_CODE, value.statusCode());
+      gen.writeNumberField(FIELD_NAME_VERSION, value.version().ordinal());
+      gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
 
-            String timeoutString = value.timeout().map(Duration::toString).orElse(null);
-            if (timeoutString != null) {
-                gen.writeStringField("timeout", timeoutString);
-            }
+      gen.writeEndObject();
+    }
+  }
 
-            gen.writeStringField("uri", value.uri().toASCIIString());
-            Integer versionOrd = value.version().map(Enum::ordinal).orElse(null);
-            if (versionOrd != null) {
-                gen.writeNumberField(FIELD_NAME_VERSION, versionOrd);
-            }
+  static class ResponseInfoDeserializer extends StdDeserializer<ResponseInfo> {
+    private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
+    private final HttpClient.Version[] values = HttpClient.Version.values();
 
-            gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
-
-            gen.writeEndObject();
-        }
+    ResponseInfoDeserializer() {
+      super(ResponseInfo.class);
     }
 
-    static class HttpRequestDeserializer extends StdDeserializer<HttpRequest> {
-        private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
+    @Override
+    public ResponseInfo deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      ResponseInfoBuilder builder = ImmutableResponseInfo.builder();
 
-        HttpRequestDeserializer() {
-            super(HttpRequest.class);
+      String fieldName;
+      while ((fieldName = p.nextFieldName()) != null) {
+        switch (fieldName) {
+          case FIELD_NAME_CODE:
+            builder.statusCode(p.nextIntValue(-1));
+            break;
+          case FIELD_NAME_VERSION:
+            builder.version(values[p.nextIntValue(-1)]);
+            break;
+          case FIELD_NAME_HEADERS:
+            JsonDeserializer<Object> headersDeserializer = ctxt.findRootValueDeserializer(headersType);
+            p.nextToken();
+            HttpHeaders headers = (HttpHeaders) headersDeserializer.deserialize(p, ctxt);
+            builder.headers(headers);
+            break;
+          default:
+            throw unexpectedFieldException(p, fieldName);
         }
+      }
 
-        @Override
-        public HttpRequest deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            Builder builder = HttpRequest.newBuilder();
-            String fieldName;
+      return builder.build();
+    }
+  }
 
-            while ((fieldName = p.nextFieldName()) != null) {
-                switch (fieldName) {
-                    case "method":
-                        builder.method(p.nextTextValue(), noBody());
-                        break;
-                    case "timeout":
-                        String timeout = p.nextTextValue();
-                        builder.timeout(Duration.parse(timeout));
-                        break;
-                    case FIELD_NAME_VERSION:
-                        int version = p.nextIntValue(-1);
-                        builder.version(HttpClient.Version.values()[version]);
-                        break;
-                    case "uri":
-                        builder.uri(URI.create(p.nextTextValue()));
-                        break;
-                    case FIELD_NAME_HEADERS:
-                        p.nextToken();
-                        HttpHeaders headers = (HttpHeaders) ctxt.findRootValueDeserializer(headersType).deserialize(p, ctxt);
-                        headers.map().forEach((name, values) -> values.forEach(value -> builder.header(name, value)));
-                        break;
-                    default:
-                        throw unexpectedFieldException(p, fieldName);
-                }
-            }
-
-            return builder.build();
-        }
+  static class HttpHeadersSerializer extends StdSerializer<HttpHeaders> {
+    HttpHeadersSerializer() {
+      super(HttpHeaders.class);
     }
 
-    static class ResponseInfoSerializer extends StdSerializer<ResponseInfo> {
-        ResponseInfoSerializer() {
-            super(ResponseInfo.class);
-        }
+    @Override
+    public void serialize(HttpHeaders value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+      gen.writeStartObject();
 
-        @Override
-        public void serialize(ResponseInfo value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeStartObject();
+      Map<String, List<String>> map = value.map();
+      for (var entry : map.entrySet()) {
+        gen.writeFieldName(entry.getKey());
 
-            gen.writeNumberField(FIELD_NAME_CODE, value.statusCode());
-            gen.writeNumberField(FIELD_NAME_VERSION, value.version().ordinal());
-            gen.writeObjectField(FIELD_NAME_HEADERS, value.headers());
+        String[] values = entry.getValue().toArray(new String[0]);
+        gen.writeArray(values, 0, values.length);
+      }
 
-            gen.writeEndObject();
-        }
+      gen.writeEndObject();
+    }
+  }
+
+  static class HttpHeadersDeserializer extends StdDeserializer<HttpHeaders> {
+    private final MapType mapType;
+
+    HttpHeadersDeserializer() {
+      super(HttpHeaders.class);
+      TypeFactory typeFactory = TypeFactory.defaultInstance();
+
+      JavaType keyType = typeFactory.constructType(String.class);
+      CollectionType valueType = typeFactory.constructCollectionType(ArrayList.class, String.class);
+      this.mapType = typeFactory.constructMapType(HashMap.class, keyType, valueType);
     }
 
-    static class ResponseInfoDeserializer extends StdDeserializer<ResponseInfo> {
-        private final JavaType headersType = TypeFactory.defaultInstance().constructType(HttpHeaders.class);
-        private final HttpClient.Version[] values = HttpClient.Version.values();
+    @Override
+    public HttpHeaders deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+      @SuppressWarnings("unchecked")
+      var deserialize = (Map<String, List<String>>) ctxt.findRootValueDeserializer(mapType).deserialize(p, ctxt);
 
-        ResponseInfoDeserializer() {
-            super(ResponseInfo.class);
-        }
-
-        @Override
-        public ResponseInfo deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            ResponseInfoBuilder builder = ImmutableResponseInfo.builder();
-
-            String fieldName;
-            while ((fieldName = p.nextFieldName()) != null) {
-                switch (fieldName) {
-                    case FIELD_NAME_CODE:
-                        builder.statusCode(p.nextIntValue(-1));
-                        break;
-                    case FIELD_NAME_VERSION:
-                        builder.version(values[p.nextIntValue(-1)]);
-                        break;
-                    case FIELD_NAME_HEADERS:
-                        JsonDeserializer<Object> headersDeserializer = ctxt.findRootValueDeserializer(headersType);
-                        p.nextToken();
-                        HttpHeaders headers = (HttpHeaders) headersDeserializer.deserialize(p, ctxt);
-                        builder.headers(headers);
-                        break;
-                    default:
-                        throw unexpectedFieldException(p, fieldName);
-                }
-            }
-
-            return builder.build();
-        }
+      return HttpHeaders.of(deserialize, Headers.ALLOW_ALL);
     }
-
-    static class HttpHeadersSerializer extends StdSerializer<HttpHeaders> {
-        HttpHeadersSerializer() {
-            super(HttpHeaders.class);
-        }
-
-        @Override
-        public void serialize(HttpHeaders value, JsonGenerator gen, SerializerProvider provider) throws IOException {
-            gen.writeStartObject();
-
-            Map<String, List<String>> map = value.map();
-            for (var entry : map.entrySet()) {
-                gen.writeFieldName(entry.getKey());
-
-                String[] values = entry.getValue().toArray(new String[0]);
-                gen.writeArray(values, 0, values.length);
-            }
-
-            gen.writeEndObject();
-        }
-    }
-
-    static class HttpHeadersDeserializer extends StdDeserializer<HttpHeaders> {
-        private final MapType mapType;
-
-        HttpHeadersDeserializer() {
-            super(HttpHeaders.class);
-            TypeFactory typeFactory = TypeFactory.defaultInstance();
-
-            JavaType keyType = typeFactory.constructType(String.class);
-            CollectionType valueType = typeFactory.constructCollectionType(ArrayList.class, String.class);
-            this.mapType = typeFactory.constructMapType(HashMap.class, keyType, valueType);
-        }
-
-        @Override
-        public HttpHeaders deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            @SuppressWarnings("unchecked")
-            var deserialize = (Map<String, List<String>>) ctxt.findRootValueDeserializer(mapType).deserialize(p, ctxt);
-
-            return HttpHeaders.of(deserialize, Headers.ALLOW_ALL);
-        }
-    }
+  }
 }

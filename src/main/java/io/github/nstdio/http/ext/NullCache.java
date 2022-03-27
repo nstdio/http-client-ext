@@ -22,62 +22,62 @@ import java.net.http.HttpResponse.BodySubscribers;
 import java.util.function.Consumer;
 
 class NullCache implements Cache {
-    static final NullCache INSTANCE = new NullCache();
+  static final NullCache INSTANCE = new NullCache();
 
-    private static final Consumer<Object> NOOP_CONSUMER = t -> {
-    };
-    private static final Writer<Object> WRITER = new Writer<>() {
-        @Override
-        public HttpResponse.BodySubscriber<Object> subscriber() {
-            return BodySubscribers.mapping(BodySubscribers.discarding(), unused -> null);
-        }
-
-        @Override
-        public Consumer<Object> finisher() {
-            return NOOP_CONSUMER;
-        }
-    };
-
-    private NullCache() {
-    }
-
-    @SuppressWarnings("unchecked")
-    static <T> Writer<T> writer() {
-        return (Writer<T>) WRITER;
+  private static final Consumer<Object> NOOP_CONSUMER = t -> {
+  };
+  private static final Writer<Object> WRITER = new Writer<>() {
+    @Override
+    public HttpResponse.BodySubscriber<Object> subscriber() {
+      return BodySubscribers.mapping(BodySubscribers.discarding(), unused -> null);
     }
 
     @Override
-    public CacheEntry get(HttpRequest request) {
-        return null;
+    public Consumer<Object> finisher() {
+      return NOOP_CONSUMER;
     }
+  };
 
-    @Override
-    public void put(HttpRequest request, CacheEntry entry) {
-        // intentional noop
-    }
+  private NullCache() {
+  }
 
-    @Override
-    public void evict(HttpRequest request) {
-        // intentional noop
-    }
+  @SuppressWarnings("unchecked")
+  static <T> Writer<T> writer() {
+    return (Writer<T>) WRITER;
+  }
 
-    @Override
-    public void evictAll(HttpRequest request) {
-        // intentional noop
-    }
+  @Override
+  public CacheEntry get(HttpRequest request) {
+    return null;
+  }
 
-    @Override
-    public void evictAll() {
-        // intentional noop
-    }
+  @Override
+  public void put(HttpRequest request, CacheEntry entry) {
+    // intentional noop
+  }
 
-    @Override
-    public CacheStats stats() {
-        return null;
-    }
+  @Override
+  public void evict(HttpRequest request) {
+    // intentional noop
+  }
 
-    @Override
-    public <T> Writer<T> writer(CacheEntryMetadata metadata) {
-        return writer();
-    }
+  @Override
+  public void evictAll(HttpRequest request) {
+    // intentional noop
+  }
+
+  @Override
+  public void evictAll() {
+    // intentional noop
+  }
+
+  @Override
+  public CacheStats stats() {
+    return null;
+  }
+
+  @Override
+  public <T> Writer<T> writer(CacheEntryMetadata metadata) {
+    return writer();
+  }
 }

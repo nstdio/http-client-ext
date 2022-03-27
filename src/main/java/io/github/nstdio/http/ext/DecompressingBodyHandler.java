@@ -16,9 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
-import static java.util.stream.Collectors.toMap;
-
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
@@ -30,126 +27,125 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.ResponseInfo;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 
+import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
+import static java.util.stream.Collectors.toMap;
+
 class DecompressingBodyHandler<T> implements BodyHandler<T> {
-    private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
-    private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
-    private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
-    private static final Set<String> WELL_KNOWN_DIRECTIVES = Set.of("gzip", "x-gzip", "br", "compress", "deflate", "identity");
+  private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
+  private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
+  private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
+  private static final Set<String> WELL_KNOWN_DIRECTIVES = Set.of("gzip", "x-gzip", "br", "compress", "deflate", "identity");
 
-    private final BodyHandler<T> original;
-    private final Options options;
-    private final boolean direct;
-    private volatile List<String> directives;
+  private final BodyHandler<T> original;
+  private final Options options;
+  private final boolean direct;
+  private volatile List<String> directives;
 
-    DecompressingBodyHandler(BodyHandler<T> original, Options options) {
-        this(Objects.requireNonNull(original), Objects.requireNonNull(options), false);
-    }
+  DecompressingBodyHandler(BodyHandler<T> original, Options options) {
+    this(Objects.requireNonNull(original), Objects.requireNonNull(options), false);
+  }
 
-    private DecompressingBodyHandler(BodyHandler<T> original, Options options, boolean direct) {
-        this.original = original;
-        this.options = options;
-        this.direct = direct;
-    }
+  private DecompressingBodyHandler(BodyHandler<T> original, Options options, boolean direct) {
+    this.original = original;
+    this.options = options;
+    this.direct = direct;
+  }
 
-    static DecompressingBodyHandler<InputStream> ofDirect(Options options) {
-        return new DecompressingBodyHandler<>(null, options, true);
-    }
+  static DecompressingBodyHandler<InputStream> ofDirect(Options options) {
+    return new DecompressingBodyHandler<>(null, options, true);
+  }
 
-    private UnaryOperator<InputStream> chain(UnaryOperator<InputStream> u1, UnaryOperator<InputStream> u2) {
-        return in -> u2.apply(u1.apply(in));
-    }
+  private UnaryOperator<InputStream> chain(UnaryOperator<InputStream> u1, UnaryOperator<InputStream> u2) {
+    return in -> u2.apply(u1.apply(in));
+  }
 
-    UnaryOperator<InputStream> decompressionFn(String directive) {
-        var factory = CompressionFactories.firstSupporting(directive);
+  UnaryOperator<InputStream> decompressionFn(String directive) {
+    var factory = CompressionFactories.firstSupporting(directive);
 
-        if (factory != null) {
-            return in -> {
-                try {
-                    return factory.decompressing(in, directive);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            };
+    if (factory != null) {
+      return in -> {
+        try {
+          return factory.decompressing(in, directive);
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
         }
-
-        boolean wellKnown = WELL_KNOWN_DIRECTIVES.contains(directive);
-        if (wellKnown && options.failOnUnsupportedDirectives()) {
-            throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
-        }
-
-        if (!wellKnown && options.failOnUnknownDirectives()) {
-            throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
-        }
-
-        return IDENTITY;
+      };
     }
 
-    @Override
-    public BodySubscriber<T> apply(ResponseInfo info) {
-        var directiveToFn = computeDirectives(info.headers());
-        if (directiveToFn.isEmpty()) {
-            return original.apply(info);
-        }
-
-        var reduced = directiveToFn
-                .values()
-                .stream()
-                .reduce(IDENTITY, this::chain);
-
-        directives = List.copyOf(directiveToFn.keySet());
-
-        if (direct) {
-            return directSubscriber(reduced);
-        }
-
-        return new DecompressingSubscriber<>(original.apply(info), reduced);
+    boolean wellKnown = WELL_KNOWN_DIRECTIVES.contains(directive);
+    if (wellKnown && options.failOnUnsupportedDirectives()) {
+      throw new UnsupportedOperationException(String.format(UNSUPPORTED_DIRECTIVE, directive));
     }
 
-    private BodySubscriber<T> directSubscriber(UnaryOperator<InputStream> reduced) {
-        BodySubscriber<InputStream> upstream = HttpResponse.BodySubscribers.ofInputStream();
-        @SuppressWarnings("unchecked")
-        var directSubscriber = (BodySubscriber<T>) new AsyncMappingSubscriber<>(upstream, reduced);
-
-        return directSubscriber;
+    if (!wellKnown && options.failOnUnknownDirectives()) {
+      throw new IllegalArgumentException(String.format(UNKNOWN_DIRECTIVE, directive));
     }
 
-    private Map<String, UnaryOperator<InputStream>> computeDirectives(HttpHeaders headers) {
-        var encodingOpt = Headers.firstValue(headers, HEADER_CONTENT_ENCODING);
-        if (encodingOpt.isEmpty()) {
-            return Map.of();
-        }
+    return IDENTITY;
+  }
 
-        return Headers.splitComma(encodingOpt.get())
-                .map(s -> Map.entry(s, decompressionFn(s)))
-                .filter(e -> e.getValue() != IDENTITY)
-                .collect(toMap(Entry::getKey, Entry::getValue, (f1, f2) -> f1, LinkedHashMap::new));
+  @Override
+  public BodySubscriber<T> apply(ResponseInfo info) {
+    var directiveToFn = computeDirectives(info.headers());
+    if (directiveToFn.isEmpty()) {
+      return original.apply(info);
     }
 
-    List<String> directives(HttpHeaders headers) {
-        if (directives != null)
-            return directives;
+    var reduced = directiveToFn
+        .values()
+        .stream()
+        .reduce(IDENTITY, this::chain);
 
-        return (directives = List.copyOf(computeDirectives(headers).keySet()));
+    directives = List.copyOf(directiveToFn.keySet());
+
+    if (direct) {
+      return directSubscriber(reduced);
     }
 
-    @Getter
-    @Accessors(fluent = true)
-    static class Options {
-        static final Options LENIENT = new Options(false, false);
-        private final boolean failOnUnsupportedDirectives;
-        private final boolean failOnUnknownDirectives;
+    return new DecompressingSubscriber<>(original.apply(info), reduced);
+  }
 
-        Options(boolean failOnUnsupportedDirectives, boolean failOnUnknownDirectives) {
-            this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
-            this.failOnUnknownDirectives = failOnUnknownDirectives;
-        }
+  private BodySubscriber<T> directSubscriber(UnaryOperator<InputStream> reduced) {
+    BodySubscriber<InputStream> upstream = HttpResponse.BodySubscribers.ofInputStream();
+    @SuppressWarnings("unchecked")
+    var directSubscriber = (BodySubscriber<T>) new AsyncMappingSubscriber<>(upstream, reduced);
+
+    return directSubscriber;
+  }
+
+  private Map<String, UnaryOperator<InputStream>> computeDirectives(HttpHeaders headers) {
+    var encodingOpt = Headers.firstValue(headers, HEADER_CONTENT_ENCODING);
+    if (encodingOpt.isEmpty()) {
+      return Map.of();
     }
+
+    return Headers.splitComma(encodingOpt.get())
+        .map(s -> Map.entry(s, decompressionFn(s)))
+        .filter(e -> e.getValue() != IDENTITY)
+        .collect(toMap(Entry::getKey, Entry::getValue, (f1, f2) -> f1, LinkedHashMap::new));
+  }
+
+  List<String> directives(HttpHeaders headers) {
+    if (directives != null)
+      return directives;
+
+    return (directives = List.copyOf(computeDirectives(headers).keySet()));
+  }
+
+  @Getter
+  @Accessors(fluent = true)
+  static class Options {
+    static final Options LENIENT = new Options(false, false);
+    private final boolean failOnUnsupportedDirectives;
+    private final boolean failOnUnknownDirectives;
+
+    Options(boolean failOnUnsupportedDirectives, boolean failOnUnknownDirectives) {
+      this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
+      this.failOnUnknownDirectives = failOnUnknownDirectives;
+    }
+  }
 }

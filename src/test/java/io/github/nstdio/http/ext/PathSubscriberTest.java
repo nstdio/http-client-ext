@@ -16,8 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -25,33 +23,35 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class PathSubscriberTest {
 
-    @Test
-    void shouldBeCompletedWhenOnError() {
-        //given
-        PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
-        IOException th = new IOException();
+  @Test
+  void shouldBeCompletedWhenOnError() {
+    //given
+    PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
+    IOException th = new IOException();
 
-        //when
-        subscriber.onError(th);
+    //when
+    subscriber.onError(th);
 
-        //then
-        assertThat(subscriber.getBody())
-                .isCompletedExceptionally();
-    }
+    //then
+    assertThat(subscriber.getBody())
+        .isCompletedExceptionally();
+  }
 
-    @Test
-    void shouldCompleteExceptionallyWhenPathDoesNotExist() {
-        //given
-        PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
+  @Test
+  void shouldCompleteExceptionallyWhenPathDoesNotExist() {
+    //given
+    PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
 
-        //when
-        subscriber.onSubscribe(new PlainSubscription(subscriber, List.of(), false));
-        CompletionStage<Path> body = subscriber.getBody();
+    //when
+    subscriber.onSubscribe(new PlainSubscription(subscriber, List.of(), false));
+    CompletionStage<Path> body = subscriber.getBody();
 
-        //then
-        assertThat(body)
-                .isCompletedExceptionally();
-    }
+    //then
+    assertThat(body)
+        .isCompletedExceptionally();
+  }
 }

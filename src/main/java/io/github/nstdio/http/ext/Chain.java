@@ -16,8 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static lombok.Lombok.sneakyThrow;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -25,27 +23,29 @@ import lombok.experimental.Accessors;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 
+import static lombok.Lombok.sneakyThrow;
+
 @Getter
 @Accessors(fluent = true)
 @AllArgsConstructor(staticName = "of")
 class Chain<T> {
-    RequestContext ctx;
-    FutureHandler<T> futureHandler;
-    Optional<HttpResponse<T>> response;
+  RequestContext ctx;
+  FutureHandler<T> futureHandler;
+  Optional<HttpResponse<T>> response;
 
-    public static <T> Chain<T> of(RequestContext ctx) {
-        return Chain.of(ctx, (r, th) -> {
-            if (r != null)
-                return r;
-            throw sneakyThrow(th);
-        });
-    }
+  public static <T> Chain<T> of(RequestContext ctx) {
+    return Chain.of(ctx, (r, th) -> {
+      if (r != null)
+        return r;
+      throw sneakyThrow(th);
+    });
+  }
 
-    public static <T> Chain<T> of(RequestContext ctx, FutureHandler<T> futureHandler) {
-        return new Chain<>(ctx, futureHandler, Optional.empty());
-    }
+  public static <T> Chain<T> of(RequestContext ctx, FutureHandler<T> futureHandler) {
+    return new Chain<>(ctx, futureHandler, Optional.empty());
+  }
 
-    Chain<T> withResponse(HttpResponse<T> response) {
-        return of(ctx, futureHandler, Optional.of(response));
-    }
+  Chain<T> withResponse(HttpResponse<T> response) {
+    return of(ctx, futureHandler, Optional.of(response));
+  }
 }

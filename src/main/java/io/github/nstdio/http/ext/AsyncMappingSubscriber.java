@@ -23,36 +23,36 @@ import java.util.concurrent.Flow.Subscription;
 import java.util.function.Function;
 
 final class AsyncMappingSubscriber<T, U> implements BodySubscriber<U> {
-    private final BodySubscriber<T> upstream;
-    private final Function<? super T, ? extends U> mapper;
+  private final BodySubscriber<T> upstream;
+  private final Function<? super T, ? extends U> mapper;
 
-    AsyncMappingSubscriber(BodySubscriber<T> upstream, Function<? super T, ? extends U> mapper) {
-        this.upstream = upstream;
-        this.mapper = mapper;
-    }
+  AsyncMappingSubscriber(BodySubscriber<T> upstream, Function<? super T, ? extends U> mapper) {
+    this.upstream = upstream;
+    this.mapper = mapper;
+  }
 
-    @Override
-    public CompletionStage<U> getBody() {
-        return upstream.getBody().thenApplyAsync(mapper);
-    }
+  @Override
+  public CompletionStage<U> getBody() {
+    return upstream.getBody().thenApplyAsync(mapper);
+  }
 
-    @Override
-    public void onSubscribe(Subscription subscription) {
-        upstream.onSubscribe(subscription);
-    }
+  @Override
+  public void onSubscribe(Subscription subscription) {
+    upstream.onSubscribe(subscription);
+  }
 
-    @Override
-    public void onNext(List<ByteBuffer> item) {
-        upstream.onNext(item);
-    }
+  @Override
+  public void onNext(List<ByteBuffer> item) {
+    upstream.onNext(item);
+  }
 
-    @Override
-    public void onError(Throwable throwable) {
-        upstream.onError(throwable);
-    }
+  @Override
+  public void onError(Throwable throwable) {
+    upstream.onError(throwable);
+  }
 
-    @Override
-    public void onComplete() {
-        upstream.onComplete();
-    }
+  @Override
+  public void onComplete() {
+    upstream.onComplete();
+  }
 }

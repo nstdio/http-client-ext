@@ -20,14 +20,14 @@ import java.io.IOException;
 import java.io.InputStream;
 
 abstract class CompressionFactoryBase implements CompressionFactory {
-    @Override
-    public final InputStream decompressing(InputStream in, String type) throws IOException {
-        if (!supported().contains(type)) {
-            throw new IllegalArgumentException(String.format("Type '%s' not supported", type));
-        }
-
-        return doDecompressing(in, type);
+  @Override
+  public final InputStream decompressing(InputStream in, String type) throws IOException {
+    if (!supported().contains(type)) {
+      throw new IllegalArgumentException(String.format("Type '%s' not supported", type));
     }
 
-    abstract InputStream doDecompressing(InputStream in, String type) throws IOException;
+    return doDecompressing(in, type);
+  }
+
+  abstract InputStream doDecompressing(InputStream in, String type) throws IOException;
 }

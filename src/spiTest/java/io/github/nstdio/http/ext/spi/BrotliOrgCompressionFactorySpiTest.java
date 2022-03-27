@@ -16,9 +16,6 @@
 
 package io.github.nstdio.http.ext.spi;
 
-import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
 
@@ -26,19 +23,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+import static com.jayway.jsonpath.matchers.JsonPathMatchers.isJson;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 class BrotliOrgCompressionFactorySpiTest {
 
-    @Test
-    void shouldDecompress() throws IOException {
-        //given
-        InputStream inputStream = URI.create("https://httpbin.org/brotli").toURL().openStream();
-        BrotliOrgCompressionFactory factory = new BrotliOrgCompressionFactory();
+  @Test
+  void shouldDecompress() throws IOException {
+    //given
+    InputStream inputStream = URI.create("https://httpbin.org/brotli").toURL().openStream();
+    BrotliOrgCompressionFactory factory = new BrotliOrgCompressionFactory();
 
-        //when
-        InputStream actual = factory.decompressing(inputStream, "br");
-        String actualAsString = IOUtils.toString(actual, UTF_8);
+    //when
+    InputStream actual = factory.decompressing(inputStream, "br");
+    String actualAsString = IOUtils.toString(actual, UTF_8);
 
-        //then
-        isJson().matches(actualAsString);
-    }
+    //then
+    isJson().matches(actualAsString);
+  }
 }

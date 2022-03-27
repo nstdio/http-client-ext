@@ -16,80 +16,80 @@
 
 package io.github.nstdio.http.ext;
 
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Optional;
+
 import static io.github.nstdio.http.ext.ExtendedHttpClient.toBuilder;
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_LENGTH;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
 
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.List;
-import java.util.Optional;
-
 class CompressionInterceptor implements Interceptor {
-    @Override
-    public <T> Chain<T> intercept(Chain<T> in) {
-        var handler = decompressingHandler(in.ctx().<T>bodyHandler());
+  @Override
+  public <T> Chain<T> intercept(Chain<T> in) {
+    var handler = decompressingHandler(in.ctx().<T>bodyHandler());
 
-        FutureHandler<T> fn = FutureHandler.of(r -> {
-            List<String> directives = handler.directives(r.headers());
-            if (!directives.isEmpty()) {
-                return removeCompressionHeaders(r, directives);
-            }
+    FutureHandler<T> fn = FutureHandler.of(r -> {
+      List<String> directives = handler.directives(r.headers());
+      if (!directives.isEmpty()) {
+        return removeCompressionHeaders(r, directives);
+      }
 
-            return r;
-        });
+      return r;
+    });
 
-        RequestContext ctx = in.ctx()
-                .withRequest(preProcessRequest(in.ctx().request()))
-                .withBodyHandler(handler);
+    RequestContext ctx = in.ctx()
+        .withRequest(preProcessRequest(in.ctx().request()))
+        .withBodyHandler(handler);
 
-        FutureHandler<T> futureHandler = in.futureHandler().andThen(fn);
-        Optional<HttpResponse<T>> response = in.response();
+    FutureHandler<T> futureHandler = in.futureHandler().andThen(fn);
+    Optional<HttpResponse<T>> response = in.response();
 
-        return Chain.of(ctx, futureHandler, response);
+    return Chain.of(ctx, futureHandler, response);
+  }
+
+  private HttpRequest preProcessRequest(HttpRequest request) {
+    var supported = CompressionFactories.allSupported()
+        .stream()
+        .filter(not("identity"::equals))
+        .filter(not("x-gzip"::equals))
+        .filter(not("x-compress"::equals))
+        .collect(joining(","));
+
+    if (supported.isBlank()) {
+      return request;
     }
 
-    private HttpRequest preProcessRequest(HttpRequest request) {
-        var supported = CompressionFactories.allSupported()
-                .stream()
-                .filter(not("identity"::equals))
-                .filter(not("x-gzip"::equals))
-                .filter(not("x-compress"::equals))
-                .collect(joining(","));
+    HttpRequest.Builder builder = toBuilder(request);
+    builder.setHeader("Accept-Encoding", supported);
 
-        if (supported.isBlank()) {
-            return request;
-        }
+    return builder.build();
+  }
 
-        HttpRequest.Builder builder = toBuilder(request);
-        builder.setHeader("Accept-Encoding", supported);
+  private <T> DecompressingBodyHandler<T> decompressingHandler(HttpResponse.BodyHandler<T> bodyHandler) {
+    return new DecompressingBodyHandler<>(bodyHandler, DecompressingBodyHandler.Options.LENIENT);
+  }
 
-        return builder.build();
+  private <T> HttpResponse<T> removeCompressionHeaders(HttpResponse<T> response, List<String> directives) {
+    String contentEncoding = response.headers()
+        .firstValue(HEADER_CONTENT_ENCODING)
+        .stream()
+        .flatMap(Headers::splitComma)
+        .filter(not(directives::contains))
+        .collect(joining(","));
+
+    var headersBuilder = new HttpHeadersBuilder(response.headers())
+        .remove(HEADER_CONTENT_LENGTH);
+
+    if (contentEncoding.isBlank()) {
+      headersBuilder.remove(HEADER_CONTENT_ENCODING);
+    } else {
+      headersBuilder.set(HEADER_CONTENT_ENCODING, contentEncoding);
     }
 
-    private <T> DecompressingBodyHandler<T> decompressingHandler(HttpResponse.BodyHandler<T> bodyHandler) {
-        return new DecompressingBodyHandler<>(bodyHandler, DecompressingBodyHandler.Options.LENIENT);
-    }
-
-    private <T> HttpResponse<T> removeCompressionHeaders(HttpResponse<T> response, List<String> directives) {
-        String contentEncoding = response.headers()
-                .firstValue(HEADER_CONTENT_ENCODING)
-                .stream()
-                .flatMap(Headers::splitComma)
-                .filter(not(directives::contains))
-                .collect(joining(","));
-
-        var headersBuilder = new HttpHeadersBuilder(response.headers())
-                .remove(HEADER_CONTENT_LENGTH);
-
-        if (contentEncoding.isBlank()) {
-            headersBuilder.remove(HEADER_CONTENT_ENCODING);
-        } else {
-            headersBuilder.set(HEADER_CONTENT_ENCODING, contentEncoding);
-        }
-
-        return Responses.headersReplacing(response, headersBuilder.build());
-    }
+    return Responses.headersReplacing(response, headersBuilder.build());
+  }
 }

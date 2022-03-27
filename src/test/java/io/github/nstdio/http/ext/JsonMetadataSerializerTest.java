@@ -16,10 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -30,58 +26,62 @@ import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 
+import static io.github.nstdio.http.ext.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 class JsonMetadataSerializerTest {
-    @TempDir
-    private Path dir;
+  @TempDir
+  private Path dir;
 
-    @Test
-    void shouldReturnNullWhenCannotRead() {
-        //given
-        var file = dir.resolve("abc");
-        var ser = new JsonMetadataSerializer();
+  @Test
+  void shouldReturnNullWhenCannotRead() {
+    //given
+    var file = dir.resolve("abc");
+    var ser = new JsonMetadataSerializer();
 
-        //when
-        CacheEntryMetadata metadata = ser.read(file);
+    //when
+    CacheEntryMetadata metadata = ser.read(file);
 
-        //then
-        assertNull(metadata);
-    }
+    //then
+    assertNull(metadata);
+  }
 
-    @Test
-    void shouldWriteAndRead() {
-        //given
-        var file = dir.resolve("abc");
-        var responseInfo = ImmutableResponseInfo.builder()
-                .headers(new HttpHeadersBuilder()
-                        .add("test", "1")
-                        .add("test", "2")
-                        .build())
-                .statusCode(200)
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-        var request = HttpRequest.newBuilder(URI.create("https://example.com"))
-                .header("abc", "1")
-                .header("abc", "2")
-                .header("abcd", "11")
-                .header("abcd", "22")
-                .version(HttpClient.Version.HTTP_2)
-                .timeout(Duration.ofSeconds(30))
-                .build();
+  @Test
+  void shouldWriteAndRead() {
+    //given
+    var file = dir.resolve("abc");
+    var responseInfo = ImmutableResponseInfo.builder()
+        .headers(new HttpHeadersBuilder()
+            .add("test", "1")
+            .add("test", "2")
+            .build())
+        .statusCode(200)
+        .version(HttpClient.Version.HTTP_1_1)
+        .build();
+    var request = HttpRequest.newBuilder(URI.create("https://example.com"))
+        .header("abc", "1")
+        .header("abc", "2")
+        .header("abcd", "11")
+        .header("abcd", "22")
+        .version(HttpClient.Version.HTTP_2)
+        .timeout(Duration.ofSeconds(30))
+        .build();
 
-        var metadata = new CacheEntryMetadata(10, 15, responseInfo, request, Clock.systemUTC());
-        var ser = new JsonMetadataSerializer();
+    var metadata = new CacheEntryMetadata(10, 15, responseInfo, request, Clock.systemUTC());
+    var ser = new JsonMetadataSerializer();
 
-        //when
-        ser.write(metadata, file);
-        var actual = ser.read(file);
+    //when
+    ser.write(metadata, file);
+    var actual = ser.read(file);
 
-        //then
-        assertThat(actual.requestTime()).isEqualTo(metadata.requestTime());
-        assertThat(actual.responseTime()).isEqualTo(metadata.responseTime());
-        assertThat(actual.request()).isEqualTo(metadata.request());
+    //then
+    assertThat(actual.requestTime()).isEqualTo(metadata.requestTime());
+    assertThat(actual.responseTime()).isEqualTo(metadata.responseTime());
+    assertThat(actual.request()).isEqualTo(metadata.request());
 
-        assertThat(actual.response().statusCode()).isEqualTo(metadata.response().statusCode());
-        assertThat(actual.response().version()).isEqualTo(metadata.response().version());
-        assertThat(actual.response().headers()).isEqualTo(metadata.response().headers());
-    }
+    assertThat(actual.response().statusCode()).isEqualTo(metadata.response().statusCode());
+    assertThat(actual.response().version()).isEqualTo(metadata.response().version());
+    assertThat(actual.response().headers()).isEqualTo(metadata.response().headers());
+  }
 }

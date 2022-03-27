@@ -23,15 +23,15 @@ import java.io.InputStream;
 import java.util.List;
 
 class BrotliOrgCompressionFactory implements CompressionFactory {
-    private final List<String> supported = List.of("br");
+  private final List<String> supported = List.of("br");
 
-    @Override
-    public List<String> supported() {
-        return supported;
-    }
+  @Override
+  public List<String> supported() {
+    return supported;
+  }
 
-    @Override
-    public InputStream decompressing(InputStream in, String type) throws IOException {
-        return new BrotliInputStream(in);
-    }
+  @Override
+  public InputStream decompressing(InputStream in, String type) throws IOException {
+    return new BrotliInputStream(in);
+  }
 }

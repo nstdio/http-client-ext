@@ -25,34 +25,34 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 class Responses {
-    private Responses() {
-    }
+  private Responses() {
+  }
 
-    static <T> HttpResponse<T> headersReplacing(HttpResponse<T> response, HttpHeaders headers) {
-        return new DelegatingHttpResponse<>(response) {
-            @Override
-            public HttpHeaders headers() {
-                return headers;
-            }
-        };
-    }
+  static <T> HttpResponse<T> headersReplacing(HttpResponse<T> response, HttpHeaders headers) {
+    return new DelegatingHttpResponse<>(response) {
+      @Override
+      public HttpHeaders headers() {
+        return headers;
+      }
+    };
+  }
 
-    static <T> HttpResponse<T> gatewayTimeoutResponse(HttpRequest request) {
-        return StaticHttpResponse.<T>builder()
-                .statusCode(504)
-                .request(request)
-                .uri(request.uri())
-                .version(HttpClient.Version.HTTP_1_1)
-                .build();
-    }
+  static <T> HttpResponse<T> gatewayTimeoutResponse(HttpRequest request) {
+    return StaticHttpResponse.<T>builder()
+        .statusCode(504)
+        .request(request)
+        .uri(request.uri())
+        .version(HttpClient.Version.HTTP_1_1)
+        .build();
+  }
 
-    @RequiredArgsConstructor
-    static class DelegatingHttpResponse<T> implements HttpResponse<T> {
-        @Delegate
-        private final HttpResponse<T> delegate;
+  @RequiredArgsConstructor
+  static class DelegatingHttpResponse<T> implements HttpResponse<T> {
+    @Delegate
+    private final HttpResponse<T> delegate;
 
-        HttpResponse<T> delegate() {
-            return delegate;
-        }
+    HttpResponse<T> delegate() {
+      return delegate;
     }
+  }
 }

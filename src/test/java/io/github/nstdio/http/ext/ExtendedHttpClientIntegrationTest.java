@@ -16,17 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
-import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static io.github.nstdio.http.ext.Assertions.awaitFor;
-import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
-import static java.net.http.HttpResponse.BodyHandlers.ofString;
-
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Nested;
@@ -37,88 +26,95 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static io.github.nstdio.http.ext.Assertions.assertThat;
+import static io.github.nstdio.http.ext.Assertions.awaitFor;
+import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
+import static java.net.http.HttpResponse.BodyHandlers.ofString;
+
 class ExtendedHttpClientIntegrationTest {
-    @RegisterExtension
-    WireMockExtension wm = WireMockExtension.newInstance()
-            .configureStaticDsl(true)
-            .failOnUnmatchedRequests(true)
-            .options(wireMockConfig().dynamicPort())
-            .build();
+  @RegisterExtension
+  WireMockExtension wm = WireMockExtension.newInstance()
+      .configureStaticDsl(true)
+      .failOnUnmatchedRequests(true)
+      .options(wireMockConfig().dynamicPort())
+      .build();
 
-    private URI resolve(String path) {
-        return URI.create(wm.getRuntimeInfo().getHttpBaseUrl()).resolve(path);
+  private URI resolve(String path) {
+    return URI.create(wm.getRuntimeInfo().getHttpBaseUrl()).resolve(path);
+  }
+
+  @Nested
+  class TransparentDecompressionTest {
+    @Test
+    void shouldTransparentlyDecompressAndCache() throws Exception {
+      //given
+      Cache cache = Cache.newInMemoryCacheBuilder().build();
+      HttpClient client = ExtendedHttpClient.newBuilder()
+          .cache(cache)
+          .transparentEncoding(true)
+          .build();
+      var expectedBody = RandomStringUtils.randomAlphabetic(16);
+      String testUrl = "/gzip";
+      stubFor(get(urlEqualTo(testUrl))
+          .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
+          .willReturn(ok()
+              .withHeader("Cache-Control", "max-age=86000")
+              .withBody(expectedBody))
+      );
+      HttpRequest request1 = HttpRequest.newBuilder(resolve(testUrl))
+          .build();
+      HttpRequest request2 = HttpRequest.newBuilder(resolve(testUrl))
+          .build();
+
+      //when + then
+      var r1 = client.send(request1, ofString());
+      assertThat(r1)
+          .isNetwork()
+          .hasBody(expectedBody)
+          .hasNoHeader(HEADER_CONTENT_ENCODING);
+
+      awaitFor(() -> {
+        var r2 = client.send(request2, ofString());
+
+        assertThat(r2)
+            .isCached()
+            .hasBody(expectedBody)
+            .hasNoHeader(HEADER_CONTENT_ENCODING);
+      });
+
     }
 
-    @Nested
-    class TransparentDecompressionTest {
-        @Test
-        void shouldTransparentlyDecompressAndCache() throws Exception {
-            //given
-            Cache cache = Cache.newInMemoryCacheBuilder().build();
-            HttpClient client = ExtendedHttpClient.newBuilder()
-                    .cache(cache)
-                    .transparentEncoding(true)
-                    .build();
-            var expectedBody = RandomStringUtils.randomAlphabetic(16);
-            String testUrl = "/gzip";
-            stubFor(get(urlEqualTo(testUrl))
-                    .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
-                    .willReturn(ok()
-                            .withHeader("Cache-Control", "max-age=86000")
-                            .withBody(expectedBody))
-            );
-            HttpRequest request1 = HttpRequest.newBuilder(resolve(testUrl))
-                    .build();
-            HttpRequest request2 = HttpRequest.newBuilder(resolve(testUrl))
-                    .build();
+    @Test
+    void shouldTransparentlyDecompress() throws Exception {
+      //given
+      HttpClient client = ExtendedHttpClient.newBuilder()
+          .cache(Cache.noop())
+          .transparentEncoding(true)
+          .build();
+      var expectedBody = RandomStringUtils.randomAlphabetic(16);
+      String testUrl = "/gzip";
+      stubFor(get(urlEqualTo(testUrl))
+          .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
+          .willReturn(ok().withBody(expectedBody))
+      );
+      HttpRequest request = HttpRequest.newBuilder(resolve(testUrl)).build();
 
-            //when + then
-            var r1 = client.send(request1, ofString());
-            assertThat(r1)
-                    .isNetwork()
-                    .hasBody(expectedBody)
-                    .hasNoHeader(HEADER_CONTENT_ENCODING);
+      //when
+      var r1 = client.send(request, ofString());
+      var r2 = client.sendAsync(request, ofString()).join();
 
-            awaitFor(() -> {
-                var r2 = client.send(request2, ofString());
+      //then
+      assertThat(r1)
+          .isNetwork()
+          .hasBody(expectedBody)
+          .hasNoHeader(HEADER_CONTENT_ENCODING);
 
-                assertThat(r2)
-                        .isCached()
-                        .hasBody(expectedBody)
-                        .hasNoHeader(HEADER_CONTENT_ENCODING);
-            });
-
-        }
-
-        @Test
-        void shouldTransparentlyDecompress() throws Exception {
-            //given
-            HttpClient client = ExtendedHttpClient.newBuilder()
-                    .cache(Cache.noop())
-                    .transparentEncoding(true)
-                    .build();
-            var expectedBody = RandomStringUtils.randomAlphabetic(16);
-            String testUrl = "/gzip";
-            stubFor(get(urlEqualTo(testUrl))
-                    .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
-                    .willReturn(ok().withBody(expectedBody))
-            );
-            HttpRequest request = HttpRequest.newBuilder(resolve(testUrl)).build();
-
-            //when
-            var r1 = client.send(request, ofString());
-            var r2 = client.sendAsync(request, ofString()).join();
-
-            //then
-            assertThat(r1)
-                    .isNetwork()
-                    .hasBody(expectedBody)
-                    .hasNoHeader(HEADER_CONTENT_ENCODING);
-
-            assertThat(r2)
-                    .isNetwork()
-                    .hasBody(expectedBody)
-                    .hasNoHeader(HEADER_CONTENT_ENCODING);
-        }
+      assertThat(r2)
+          .isNetwork()
+          .hasBody(expectedBody)
+          .hasNoHeader(HEADER_CONTENT_ENCODING);
     }
+  }
 }

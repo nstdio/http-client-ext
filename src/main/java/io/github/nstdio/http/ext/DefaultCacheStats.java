@@ -19,26 +19,26 @@ package io.github.nstdio.http.ext;
 import java.util.concurrent.atomic.LongAdder;
 
 class DefaultCacheStats implements TrackableCacheStats {
-    private final LongAdder hit = new LongAdder();
-    private final LongAdder miss = new LongAdder();
+  private final LongAdder hit = new LongAdder();
+  private final LongAdder miss = new LongAdder();
 
-    @Override
-    public long hit() {
-        return hit.longValue();
-    }
+  @Override
+  public long hit() {
+    return hit.longValue();
+  }
 
-    @Override
-    public long miss() {
-        return miss.longValue();
-    }
+  @Override
+  public long miss() {
+    return miss.longValue();
+  }
 
-    @Override
-    public void trackHit() {
-        hit.increment();
-    }
+  @Override
+  public void trackHit() {
+    hit.increment();
+  }
 
-    @Override
-    public void trackMiss() {
-        miss.increment();
-    }
+  @Override
+  public void trackMiss() {
+    miss.increment();
+  }
 }

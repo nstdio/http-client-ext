@@ -16,27 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.status;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static com.github.tomakehurst.wiremock.http.Fault.EMPTY_RESPONSE;
-import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static io.github.nstdio.http.ext.Assertions.await;
-import static io.github.nstdio.http.ext.Assertions.awaitFor;
-import static io.github.nstdio.http.ext.Headers.HEADER_CACHE_CONTROL;
-import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
-import static io.github.nstdio.http.ext.Headers.HEADER_EXPIRES;
-import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
-import static io.github.nstdio.http.ext.Headers.toRFC1123;
-import static io.github.nstdio.http.ext.Matchers.isCached;
-import static org.hamcrest.CoreMatchers.not;
-import static org.junit.jupiter.api.Assertions.assertNull;
-
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -49,194 +28,202 @@ import java.net.http.HttpRequest;
 import java.time.Clock;
 import java.time.Duration;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.http.Fault.EMPTY_RESPONSE;
+import static io.github.nstdio.http.ext.Assertions.*;
+import static io.github.nstdio.http.ext.Headers.*;
+import static io.github.nstdio.http.ext.Matchers.isCached;
+import static org.hamcrest.CoreMatchers.not;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 class InMemoryExtendedHttpClientIntegrationTest implements ExtendedHttpClientContract {
 
-    private final Clock defaultClock = Clock.systemUTC();
-    private ExtendedHttpClient client;
-    private String path;
-    private Cache cache;
+  private final Clock defaultClock = Clock.systemUTC();
+  private ExtendedHttpClient client;
+  private String path;
+  private Cache cache;
 
-    @BeforeEach
-    void setUp() {
-        cache = Cache.newInMemoryCacheBuilder()
-                .requestFilter(request -> true)
-                .responseFilter(response -> true)
-                .build();
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, defaultClock);
-        path = "/resource";
-    }
+  @BeforeEach
+  void setUp() {
+    cache = Cache.newInMemoryCacheBuilder()
+        .requestFilter(request -> true)
+        .responseFilter(response -> true)
+        .build();
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, defaultClock);
+    path = "/resource";
+  }
 
-    @Override
-    public String path() {
-        return path;
-    }
+  @Override
+  public String path() {
+    return path;
+  }
 
-    @Override
-    public ExtendedHttpClient client() {
-        return client;
-    }
+  @Override
+  public ExtendedHttpClient client() {
+    return client;
+  }
 
-    @Override
-    public Cache cache() {
-        return cache;
-    }
+  @Override
+  public Cache cache() {
+    return cache;
+  }
 
-    @Override
-    public ExtendedHttpClient client(Clock clock) {
-        return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
-    }
+  @Override
+  public ExtendedHttpClient client(Clock clock) {
+    return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+  }
 
-    @Test
-    void shouldRespondWithCachedWhenNotModified() throws IOException, InterruptedException {
-        //given
-        var urlPattern = urlEqualTo(path);
-        var clock = FixedRateTickClock.of(defaultClock, Duration.ofSeconds(2));
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+  @Test
+  void shouldRespondWithCachedWhenNotModified() throws IOException, InterruptedException {
+    //given
+    var urlPattern = urlEqualTo(path);
+    var clock = FixedRateTickClock.of(defaultClock, Duration.ofSeconds(2));
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
 
-        String date = toRFC1123(clock.instant().minusSeconds(2));
-        stubFor(get(urlPattern)
-                .willReturn(WireMock.ok()
-                        .withHeader(HEADER_DATE, date)
-                        .withHeader(HEADER_CACHE_CONTROL, "public,max-age=1")
-                        .withBody("Hello world!")
-                )
-        );
-        stubFor(get(urlPattern)
-                .withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date))
-                .willReturn(status(304).withHeader(HEADER_CACHE_CONTROL, "private, max-age=1"))
-        );
+    String date = toRFC1123(clock.instant().minusSeconds(2));
+    stubFor(get(urlPattern)
+        .willReturn(WireMock.ok()
+            .withHeader(HEADER_DATE, date)
+            .withHeader(HEADER_CACHE_CONTROL, "public,max-age=1")
+            .withBody("Hello world!")
+        )
+    );
+    stubFor(get(urlPattern)
+        .withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date))
+        .willReturn(status(304).withHeader(HEADER_CACHE_CONTROL, "private, max-age=1"))
+    );
 
-        var request = requestBuilder().build();
+    var request = requestBuilder().build();
 
-        //when
-        var r1 = send(request);
-        var r2 = await().until(() -> send(request), isCached());
-        var r3 = await().until(() -> send(request), isCached());
+    //when
+    var r1 = send(request);
+    var r2 = await().until(() -> send(request), isCached());
+    var r3 = await().until(() -> send(request), isCached());
 
-        //then
-        assertThat(r1)
-                .hasHeader(HEADER_CACHE_CONTROL, "public,max-age=1")
-                .isNetwork();
-        assertThat(r2)
-                .hasHeader(HEADER_CACHE_CONTROL, "private, max-age=1")
-                .isSemanticallyEqualTo(r3);
+    //then
+    assertThat(r1)
+        .hasHeader(HEADER_CACHE_CONTROL, "public,max-age=1")
+        .isNetwork();
+    assertThat(r2)
+        .hasHeader(HEADER_CACHE_CONTROL, "private, max-age=1")
+        .isSemanticallyEqualTo(r3);
 
-        verify(1, getRequestedFor(urlPattern).withoutHeader(HEADER_IF_MODIFIED_SINCE));
-        verify(2, getRequestedFor(urlPattern).withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date)));
-    }
+    verify(1, getRequestedFor(urlPattern).withoutHeader(HEADER_IF_MODIFIED_SINCE));
+    verify(2, getRequestedFor(urlPattern).withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date)));
+  }
 
-    @Test
-    void shouldRespectMaxStaleRequests() throws Exception {
-        //given
-        Duration tickDuration = Duration.ofSeconds(1);
-        var clock = FixedRateTickClock.of(defaultClock, tickDuration);
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
-        String date = toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()));
+  @Test
+  void shouldRespectMaxStaleRequests() throws Exception {
+    //given
+    Duration tickDuration = Duration.ofSeconds(1);
+    var clock = FixedRateTickClock.of(defaultClock, tickDuration);
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+    String date = toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()));
 
-        stubFor(get(urlEqualTo(path()))
-                .willReturn(WireMock.ok()
-                        .withHeader(HEADER_DATE, date)
-                        .withHeader(HEADER_CACHE_CONTROL, "max-age=1")
-                        .withBody("abc")
-                )
-        );
+    stubFor(get(urlEqualTo(path()))
+        .willReturn(WireMock.ok()
+            .withHeader(HEADER_DATE, date)
+            .withHeader(HEADER_CACHE_CONTROL, "max-age=1")
+            .withBody("abc")
+        )
+    );
 
-        //when
-        var r1 = send(requestBuilder().build());
-        var r2 = await().until(() -> send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-stale=5").build()), isCached());
-        var r3 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-stale=4").build());
+    //when
+    var r1 = send(requestBuilder().build());
+    var r2 = await().until(() -> send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-stale=5").build()), isCached());
+    var r3 = send(requestBuilder().header(HEADER_CACHE_CONTROL, "max-stale=4").build());
 
-        //then
-        assertThat(r1).isNetwork();
-        assertThat(r2).isCached();
-        assertThat(r3).isNetwork();
-    }
+    //then
+    assertThat(r1).isNetwork();
+    assertThat(r2).isCached();
+    assertThat(r3).isNetwork();
+  }
 
-    @Test
-    void shouldUseResponseTimeWhenDateHeaderMissing() throws Exception {
-        //given
-        Duration tickDuration = Duration.ofSeconds(1);
-        var clock = FixedRateTickClock.of(defaultClock, tickDuration);
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
-        String expires = toRFC1123(defaultClock.instant().plusSeconds(6));
+  @Test
+  void shouldUseResponseTimeWhenDateHeaderMissing() throws Exception {
+    //given
+    Duration tickDuration = Duration.ofSeconds(1);
+    var clock = FixedRateTickClock.of(defaultClock, tickDuration);
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+    String expires = toRFC1123(defaultClock.instant().plusSeconds(6));
 
-        stubFor(get(urlEqualTo(path()))
-                .willReturn(WireMock.ok()
-                        .withHeader(HEADER_EXPIRES, expires)
-                        .withBody("abc")
-                )
-        );
-        var request = requestBuilder().build();
+    stubFor(get(urlEqualTo(path()))
+        .willReturn(WireMock.ok()
+            .withHeader(HEADER_EXPIRES, expires)
+            .withBody("abc")
+        )
+    );
+    var request = requestBuilder().build();
 
-        //when
-        var r1 = send(request);
-        var r2 = await().until(() -> send(request), isCached());
-        var r3 = await().until(() -> send(request), not(isCached()));
+    //when
+    var r1 = send(request);
+    var r2 = await().until(() -> send(request), isCached());
+    var r3 = await().until(() -> send(request), not(isCached()));
 
-        //then
-        assertThat(r1).isNetwork();
-    }
+    //then
+    assertThat(r1).isNetwork();
+  }
 
-    @Test
-    @DisplayName("Should respond with 504 when server requires validation, but validation request fails.")
-    void shouldReturn504WhenMustRevalidate() throws Exception {
-        //given
-        Duration tickDuration = Duration.ofSeconds(1);
-        var clock = FixedRateTickClock.of(defaultClock, tickDuration);
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
-        String date = toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()));
-        var urlPattern = urlEqualTo(path());
+  @Test
+  @DisplayName("Should respond with 504 when server requires validation, but validation request fails.")
+  void shouldReturn504WhenMustRevalidate() throws Exception {
+    //given
+    Duration tickDuration = Duration.ofSeconds(1);
+    var clock = FixedRateTickClock.of(defaultClock, tickDuration);
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+    String date = toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()));
+    var urlPattern = urlEqualTo(path());
 
-        stubFor(get(urlPattern)
-                .willReturn(WireMock.ok()
-                        .withHeader(HEADER_DATE, date)
-                        .withHeader(HEADER_CACHE_CONTROL, "max-age=1,must-revalidate")
-                        .withBody("abc")
-                )
-        );
-        stubFor(get(urlPattern)
-                .withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date))
-                .willReturn(aResponse().withFault(EMPTY_RESPONSE))
-        );
-        var request = requestBuilder().build();
+    stubFor(get(urlPattern)
+        .willReturn(WireMock.ok()
+            .withHeader(HEADER_DATE, date)
+            .withHeader(HEADER_CACHE_CONTROL, "max-age=1,must-revalidate")
+            .withBody("abc")
+        )
+    );
+    stubFor(get(urlPattern)
+        .withHeader(HEADER_IF_MODIFIED_SINCE, equalTo(date))
+        .willReturn(aResponse().withFault(EMPTY_RESPONSE))
+    );
+    var request = requestBuilder().build();
 
-        //when + then
-        var r1 = send(request);
-        assertThat(r1).isNetwork().hasStatusCode(200).hasBody("abc");
+    //when + then
+    var r1 = send(request);
+    assertThat(r1).isNetwork().hasStatusCode(200).hasBody("abc");
 
-        awaitFor(() -> {
-            var r2 = send(request);
-            assertThat(r2).isNotNetwork().isNotCached().hasStatusCode(504);
-        });
-    }
+    awaitFor(() -> {
+      var r2 = send(request);
+      assertThat(r2).isNotNetwork().isNotCached().hasStatusCode(504);
+    });
+  }
 
-    @Test
-    void shouldNotCacheWhenFiltered() throws Exception {
-        //given
-        URI cacheableUri = ExtendedHttpClientContract.resolve(path());
-        URI notCacheableUri = cacheableUri.resolve("/no-cache");
+  @Test
+  void shouldNotCacheWhenFiltered() throws Exception {
+    //given
+    URI cacheableUri = ExtendedHttpClientContract.resolve(path());
+    URI notCacheableUri = cacheableUri.resolve("/no-cache");
 
-        cache = Cache.newInMemoryCacheBuilder()
-                .requestFilter(r -> r.uri().equals(cacheableUri))
-                .build();
-        client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock());
+    cache = Cache.newInMemoryCacheBuilder()
+        .requestFilter(r -> r.uri().equals(cacheableUri))
+        .build();
+    client = new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock());
 
-        stubFor(get(urlEqualTo(notCacheableUri.getPath()))
-                .willReturn(WireMock.ok()
-                        .withHeader(HEADER_CACHE_CONTROL, "max-age=512")
-                        .withBody("abc")
-                )
-        );
-        HttpRequest request = HttpRequest.newBuilder().uri(notCacheableUri).build();
+    stubFor(get(urlEqualTo(notCacheableUri.getPath()))
+        .willReturn(WireMock.ok()
+            .withHeader(HEADER_CACHE_CONTROL, "max-age=512")
+            .withBody("abc")
+        )
+    );
+    HttpRequest request = HttpRequest.newBuilder().uri(notCacheableUri).build();
 
-        //when
-        var r1 = send(request);
-        var r2 = send(request);
+    //when
+    var r1 = send(request);
+    var r2 = send(request);
 
-        //then
-        assertThat(r1).isNetwork();
-        assertThat(r2).isNetwork();
+    //then
+    assertThat(r1).isNetwork();
+    assertThat(r2).isNetwork();
 
-        assertNull(cache.get(request));
-    }
+    assertNull(cache.get(request));
+  }
 }

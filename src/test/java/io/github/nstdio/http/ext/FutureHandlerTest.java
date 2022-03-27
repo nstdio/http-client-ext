@@ -16,35 +16,35 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThatIOException;
-
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.function.UnaryOperator;
 
+import static org.assertj.core.api.Assertions.assertThatIOException;
+
 class FutureHandlerTest {
 
-    @Test
-    void shouldThrowIfThrowableNotNull() {
-        //given
-        UnaryOperator<HttpResponse<Object>> op = UnaryOperator.identity();
-        FutureHandler<Object> handler = FutureHandler.of(op);
+  @Test
+  void shouldThrowIfThrowableNotNull() {
+    //given
+    UnaryOperator<HttpResponse<Object>> op = UnaryOperator.identity();
+    FutureHandler<Object> handler = FutureHandler.of(op);
 
-        //when + then
-        assertThatIOException()
-                .isThrownBy(() -> handler.apply(null, new IOException()));
-    }
+    //when + then
+    assertThatIOException()
+        .isThrownBy(() -> handler.apply(null, new IOException()));
+  }
 
-    @Test
-    void shouldProperlyChain() {
-        //given
-        FutureHandler<HttpResponse<Object>> handler = (r, t) -> r;
-        FutureHandler<HttpResponse<Object>> other = FutureHandler.of(UnaryOperator.identity());
+  @Test
+  void shouldProperlyChain() {
+    //given
+    FutureHandler<HttpResponse<Object>> handler = (r, t) -> r;
+    FutureHandler<HttpResponse<Object>> other = FutureHandler.of(UnaryOperator.identity());
 
-        //when + then
-        assertThatIOException()
-                .isThrownBy(() -> handler.andThen(other).apply(null, new IOException()));
-    }
+    //when + then
+    assertThatIOException()
+        .isThrownBy(() -> handler.andThen(other).apply(null, new IOException()));
+  }
 }

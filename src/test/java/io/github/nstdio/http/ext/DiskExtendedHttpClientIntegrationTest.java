@@ -26,39 +26,39 @@ import java.nio.file.Files;
 import java.time.Clock;
 
 class DiskExtendedHttpClientIntegrationTest implements ExtendedHttpClientContract {
-    private final HttpClient delegate = HttpClient.newHttpClient();
-    private File cacheDir;
-    private ExtendedHttpClient client;
-    private DiskCache cache;
+  private final HttpClient delegate = HttpClient.newHttpClient();
+  private File cacheDir;
+  private ExtendedHttpClient client;
+  private DiskCache cache;
 
-    @BeforeEach
-    void setUp() throws IOException {
-        cacheDir = Files.createTempDirectory("diskcache").toFile();
-        cacheDir.deleteOnExit();
+  @BeforeEach
+  void setUp() throws IOException {
+    cacheDir = Files.createTempDirectory("diskcache").toFile();
+    cacheDir.deleteOnExit();
 
-        cache = new DiskCache(cacheDir.toPath());
-        client = new ExtendedHttpClient(delegate, cache, Clock.systemUTC());
-    }
+    cache = new DiskCache(cacheDir.toPath());
+    client = new ExtendedHttpClient(delegate, cache, Clock.systemUTC());
+  }
 
-    @AfterEach
-    void tearDown() {
-        cache.evictAll();
+  @AfterEach
+  void tearDown() {
+    cache.evictAll();
 
-        for (File file : cacheDir.listFiles()) file.delete();
-    }
+    for (File file : cacheDir.listFiles()) file.delete();
+  }
 
-    @Override
-    public ExtendedHttpClient client() {
-        return client;
-    }
+  @Override
+  public ExtendedHttpClient client() {
+    return client;
+  }
 
-    @Override
-    public Cache cache() {
-        return cache;
-    }
+  @Override
+  public Cache cache() {
+    return cache;
+  }
 
-    @Override
-    public ExtendedHttpClient client(Clock clock) {
-        return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
-    }
+  @Override
+  public ExtendedHttpClient client(Clock clock) {
+    return new ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock);
+  }
 }

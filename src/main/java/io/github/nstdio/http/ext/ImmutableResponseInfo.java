@@ -26,31 +26,32 @@ import java.net.http.HttpResponse.ResponseInfo;
 @Builder(builderClassName = "ResponseInfoBuilder")
 @RequiredArgsConstructor
 class ImmutableResponseInfo implements ResponseInfo {
-    private final int statusCode;
-    private final HttpHeaders headers;
-    private final Version version;
+  private final int statusCode;
+  private final HttpHeaders headers;
+  private final Version version;
 
-    static ResponseInfoBuilder toBuilder(ResponseInfo info) {
-        return builder()
-                .version(info.version())
-                .headers(info.headers())
-                .statusCode(info.statusCode());
-    }
+  static ResponseInfoBuilder toBuilder(ResponseInfo info) {
+    return builder()
+        .version(info.version())
+        .headers(info.headers())
+        .statusCode(info.statusCode());
+  }
 
-    @Override
-    public int statusCode() {
-        return statusCode;
-    }
+  @Override
+  public int statusCode() {
+    return statusCode;
+  }
 
-    @Override
-    public HttpHeaders headers() {
-        return headers;
-    }
+  @Override
+  public HttpHeaders headers() {
+    return headers;
+  }
 
-    @Override
-    public Version version() {
-        return version;
-    }
+  @Override
+  public Version version() {
+    return version;
+  }
 
-    static class ResponseInfoBuilder {}
+  static class ResponseInfoBuilder {
+  }
 }

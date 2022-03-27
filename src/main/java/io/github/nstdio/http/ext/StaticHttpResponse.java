@@ -25,121 +25,121 @@ import java.net.http.HttpResponse;
 import java.util.Optional;
 
 class StaticHttpResponse<T> implements HttpResponse<T> {
-    private final int statusCode;
-    private final HttpRequest request;
-    private final HttpHeaders headers;
-    private final Optional<SSLSession> sslSession;
-    private final URI uri;
-    private final HttpClient.Version version;
-    private final T body;
+  private final int statusCode;
+  private final HttpRequest request;
+  private final HttpHeaders headers;
+  private final Optional<SSLSession> sslSession;
+  private final URI uri;
+  private final HttpClient.Version version;
+  private final T body;
 
-    private StaticHttpResponse(int statusCode, HttpRequest request, HttpHeaders headers, SSLSession sslSession, URI uri, HttpClient.Version version, T body) {
-        this.statusCode = statusCode;
-        this.request = request;
-        this.headers = headers;
-        this.sslSession = Optional.ofNullable(sslSession);
-        this.uri = uri;
-        this.version = version;
-        this.body = body;
+  private StaticHttpResponse(int statusCode, HttpRequest request, HttpHeaders headers, SSLSession sslSession, URI uri, HttpClient.Version version, T body) {
+    this.statusCode = statusCode;
+    this.request = request;
+    this.headers = headers;
+    this.sslSession = Optional.ofNullable(sslSession);
+    this.uri = uri;
+    this.version = version;
+    this.body = body;
+  }
+
+  static <T> StaticHttpResponseBuilder<T> builder() {
+    return new StaticHttpResponseBuilder<>();
+  }
+
+  @Override
+  public int statusCode() {
+    return statusCode;
+  }
+
+  @Override
+  public HttpRequest request() {
+    return request;
+  }
+
+  @Override
+  public Optional<HttpResponse<T>> previousResponse() {
+    return Optional.empty();
+  }
+
+  @Override
+  public HttpHeaders headers() {
+    return headers;
+  }
+
+  @Override
+  public T body() {
+    return body;
+  }
+
+  @Override
+  public Optional<SSLSession> sslSession() {
+    return sslSession;
+  }
+
+  @Override
+  public URI uri() {
+    return uri;
+  }
+
+  @Override
+  public HttpClient.Version version() {
+    return version;
+  }
+
+  static class StaticHttpResponseBuilder<T> {
+    private int statusCode;
+    private HttpRequest request;
+    private HttpHeaders headers;
+    private SSLSession sslSession;
+    private URI uri;
+    private HttpClient.Version version;
+    private T body;
+
+    StaticHttpResponseBuilder() {
     }
 
-    static <T> StaticHttpResponseBuilder<T> builder() {
-        return new StaticHttpResponseBuilder<>();
+    StaticHttpResponseBuilder<T> statusCode(int statusCode) {
+      this.statusCode = statusCode;
+      return this;
     }
 
-    @Override
-    public int statusCode() {
-        return statusCode;
+    StaticHttpResponseBuilder<T> request(HttpRequest request) {
+      this.request = request;
+      return this;
     }
 
-    @Override
-    public HttpRequest request() {
-        return request;
+    StaticHttpResponseBuilder<T> headers(HttpHeaders headers) {
+      this.headers = headers;
+      return this;
     }
 
-    @Override
-    public Optional<HttpResponse<T>> previousResponse() {
-        return Optional.empty();
+    StaticHttpResponseBuilder<T> sslSession(SSLSession sslSession) {
+      this.sslSession = sslSession;
+      return this;
     }
 
-    @Override
-    public HttpHeaders headers() {
-        return headers;
+    StaticHttpResponseBuilder<T> uri(URI uri) {
+      this.uri = uri;
+      return this;
     }
 
-    @Override
-    public T body() {
-        return body;
+    StaticHttpResponseBuilder<T> version(HttpClient.Version version) {
+      this.version = version;
+      return this;
     }
 
-    @Override
-    public Optional<SSLSession> sslSession() {
-        return sslSession;
+    StaticHttpResponseBuilder<T> body(T body) {
+      this.body = body;
+      return this;
     }
 
-    @Override
-    public URI uri() {
-        return uri;
+    StaticHttpResponse<T> build() {
+      return new StaticHttpResponse<>(statusCode, request, headers, sslSession, uri, version, body);
     }
 
-    @Override
-    public HttpClient.Version version() {
-        return version;
+    public String toString() {
+      return "StaticHttpResponse.StaticHttpResponseBuilder(statusCode=" + this.statusCode + ", request=" + this.request + ", headers=" + this.headers + ", sslSession=" + this.sslSession + ", uri=" + this.uri + ", version=" + this.version + ", body=" + this.body + ")";
     }
-
-    static class StaticHttpResponseBuilder<T> {
-        private int statusCode;
-        private HttpRequest request;
-        private HttpHeaders headers;
-        private SSLSession sslSession;
-        private URI uri;
-        private HttpClient.Version version;
-        private T body;
-
-        StaticHttpResponseBuilder() {
-        }
-
-        StaticHttpResponseBuilder<T> statusCode(int statusCode) {
-            this.statusCode = statusCode;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> request(HttpRequest request) {
-            this.request = request;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> headers(HttpHeaders headers) {
-            this.headers = headers;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> sslSession(SSLSession sslSession) {
-            this.sslSession = sslSession;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> uri(URI uri) {
-            this.uri = uri;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> version(HttpClient.Version version) {
-            this.version = version;
-            return this;
-        }
-
-        StaticHttpResponseBuilder<T> body(T body) {
-            this.body = body;
-            return this;
-        }
-
-        StaticHttpResponse<T> build() {
-            return new StaticHttpResponse<>(statusCode, request, headers, sslSession, uri, version, body);
-        }
-
-        public String toString() {
-            return "StaticHttpResponse.StaticHttpResponseBuilder(statusCode=" + this.statusCode + ", request=" + this.request + ", headers=" + this.headers + ", sslSession=" + this.sslSession + ", uri=" + this.uri + ", version=" + this.version + ", body=" + this.body + ")";
-        }
-    }
+  }
 }

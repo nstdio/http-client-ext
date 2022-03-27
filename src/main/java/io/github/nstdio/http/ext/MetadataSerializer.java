@@ -19,7 +19,7 @@ package io.github.nstdio.http.ext;
 import java.nio.file.Path;
 
 interface MetadataSerializer {
-    void write(CacheEntryMetadata metadata, Path path);
+  void write(CacheEntryMetadata metadata, Path path);
 
-    CacheEntryMetadata read(Path path);
+  CacheEntryMetadata read(Path path);
 }

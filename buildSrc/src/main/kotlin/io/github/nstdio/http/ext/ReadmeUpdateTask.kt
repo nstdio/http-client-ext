@@ -43,15 +43,13 @@ abstract class ReadmeUpdateTask : DefaultTask() {
     }
 
     private fun replaceGradle(text: StringBuilder, version: String) {
-        val gradlePattern = Pattern.compile("implementation 'io\\.github\\.nstdio:http-client-ext:(.+)'");
+        val gradlePattern = Pattern.compile("implementation 'io\\.github\\.nstdio:http-client-ext:(.+)'")
         replacePattern(gradlePattern, text, version)
     }
 
     private fun replacePattern(pattern: Pattern, text: StringBuilder, version: String) {
         val matcher = pattern.matcher(text)
-        val find = matcher.find()
-        logger.lifecycle("Pattern: {}, Matches: {}", pattern.pattern(), find)
-        if (find) {
+        if (matcher.find()) {
             val start = matcher.start(1)
             val end = matcher.end(1)
 

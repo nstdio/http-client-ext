@@ -27,73 +27,73 @@ import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.TimeUnit;
 
 class PlainSubscription implements Flow.Subscription {
-    private final Optional<ExecutorService> executor;
-    private final Subscriber<List<ByteBuffer>> subscriber;
-    private final List<ByteBuffer> buffers;
-    private final Iterator<ByteBuffer> it;
-    private boolean completed;
+  private final Optional<ExecutorService> executor;
+  private final Subscriber<List<ByteBuffer>> subscriber;
+  private final List<ByteBuffer> buffers;
+  private final Iterator<ByteBuffer> it;
+  private boolean completed;
 
-    PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers) {
-        this(subscriber, buffers, true);
+  PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers) {
+    this(subscriber, buffers, true);
+  }
+
+  PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers, boolean async) {
+    this.subscriber = subscriber;
+    this.buffers = buffers;
+    this.it = buffers.iterator();
+    this.executor = async ? Optional.of(Executors.newSingleThreadExecutor()) : Optional.empty();
+  }
+
+  @Override
+  public void request(long n) {
+    if (completed)
+      return;
+
+    request0(n);
+  }
+
+  private void request0(long n) {
+    while (n != 0 && it.hasNext()) {
+      List<ByteBuffer> next = List.of(it.next());
+      execute(() -> subscriber.onNext(next));
+      n--;
     }
 
-    PlainSubscription(Subscriber<List<ByteBuffer>> subscriber, List<ByteBuffer> buffers, boolean async) {
-        this.subscriber = subscriber;
-        this.buffers = buffers;
-        this.it = buffers.iterator();
-        this.executor = async ? Optional.of(Executors.newSingleThreadExecutor()) : Optional.empty();
+    if (!it.hasNext()) {
+      completed = true;
+      clean();
+
+      subscriber.onComplete();
+    }
+  }
+
+  private void execute(Runnable cmd) {
+    executor.ifPresentOrElse(service -> service.execute(cmd), cmd);
+  }
+
+  @Override
+  public void cancel() {
+    if (completed) {
+      return;
     }
 
-    @Override
-    public void request(long n) {
-        if (completed)
-            return;
+    completed = true;
+    request0(Integer.MAX_VALUE);
 
-        request0(n);
-    }
+    clean();
+  }
 
-    private void request0(long n) {
-        while (n != 0 && it.hasNext()) {
-            List<ByteBuffer> next = List.of(it.next());
-            execute(() -> subscriber.onNext(next));
-            n--;
-        }
+  private void clean() {
+    buffers.clear();
 
-        if (!it.hasNext()) {
-            completed = true;
-            clean();
-
-            subscriber.onComplete();
-        }
-    }
-
-    private void execute(Runnable cmd) {
-        executor.ifPresentOrElse(service -> service.execute(cmd), cmd);
-    }
-
-    @Override
-    public void cancel() {
-        if (completed) {
-            return;
-        }
-
-        completed = true;
-        request0(Integer.MAX_VALUE);
-
-        clean();
-    }
-
-    private void clean() {
-        buffers.clear();
-
-        executor.ifPresent(service -> {
-            service.shutdown();
-            try {
-                //noinspection ResultOfMethodCallIgnored
-                service.awaitTermination(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                // noop
-            }
-        });
-    }
+    executor.ifPresent(service -> {
+      service.shutdown();
+      try {
+        //noinspection ResultOfMethodCallIgnored
+        service.awaitTermination(5, TimeUnit.SECONDS);
+      } catch (InterruptedException e) {
+        // noop
+      }
+    });
+  }
 }

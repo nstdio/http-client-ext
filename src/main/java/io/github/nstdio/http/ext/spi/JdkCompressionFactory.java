@@ -23,23 +23,23 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
 public class JdkCompressionFactory implements CompressionFactory {
-    private final List<String> supportedTypes = List.of("gzip", "x-gzip", "deflate");
+  private final List<String> supportedTypes = List.of("gzip", "x-gzip", "deflate");
 
-    @Override
-    public List<String> supported() {
-        return supportedTypes;
-    }
+  @Override
+  public List<String> supported() {
+    return supportedTypes;
+  }
 
-    @Override
-    public InputStream decompressing(InputStream in, String type) throws IOException {
-        switch (type) {
-            case "x-gzip":
-            case "gzip":
-                return new GZIPInputStream(in);
-            case "deflate":
-                return new InflaterInputStream(in);
-            default:
-                throw new IllegalArgumentException("Unsupported type:" + type);
-        }
+  @Override
+  public InputStream decompressing(InputStream in, String type) throws IOException {
+    switch (type) {
+      case "x-gzip":
+      case "gzip":
+        return new GZIPInputStream(in);
+      case "deflate":
+        return new InflaterInputStream(in);
+      default:
+        throw new IllegalArgumentException("Unsupported type:" + type);
     }
+  }
 }

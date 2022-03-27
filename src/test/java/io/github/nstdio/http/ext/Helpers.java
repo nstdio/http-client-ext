@@ -16,12 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Map.entry;
-import static java.util.stream.Collectors.collectingAndThen;
-import static java.util.stream.Collectors.toMap;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 
@@ -34,68 +28,74 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Map.entry;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toMap;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 class Helpers {
-    private Helpers() {
+  private Helpers() {
+  }
+
+  static HttpResponse.ResponseInfo responseInfo(Map<String, String> headers) {
+    return new HttpResponse.ResponseInfo() {
+      @Override
+      public int statusCode() {
+        return 200;
+      }
+
+      @Override
+      public HttpHeaders headers() {
+        return headers.entrySet()
+            .stream()
+            .map(e -> entry(e.getKey(), List.of(e.getValue())))
+            .collect(collectingAndThen(toMap(Map.Entry::getKey, Map.Entry::getValue), map -> HttpHeaders.of(map, (s, s2) -> true)));
+      }
+
+      @Override
+      public HttpClient.Version version() {
+        return HttpClient.Version.HTTP_1_1;
+      }
+    };
+  }
+
+  static List<ByteBuffer> toBuffers(byte[] bytes, boolean checkResult) {
+    List<ByteBuffer> ret = new ArrayList<>();
+    int start = 0;
+    int stop = bytes.length + 1;
+    int end = Math.max(1, RandomUtils.nextInt(start, stop));
+
+    while (end != stop) {
+      byte[] copy = Arrays.copyOfRange(bytes, start, end);
+
+      ret.add(ByteBuffer.wrap(copy));
+
+      start = end;
+      end = RandomUtils.nextInt(start + 1, stop);
     }
 
-    static HttpResponse.ResponseInfo responseInfo(Map<String, String> headers) {
-        return new HttpResponse.ResponseInfo() {
-            @Override
-            public int statusCode() {
-                return 200;
-            }
-
-            @Override
-            public HttpHeaders headers() {
-                return headers.entrySet()
-                        .stream()
-                        .map(e -> entry(e.getKey(), List.of(e.getValue())))
-                        .collect(collectingAndThen(toMap(Map.Entry::getKey, Map.Entry::getValue), map -> HttpHeaders.of(map, (s, s2) -> true)));
-            }
-
-            @Override
-            public HttpClient.Version version() {
-                return HttpClient.Version.HTTP_1_1;
-            }
-        };
-    }
-
-    static List<ByteBuffer> toBuffers(byte[] bytes, boolean checkResult) {
-        List<ByteBuffer> ret = new ArrayList<>();
-        int start = 0;
-        int stop = bytes.length + 1;
-        int end = Math.max(1, RandomUtils.nextInt(start, stop));
-
-        while (end != stop) {
-            byte[] copy = Arrays.copyOfRange(bytes, start, end);
-
-            ret.add(ByteBuffer.wrap(copy));
-
-            start = end;
-            end = RandomUtils.nextInt(start + 1, stop);
+    if (checkResult) {
+      int i = 0;
+      for (ByteBuffer b : ret) {
+        while (b.hasRemaining()) {
+          assertEquals(bytes[i++], b.get());
         }
 
-        if (checkResult) {
-            int i = 0;
-            for (ByteBuffer b : ret) {
-                while (b.hasRemaining()) {
-                    assertEquals(bytes[i++], b.get());
-                }
-
-                b.flip();
-            }
-        }
-
-        return ret;
+        b.flip();
+      }
     }
 
-    static List<ByteBuffer> toBuffers(String in) {
-        return toBuffers(in.getBytes(UTF_8), false);
-    }
+    return ret;
+  }
 
-    static String randomString(int min, int max) {
-        int count = RandomUtils.nextInt(min, max + 1);
+  static List<ByteBuffer> toBuffers(String in) {
+    return toBuffers(in.getBytes(UTF_8), false);
+  }
 
-        return RandomStringUtils.randomAlphabetic(count);
-    }
+  static String randomString(int min, int max) {
+    int count = RandomUtils.nextInt(min, max + 1);
+
+    return RandomStringUtils.randomAlphabetic(count);
+  }
 }

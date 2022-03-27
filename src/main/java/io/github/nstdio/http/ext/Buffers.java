@@ -22,31 +22,31 @@ import java.util.Collections;
 import java.util.List;
 
 class Buffers {
-    private Buffers() {
-    }
+  private Buffers() {
+  }
 
-    static ByteBuffer duplicate(ByteBuffer buf) {
-        var dup = buf.asReadOnlyBuffer();
-        return dup.hasRemaining() ? dup : dup.flip();
-    }
+  static ByteBuffer duplicate(ByteBuffer buf) {
+    var dup = buf.asReadOnlyBuffer();
+    return dup.hasRemaining() ? dup : dup.flip();
+  }
 
-    static List<ByteBuffer> duplicate(List<ByteBuffer> item) {
-        int s = item.size();
-        switch (s) {
-            case 0:
-                return Collections.emptyList();
-            case 1:
-                return List.of(duplicate(item.get(0)));
-            case 2:
-                return List.of(duplicate(item.get(0)), duplicate(item.get(1)));
-            default: {
-                List<ByteBuffer> list = new ArrayList<>(s);
-                for (ByteBuffer byteBuffer : item) {
-                    list.add(duplicate(byteBuffer));
-                }
-
-                return Collections.unmodifiableList(list);
-            }
+  static List<ByteBuffer> duplicate(List<ByteBuffer> item) {
+    int s = item.size();
+    switch (s) {
+      case 0:
+        return Collections.emptyList();
+      case 1:
+        return List.of(duplicate(item.get(0)));
+      case 2:
+        return List.of(duplicate(item.get(0)), duplicate(item.get(1)));
+      default: {
+        List<ByteBuffer> list = new ArrayList<>(s);
+        for (ByteBuffer byteBuffer : item) {
+          list.add(duplicate(byteBuffer));
         }
+
+        return Collections.unmodifiableList(list);
+      }
     }
+  }
 }

@@ -16,94 +16,94 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.InMemoryCache.indexOf;
-
 import java.net.URI;
 import java.net.http.HttpRequest;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
+import static io.github.nstdio.http.ext.InMemoryCache.indexOf;
+
 abstract class SizeConstrainedCache implements Cache {
-    private final LruMultimap<URI, CacheEntry> cache;
-    private final CacheStats stats = new DefaultCacheStats();
-    private final long maxBytes;
-    private long size;
+  private final LruMultimap<URI, CacheEntry> cache;
+  private final CacheStats stats = new DefaultCacheStats();
+  private final long maxBytes;
+  private long size;
 
-    SizeConstrainedCache(int maxItems, long maxBytes, Consumer<CacheEntry> evictionListener) {
-        Consumer<CacheEntry> reduceSize = entry -> size -= entry.bodySize();
-        var listener = evictionListener == null ? reduceSize : evictionListener.andThen(reduceSize);
+  SizeConstrainedCache(int maxItems, long maxBytes, Consumer<CacheEntry> evictionListener) {
+    Consumer<CacheEntry> reduceSize = entry -> size -= entry.bodySize();
+    var listener = evictionListener == null ? reduceSize : evictionListener.andThen(reduceSize);
 
-        this.cache = new LruMultimap<>(maxItems, listener);
-        this.maxBytes = maxBytes;
+    this.cache = new LruMultimap<>(maxItems, listener);
+    this.maxBytes = maxBytes;
+  }
+
+  @Override
+  public CacheEntry get(HttpRequest request) {
+    return cache.getSingle(request.uri(), idxFn(request));
+  }
+
+  @Override
+  public void put(HttpRequest request, CacheEntry e) {
+    if (isUnbounded()) {
+      putInternal(request, e);
+    } else if (e.bodySize() <= maxBytes) {
+      while (needSpace(e)) cache.evictEldest();
+
+      putInternal(request, e);
     }
+  }
 
-    @Override
-    public CacheEntry get(HttpRequest request) {
-        return cache.getSingle(request.uri(), idxFn(request));
-    }
+  @Override
+  public void evict(HttpRequest request) {
+    cache.remove(request.uri(), idxFn(request));
+  }
 
-    @Override
-    public void put(HttpRequest request, CacheEntry e) {
-        if (isUnbounded()) {
-            putInternal(request, e);
-        } else if (e.bodySize() <= maxBytes) {
-            while (needSpace(e)) cache.evictEldest();
+  @Override
+  public void evictAll(HttpRequest r) {
+    cache.evictAll(r.uri());
+  }
 
-            putInternal(request, e);
-        }
-    }
+  @Override
+  public void evictAll() {
+    cache.clear();
+  }
 
-    @Override
-    public void evict(HttpRequest request) {
-        cache.remove(request.uri(), idxFn(request));
-    }
+  @Override
+  public CacheStats stats() {
+    return stats;
+  }
 
-    @Override
-    public void evictAll(HttpRequest r) {
-        cache.evictAll(r.uri());
-    }
+  private void putInternal(HttpRequest k, CacheEntry e) {
+    size += e.bodySize();
+    cache.putSingle(k.uri(), e, idxFn(k));
+  }
 
-    @Override
-    public void evictAll() {
-        cache.clear();
-    }
+  private boolean needSpace(CacheEntry e) {
+    return size + e.bodySize() > maxBytes;
+  }
 
-    @Override
-    public CacheStats stats() {
-        return stats;
-    }
+  private boolean isUnbounded() {
+    return maxBytes <= 0;
+  }
 
-    private void putInternal(HttpRequest k, CacheEntry e) {
-        size += e.bodySize();
-        cache.putSingle(k.uri(), e, idxFn(k));
-    }
+  private ToIntFunction<List<CacheEntry>> idxFn(HttpRequest r) {
+    return l -> indexOf(r, l);
+  }
 
-    private boolean needSpace(CacheEntry e) {
-        return size + e.bodySize() > maxBytes;
-    }
+  void addEvictionListener(Consumer<CacheEntry> l) {
+    cache.addEvictionListener(l);
+  }
 
-    private boolean isUnbounded() {
-        return maxBytes <= 0;
-    }
+  int multimapSize() {
+    return cache.size();
+  }
 
-    private ToIntFunction<List<CacheEntry>> idxFn(HttpRequest r) {
-        return l -> indexOf(r, l);
-    }
+  int mapSize() {
+    return cache.mapSize();
+  }
 
-    void addEvictionListener(Consumer<CacheEntry> l) {
-        cache.addEvictionListener(l);
-    }
-
-    int multimapSize() {
-        return cache.size();
-    }
-
-    int mapSize() {
-        return cache.mapSize();
-    }
-
-    long bytes() {
-        return size;
-    }
+  long bytes() {
+    return size;
+  }
 }

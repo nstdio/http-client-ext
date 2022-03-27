@@ -16,72 +16,68 @@
 
 package io.github.nstdio.http.ext;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
 import org.junit.jupiter.api.Test;
 
 import java.net.http.HttpResponse.BodySubscriber;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.*;
+
 class ByteArraySubscriptionTest {
 
-    @Test
-    void shouldInvokeOnCompleteAfterFirstRequest() {
-        //given
-        byte[] bytes = Helpers.randomString(10, 20).getBytes(UTF_8);
+  @Test
+  void shouldInvokeOnCompleteAfterFirstRequest() {
+    //given
+    byte[] bytes = Helpers.randomString(10, 20).getBytes(UTF_8);
 
-        @SuppressWarnings("unchecked")
-        var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
-        var subscription = new ByteArraySubscription(mockSubscriber, bytes);
+    @SuppressWarnings("unchecked")
+    var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
+    var subscription = new ByteArraySubscription(mockSubscriber, bytes);
 
-        //when
-        for (int i = 0; i < 64; i++) {
-            subscription.request(1);
-        }
-
-        //then
-        verify(mockSubscriber).onNext(anyList());
-        verify(mockSubscriber).onComplete();
-        verifyNoMoreInteractions(mockSubscriber);
+    //when
+    for (int i = 0; i < 64; i++) {
+      subscription.request(1);
     }
 
-    @Test
-    void shouldReportErrorWhenRequestedIsNegative() {
-        //given
-        byte[] bytes = Helpers.randomString(10, 20).getBytes(UTF_8);
+    //then
+    verify(mockSubscriber).onNext(anyList());
+    verify(mockSubscriber).onComplete();
+    verifyNoMoreInteractions(mockSubscriber);
+  }
 
-        @SuppressWarnings("unchecked")
-        var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
-        var subscription = new ByteArraySubscription(mockSubscriber, bytes);
+  @Test
+  void shouldReportErrorWhenRequestedIsNegative() {
+    //given
+    byte[] bytes = Helpers.randomString(10, 20).getBytes(UTF_8);
 
-        //when
-        subscription.request(0);
-        subscription.request(-1);
+    @SuppressWarnings("unchecked")
+    var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
+    var subscription = new ByteArraySubscription(mockSubscriber, bytes);
 
-        //then
-        verify(mockSubscriber, times(2)).onError(any(IllegalArgumentException.class));
+    //when
+    subscription.request(0);
+    subscription.request(-1);
+
+    //then
+    verify(mockSubscriber, times(2)).onError(any(IllegalArgumentException.class));
+  }
+
+  @Test
+  void shouldNotInvokeSubscriberWhenCanceled() {
+    //given
+    @SuppressWarnings("unchecked")
+    var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
+    var subscription = new ByteArraySubscription(mockSubscriber, new byte[0]);
+
+    //when
+    subscription.cancel();
+    for (int i = 0; i < 64; i++) {
+      subscription.request(1);
     }
 
-    @Test
-    void shouldNotInvokeSubscriberWhenCanceled() {
-        //given
-        @SuppressWarnings("unchecked")
-        var mockSubscriber = (BodySubscriber<byte[]>) mock(BodySubscriber.class);
-        var subscription = new ByteArraySubscription(mockSubscriber, new byte[0]);
-
-        //when
-        subscription.cancel();
-        for (int i = 0; i < 64; i++) {
-            subscription.request(1);
-        }
-
-        //then
-        verifyNoInteractions(mockSubscriber);
-    }
+    //then
+    verifyNoInteractions(mockSubscriber);
+  }
 }

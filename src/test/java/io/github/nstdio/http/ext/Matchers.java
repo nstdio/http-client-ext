@@ -23,20 +23,20 @@ import org.hamcrest.Matcher;
 import java.net.http.HttpResponse;
 
 public class Matchers {
-    private Matchers() {
-    }
+  private Matchers() {
+  }
 
-    public static <T> Matcher<HttpResponse<T>> isCached() {
-        return new BaseMatcher<>() {
-            @Override
-            public boolean matches(Object actual) {
-                return actual instanceof CachedHttpResponse;
-            }
+  public static <T> Matcher<HttpResponse<T>> isCached() {
+    return new BaseMatcher<>() {
+      @Override
+      public boolean matches(Object actual) {
+        return actual instanceof CachedHttpResponse;
+      }
 
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("a cached response");
-            }
-        };
-    }
+      @Override
+      public void describeTo(Description description) {
+        description.appendText("a cached response");
+      }
+    };
+  }
 }

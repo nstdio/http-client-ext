@@ -20,21 +20,21 @@ import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
 import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
 
 module http.client.ext {
-    uses CompressionFactory;
+  uses CompressionFactory;
 
-    requires transitive java.net.http;
+  requires transitive java.net.http;
 
-    requires transitive com.fasterxml.jackson.core;
-    requires transitive com.fasterxml.jackson.databind;
+  requires transitive com.fasterxml.jackson.core;
+  requires transitive com.fasterxml.jackson.databind;
 
-    requires static lombok;
-    requires static com.aayushatharva.brotli4j;
-    requires static org.brotli.dec;
+  requires static lombok;
+  requires static com.aayushatharva.brotli4j;
+  requires static org.brotli.dec;
 
-    exports io.github.nstdio.http.ext;
-    exports io.github.nstdio.http.ext.spi;
+  exports io.github.nstdio.http.ext;
+  exports io.github.nstdio.http.ext.spi;
 
-    provides CompressionFactory with JdkCompressionFactory,
-            IdentityCompressionFactory,
-            OptionalBrotliCompressionFactory;
+  provides CompressionFactory with JdkCompressionFactory,
+      IdentityCompressionFactory,
+      OptionalBrotliCompressionFactory;
 }

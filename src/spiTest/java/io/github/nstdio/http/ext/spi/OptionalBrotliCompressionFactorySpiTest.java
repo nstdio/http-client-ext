@@ -16,21 +16,21 @@
 
 package io.github.nstdio.http.ext.spi;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class OptionalBrotliCompressionFactorySpiTest {
 
-    @Test
-    void shouldSupportSomething() {
-        //given
-        var factory = new OptionalBrotliCompressionFactory();
+  @Test
+  void shouldSupportSomething() {
+    //given
+    var factory = new OptionalBrotliCompressionFactory();
 
-        //when
-        var actual = factory.supported();
+    //when
+    var actual = factory.supported();
 
-        //then
-        assertThat(actual).isNotEmpty();
-    }
+    //then
+    assertThat(actual).isNotEmpty();
+  }
 }

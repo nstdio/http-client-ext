@@ -26,76 +26,76 @@ import java.util.function.Consumer;
 
 class InMemoryCache extends SizeConstrainedCache {
 
-    private static final Consumer<CacheEntry> EMPTY_CONSUMER = entry -> {
-    };
+  private static final Consumer<CacheEntry> EMPTY_CONSUMER = entry -> {
+  };
 
-    InMemoryCache(int maxItems, long maxBytes) {
-        super(maxItems, maxBytes, EMPTY_CONSUMER);
+  InMemoryCache(int maxItems, long maxBytes) {
+    super(maxItems, maxBytes, EMPTY_CONSUMER);
+  }
+
+  static int indexOf(HttpRequest r, List<? extends CacheEntry> es) {
+    //TODO: Check if es is RandomAccess
+    var headers = r.headers();
+
+    outer:
+    for (int i = 0; i < es.size(); i++) {
+      var cacheEntry = es.get(i);
+      var varyHeaders = cacheEntry.metadata().varyHeaders().map();
+
+      for (var entry : varyHeaders.entrySet()) {
+        if (!entry.getValue().equals(headers.allValues(entry.getKey()))) {
+          continue outer;
+        }
+      }
+
+      return i;
     }
 
-    static int indexOf(HttpRequest r, List<? extends CacheEntry> es) {
-        //TODO: Check if es is RandomAccess
-        var headers = r.headers();
+    return -1;
+  }
 
-        outer:
-        for (int i = 0; i < es.size(); i++) {
-            var cacheEntry = es.get(i);
-            var varyHeaders = cacheEntry.metadata().varyHeaders().map();
+  @Override
+  @SuppressWarnings("unchecked")
+  public Writer<byte[]> writer(CacheEntryMetadata metadata) {
+    return new Writer<>() {
+      @Override
+      public BodySubscriber<byte[]> subscriber() {
+        return BodySubscribers.ofByteArray();
+      }
 
-            for (var entry : varyHeaders.entrySet()) {
-                if (!entry.getValue().equals(headers.allValues(entry.getKey()))) {
-                    continue outer;
-                }
-            }
+      @Override
+      public Consumer<byte[]> finisher() {
+        return body -> {
+          var e = new InMemoryCacheEntry(body, metadata);
+          put(metadata.request(), e);
+        };
+      }
+    };
+  }
 
-            return i;
-        }
+  static class InMemoryCacheEntry implements CacheEntry {
+    private final byte[] body;
+    private final CacheEntryMetadata metadata;
 
-        return -1;
+    InMemoryCacheEntry(byte[] body, CacheEntryMetadata metadata) {
+      this.body = body;
+      this.metadata = metadata;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public Writer<byte[]> writer(CacheEntryMetadata metadata) {
-        return new Writer<>() {
-            @Override
-            public BodySubscriber<byte[]> subscriber() {
-                return BodySubscribers.ofByteArray();
-            }
-
-            @Override
-            public Consumer<byte[]> finisher() {
-                return body -> {
-                    var e = new InMemoryCacheEntry(body, metadata);
-                    put(metadata.request(), e);
-                };
-            }
-        };
+    public long bodySize() {
+      return body.length;
     }
 
-    static class InMemoryCacheEntry implements CacheEntry {
-        private final byte[] body;
-        private final CacheEntryMetadata metadata;
-
-        InMemoryCacheEntry(byte[] body, CacheEntryMetadata metadata) {
-            this.body = body;
-            this.metadata = metadata;
-        }
-
-        @Override
-        public long bodySize() {
-            return body.length;
-        }
-
-        @Override
-        public void subscribeTo(Flow.Subscriber<List<ByteBuffer>> sub) {
-            Flow.Subscription subscription = new ByteArraySubscription(sub, body);
-            sub.onSubscribe(subscription);
-        }
-
-        @Override
-        public CacheEntryMetadata metadata() {
-            return metadata;
-        }
+    @Override
+    public void subscribeTo(Flow.Subscriber<List<ByteBuffer>> sub) {
+      Flow.Subscription subscription = new ByteArraySubscription(sub, body);
+      sub.onSubscribe(subscription);
     }
+
+    @Override
+    public CacheEntryMetadata metadata() {
+      return metadata;
+    }
+  }
 }

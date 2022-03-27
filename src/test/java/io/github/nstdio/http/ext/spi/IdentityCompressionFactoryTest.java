@@ -16,44 +16,44 @@
 
 package io.github.nstdio.http.ext.spi;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
-
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+
 class IdentityCompressionFactoryTest {
 
-    private final IdentityCompressionFactory factory = new IdentityCompressionFactory();
+  private final IdentityCompressionFactory factory = new IdentityCompressionFactory();
 
-    @Test
-    void shouldSupportIdentityDirective() {
-        //when
-        List<String> actual = factory.supported();
+  @Test
+  void shouldSupportIdentityDirective() {
+    //when
+    List<String> actual = factory.supported();
 
-        //then
-        assertThat(actual).containsOnly("identity");
-    }
+    //then
+    assertThat(actual).containsOnly("identity");
+  }
 
-    @Test
-    void shouldReturnSameInputStream() throws IOException {
-        //given
-        InputStream inputStream = InputStream.nullInputStream();
+  @Test
+  void shouldReturnSameInputStream() throws IOException {
+    //given
+    InputStream inputStream = InputStream.nullInputStream();
 
-        //when
-        InputStream actual = factory.decompressing(inputStream, "identity");
+    //when
+    InputStream actual = factory.decompressing(inputStream, "identity");
 
-        //then
-        assertThat(actual).isSameAs(inputStream);
-    }
+    //then
+    assertThat(actual).isSameAs(inputStream);
+  }
 
-    @Test
-    void shouldThrowWhenTypeIsNotSupported() {
-        //when + then
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> factory.decompressing(InputStream.nullInputStream(), "abc"));
-    }
+  @Test
+  void shouldThrowWhenTypeIsNotSupported() {
+    //when + then
+    assertThatIllegalArgumentException()
+        .isThrownBy(() -> factory.decompressing(InputStream.nullInputStream(), "abc"));
+  }
 }

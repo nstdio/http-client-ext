@@ -27,114 +27,110 @@ import java.net.http.HttpResponse.BodyHandler;
  * Implementations of {@code BodyHandler}'s.
  */
 public final class BodyHandlers {
-    private BodyHandlers() {
-    }
+  private BodyHandlers() {
+  }
+
+  /**
+   * Wraps response body {@code InputStream} in on-the-fly decompressing {@code InputStream} in accordance with
+   * <a href="https://datatracker.ietf.org/doc/html/rfc2616#section-14.11">Content-Encoding</a> header semantics.
+   *
+   * @return The decompressing body handler.
+   */
+  public static BodyHandler<InputStream> ofDecompressing() {
+    return new DecompressingBodyHandlerBuilder().build();
+  }
+
+  public static <T> BodyHandler<T> ofDecompressing(BodyHandler<T> downstream) {
+    return new DecompressingBodyHandlerBuilder().build(downstream);
+  }
+
+  /**
+   * Creates body handler to map JSON response to {@code targetType}.
+   *
+   * @param targetType The type.
+   * @param <T>        The required type.
+   * @return The JSON body handler.
+   */
+  public static <T> BodyHandler<T> ofJson(Class<T> targetType) {
+    return responseInfo -> BodySubscribers.ofJson(targetType);
+  }
+
+  /**
+   * Creates body handler to map JSON response to {@code targetType}.
+   *
+   * @param targetType The type.
+   * @param <T>        The required type.
+   * @return The JSON body handler.
+   */
+  public static <T> BodyHandler<T> ofJson(TypeReference<T> targetType) {
+    return responseInfo -> BodySubscribers.ofJson(targetType);
+  }
+
+  /**
+   * Creates new {@code DecompressingBodyHandlerBuilder} instance.
+   *
+   * @return The builder for decompressing body handler.
+   */
+  public static DecompressingBodyHandlerBuilder decompressingBuilder() {
+    return new DecompressingBodyHandlerBuilder();
+  }
+
+  /**
+   * The builder for decompressing body handler.
+   */
+  public static final class DecompressingBodyHandlerBuilder {
+    private boolean failOnUnsupportedDirectives = true;
+    private boolean failOnUnknownDirectives = true;
 
     /**
-     * Wraps response body {@code InputStream} in on-the-fly decompressing {@code InputStream} in accordance with
-     * <a href="https://datatracker.ietf.org/doc/html/rfc2616#section-14.11">Content-Encoding</a> header semantics.
+     * Sets whether throw exception when compression directive not supported or not.
      *
-     * @return The decompressing body handler.
+     * @param failOnUnsupportedDirectives Whether throw exception when compression directive not supported or not
+     * @return this for fluent chaining.
      */
-    public static BodyHandler<InputStream> ofDecompressing() {
-        return new DecompressingBodyHandlerBuilder().build();
-    }
-
-    public static <T> BodyHandler<T> ofDecompressing(BodyHandler<T> downstream) {
-        return new DecompressingBodyHandlerBuilder().build(downstream);
+    public DecompressingBodyHandlerBuilder failOnUnsupportedDirectives(boolean failOnUnsupportedDirectives) {
+      this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
+      return this;
     }
 
     /**
-     * Creates body handler to map JSON response to {@code targetType}.
+     * Sets whether throw exception when unknown compression directive encountered or not.
      *
-     * @param targetType The type.
-     * @param <T>        The required type.
-     *
-     * @return The JSON body handler.
+     * @param failOnUnknownDirectives Whether throw exception when unknown compression directive encountered or not
+     * @return this for fluent chaining.
      */
-    public static <T> BodyHandler<T> ofJson(Class<T> targetType) {
-        return responseInfo -> BodySubscribers.ofJson(targetType);
+    public DecompressingBodyHandlerBuilder failOnUnknownDirectives(boolean failOnUnknownDirectives) {
+      this.failOnUnknownDirectives = failOnUnknownDirectives;
+      return this;
+    }
+
+    public DecompressingBodyHandlerBuilder lenient(boolean lenient) {
+      return failOnUnsupportedDirectives(!lenient)
+          .failOnUnsupportedDirectives(!lenient);
     }
 
     /**
-     * Creates body handler to map JSON response to {@code targetType}.
-     *
-     * @param targetType The type.
-     * @param <T>        The required type.
-     *
-     * @return The JSON body handler.
-     */
-    public static <T> BodyHandler<T> ofJson(TypeReference<T> targetType) {
-        return responseInfo -> BodySubscribers.ofJson(targetType);
-    }
-
-    /**
-     * Creates new {@code DecompressingBodyHandlerBuilder} instance.
+     * Creates the new decompressing body handler.
      *
      * @return The builder for decompressing body handler.
      */
-    public static DecompressingBodyHandlerBuilder decompressingBuilder() {
-        return new DecompressingBodyHandlerBuilder();
+    public BodyHandler<InputStream> build() {
+      var options = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
+      return DecompressingBodyHandler.ofDirect(options);
     }
 
     /**
-     * The builder for decompressing body handler.
+     * Creates the new decompressing body handler.
+     * <p>
+     * Please use {@link #build()} if {@code downstream} is {@link HttpResponse.BodyHandlers#ofInputStream()}.
+     *
+     * @return The builder for decompressing body handler.
      */
-    public static final class DecompressingBodyHandlerBuilder {
-        private boolean failOnUnsupportedDirectives = true;
-        private boolean failOnUnknownDirectives = true;
+    public <T> BodyHandler<T> build(BodyHandler<T> downstream) {
+      var config = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
 
-        /**
-         * Sets whether throw exception when compression directive not supported or not.
-         *
-         * @param failOnUnsupportedDirectives Whether throw exception when compression directive not supported or not
-         *
-         * @return this for fluent chaining.
-         */
-        public DecompressingBodyHandlerBuilder failOnUnsupportedDirectives(boolean failOnUnsupportedDirectives) {
-            this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
-            return this;
-        }
-
-        /**
-         * Sets whether throw exception when unknown compression directive encountered or not.
-         *
-         * @param failOnUnknownDirectives Whether throw exception when unknown compression directive encountered or not
-         *
-         * @return this for fluent chaining.
-         */
-        public DecompressingBodyHandlerBuilder failOnUnknownDirectives(boolean failOnUnknownDirectives) {
-            this.failOnUnknownDirectives = failOnUnknownDirectives;
-            return this;
-        }
-
-        public DecompressingBodyHandlerBuilder lenient(boolean lenient) {
-            return failOnUnsupportedDirectives(!lenient)
-                    .failOnUnsupportedDirectives(!lenient);
-        }
-
-        /**
-         * Creates the new decompressing body handler.
-         *
-         * @return The builder for decompressing body handler.
-         */
-        public BodyHandler<InputStream> build() {
-            var options = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
-            return DecompressingBodyHandler.ofDirect(options);
-        }
-
-        /**
-         * Creates the new decompressing body handler.
-         * <p>
-         * Please use {@link #build()} if {@code downstream} is {@link HttpResponse.BodyHandlers#ofInputStream()}.
-         *
-         * @return The builder for decompressing body handler.
-         */
-        public <T> BodyHandler<T> build(BodyHandler<T> downstream) {
-            var config = new Options(failOnUnsupportedDirectives, failOnUnknownDirectives);
-
-            return new DecompressingBodyHandler<>(downstream, config);
-        }
+      return new DecompressingBodyHandler<>(downstream, config);
     }
+  }
 
 }

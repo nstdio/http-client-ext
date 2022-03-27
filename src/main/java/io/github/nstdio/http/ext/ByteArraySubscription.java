@@ -23,37 +23,37 @@ import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 class ByteArraySubscription implements Subscription {
-    private final Subscriber<List<ByteBuffer>> subscriber;
-    private final AtomicBoolean completed = new AtomicBoolean(false);
-    private final byte[] bytes;
+  private final Subscriber<List<ByteBuffer>> subscriber;
+  private final AtomicBoolean completed = new AtomicBoolean(false);
+  private final byte[] bytes;
 
-    ByteArraySubscription(Subscriber<List<ByteBuffer>> subscriber, byte[] bytes) {
-        this.subscriber = subscriber;
-        this.bytes = bytes;
+  ByteArraySubscription(Subscriber<List<ByteBuffer>> subscriber, byte[] bytes) {
+    this.subscriber = subscriber;
+    this.bytes = bytes;
+  }
+
+  @Override
+  public void request(long n) {
+    if (completed.get()) {
+      return;
     }
 
-    @Override
-    public void request(long n) {
-        if (completed.get()) {
-            return;
-        }
-
-        if (n <= 0) {
-            subscriber.onError(new IllegalArgumentException("n <= 0"));
-            return;
-        }
-
-        completed.set(true);
-
-        ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
-        List<ByteBuffer> item = List.of(buffer);
-
-        subscriber.onNext(item);
-        subscriber.onComplete();
+    if (n <= 0) {
+      subscriber.onError(new IllegalArgumentException("n <= 0"));
+      return;
     }
 
-    @Override
-    public void cancel() {
-        completed.set(true);
-    }
+    completed.set(true);
+
+    ByteBuffer buffer = ByteBuffer.wrap(bytes).asReadOnlyBuffer();
+    List<ByteBuffer> item = List.of(buffer);
+
+    subscriber.onNext(item);
+    subscriber.onComplete();
+  }
+
+  @Override
+  public void cancel() {
+    completed.set(true);
+  }
 }

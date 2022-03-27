@@ -16,9 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -27,41 +24,44 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 class IOUtilsTest {
 
-    @Test
-    void shouldNotRethrowClosingException() {
-        //given
-        Closeable c = () -> {
-            throw new IOException();
-        };
+  @Test
+  void shouldNotRethrowClosingException() {
+    //given
+    Closeable c = () -> {
+      throw new IOException();
+    };
 
-        //when + then
-        IOUtils.closeQuietly(c);
-    }
+    //when + then
+    IOUtils.closeQuietly(c);
+  }
 
-    @Test
-    void shouldReturnNegativeWhenFileNotExists() {
-        //given
-        Path path = Path.of("abc");
+  @Test
+  void shouldReturnNegativeWhenFileNotExists() {
+    //given
+    Path path = Path.of("abc");
 
-        //when
-        long size = IOUtils.size(path);
+    //when
+    long size = IOUtils.size(path);
 
-        //then
-        assertEquals(-1, size);
-    }
+    //then
+    assertEquals(-1, size);
+  }
 
-    @Test
-    void shouldReturnTrueIfFileExists(@TempDir Path temp) throws IOException {
-        //given
-        Path path = temp.resolve("abc");
-        Files.createFile(path);
+  @Test
+  void shouldReturnTrueIfFileExists(@TempDir Path temp) throws IOException {
+    //given
+    Path path = temp.resolve("abc");
+    Files.createFile(path);
 
-        //when
-        boolean created = IOUtils.createFile(path);
+    //when
+    boolean created = IOUtils.createFile(path);
 
-        //then
-        assertTrue(created);
-    }
+    //then
+    assertTrue(created);
+  }
 }

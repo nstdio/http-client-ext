@@ -16,8 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
@@ -29,57 +27,59 @@ import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
+
 class PathReadingSubscription implements Subscription {
-    private static final int DEFAULT_BUFF_CAPACITY = 1 << 14;
-    private final Subscriber<List<ByteBuffer>> subscriber;
-    private final AtomicBoolean completed = new AtomicBoolean(false);
-    private final Path path;
-    private ReadableByteChannel channel;
+  private static final int DEFAULT_BUFF_CAPACITY = 1 << 14;
+  private final Subscriber<List<ByteBuffer>> subscriber;
+  private final AtomicBoolean completed = new AtomicBoolean(false);
+  private final Path path;
+  private ReadableByteChannel channel;
 
-    PathReadingSubscription(Subscriber<List<ByteBuffer>> subscriber, Path path) {
-        this.subscriber = subscriber;
-        this.path = path;
+  PathReadingSubscription(Subscriber<List<ByteBuffer>> subscriber, Path path) {
+    this.subscriber = subscriber;
+    this.path = path;
+  }
+
+  @Override
+  public void request(long n) {
+    if (completed.get()) {
+      return;
     }
 
-    @Override
-    public void request(long n) {
-        if (completed.get()) {
-            return;
-        }
-
-        if (n <= 0) {
-            subscriber.onError(new IllegalArgumentException("non-positive request"));
-            return;
-        }
-
-        try {
-            if (channel == null) {
-                channel = Files.newByteChannel(path);
-            }
-
-            var chan = channel;
-            var sub = subscriber;
-            while (n-- > 0) {
-                ByteBuffer buff = ByteBuffer.allocate(DEFAULT_BUFF_CAPACITY);
-                int r = chan.read(buff);
-                if (r != -1) {
-                    buff.flip();
-                    sub.onNext(Collections.singletonList(buff));
-                } else {
-                    completed.set(true);
-                    sub.onComplete();
-                    break;
-                }
-            }
-
-        } catch (IOException e) {
-            subscriber.onError(e);
-        }
+    if (n <= 0) {
+      subscriber.onError(new IllegalArgumentException("non-positive request"));
+      return;
     }
 
-    @Override
-    public void cancel() {
-        completed.set(true);
-        closeQuietly(channel);
+    try {
+      if (channel == null) {
+        channel = Files.newByteChannel(path);
+      }
+
+      var chan = channel;
+      var sub = subscriber;
+      while (n-- > 0) {
+        ByteBuffer buff = ByteBuffer.allocate(DEFAULT_BUFF_CAPACITY);
+        int r = chan.read(buff);
+        if (r != -1) {
+          buff.flip();
+          sub.onNext(Collections.singletonList(buff));
+        } else {
+          completed.set(true);
+          sub.onComplete();
+          break;
+        }
+      }
+
+    } catch (IOException e) {
+      subscriber.onError(e);
     }
+  }
+
+  @Override
+  public void cancel() {
+    completed.set(true);
+    closeQuietly(channel);
+  }
 }

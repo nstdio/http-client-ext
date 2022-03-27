@@ -21,37 +21,37 @@ import java.io.InputStream;
 import java.util.List;
 
 public class OptionalBrotliCompressionFactory extends CompressionFactoryBase {
-    private static final boolean isBrotli4JPresent = isPresent("com.aayushatharva.brotli4j.Brotli4jLoader");
-    private static final boolean isOrgBrotliPresent = isPresent("org.brotli.dec.BrotliInputStream");
+  private static final boolean isBrotli4JPresent = isPresent("com.aayushatharva.brotli4j.Brotli4jLoader");
+  private static final boolean isOrgBrotliPresent = isPresent("org.brotli.dec.BrotliInputStream");
 
-    private final CompressionFactory delegate;
+  private final CompressionFactory delegate;
 
-    public OptionalBrotliCompressionFactory() {
-        if (isOrgBrotliPresent) {
-            delegate = new BrotliOrgCompressionFactory();
-        } else if (isBrotli4JPresent) {
-            delegate = new Brotli4JCompressionFactory();
-        } else {
-            delegate = null;
-        }
+  public OptionalBrotliCompressionFactory() {
+    if (isOrgBrotliPresent) {
+      delegate = new BrotliOrgCompressionFactory();
+    } else if (isBrotli4JPresent) {
+      delegate = new Brotli4JCompressionFactory();
+    } else {
+      delegate = null;
     }
+  }
 
-    private static boolean isPresent(String cls) {
-        try {
-            Class.forName(cls);
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
+  private static boolean isPresent(String cls) {
+    try {
+      Class.forName(cls);
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
     }
+  }
 
-    @Override
-    public List<String> supported() {
-        return delegate != null ? delegate.supported() : List.of();
-    }
+  @Override
+  public List<String> supported() {
+    return delegate != null ? delegate.supported() : List.of();
+  }
 
-    @Override
-    InputStream doDecompressing(InputStream in, String type) throws IOException {
-        return delegate.decompressing(in, type);
-    }
+  @Override
+  InputStream doDecompressing(InputStream in, String type) throws IOException {
+    return delegate.decompressing(in, type);
+  }
 }

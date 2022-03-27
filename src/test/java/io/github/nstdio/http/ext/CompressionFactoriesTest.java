@@ -16,36 +16,36 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class CompressionFactoriesTest {
 
-    @Test
-    void shouldMoveUsersUp() {
-        //given
-        List<String> packages = new ArrayList<>();
-        packages.add("io.github.nstdio.http.ext.spi.JdkCompressionFactory");
-        packages.add("io.github.nstdio.http.ext.spi.IdentityCompressionFactory");
-        packages.add("io.github.nstdio.http.ext.spi.OptionalBrotli");
-        packages.add("org.other.example.BrotliFactory");
-        packages.add("com.example.GzipFactory");
+  @Test
+  void shouldMoveUsersUp() {
+    //given
+    List<String> packages = new ArrayList<>();
+    packages.add("io.github.nstdio.http.ext.spi.JdkCompressionFactory");
+    packages.add("io.github.nstdio.http.ext.spi.IdentityCompressionFactory");
+    packages.add("io.github.nstdio.http.ext.spi.OptionalBrotli");
+    packages.add("org.other.example.BrotliFactory");
+    packages.add("com.example.GzipFactory");
 
-        //when
-        packages.sort(CompressionFactories.USERS_FIRST_COMPARATOR);
+    //when
+    packages.sort(CompressionFactories.USERS_FIRST_COMPARATOR);
 
-        //then
-        assertThat(packages)
-                .containsExactly(
-                        "org.other.example.BrotliFactory",
-                        "com.example.GzipFactory",
-                        "io.github.nstdio.http.ext.spi.JdkCompressionFactory",
-                        "io.github.nstdio.http.ext.spi.IdentityCompressionFactory",
-                        "io.github.nstdio.http.ext.spi.OptionalBrotli"
-                );
-    }
+    //then
+    assertThat(packages)
+        .containsExactly(
+            "org.other.example.BrotliFactory",
+            "com.example.GzipFactory",
+            "io.github.nstdio.http.ext.spi.JdkCompressionFactory",
+            "io.github.nstdio.http.ext.spi.IdentityCompressionFactory",
+            "io.github.nstdio.http.ext.spi.OptionalBrotli"
+        );
+  }
 }

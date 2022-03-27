@@ -26,7 +26,7 @@ plugins {
     id("de.jjohannes.extra-java-module-info")
 }
 
-val isCI = System.getenv("CI").toBoolean();
+val isCI = System.getenv("CI").toBoolean()
 
 group = "io.github.nstdio"
 

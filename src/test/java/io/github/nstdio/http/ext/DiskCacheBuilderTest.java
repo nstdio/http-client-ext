@@ -16,31 +16,31 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
-
 import io.github.nstdio.http.ext.Cache.DiskCacheBuilder;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+
 class DiskCacheBuilderTest {
 
-    @Test
-    void shouldThrowWhenBuildWithoutDir() {
-        //given
-        DiskCacheBuilder builder = Cache.newDiskCacheBuilder();
+  @Test
+  void shouldThrowWhenBuildWithoutDir() {
+    //given
+    DiskCacheBuilder builder = Cache.newDiskCacheBuilder();
 
-        //when + then
-        assertThatIllegalStateException()
-                .isThrownBy(builder::build);
-    }
+    //when + then
+    assertThatIllegalStateException()
+        .isThrownBy(builder::build);
+  }
 
-    @Test
-    void shouldThrowWhenDirIsNull() {
-        //given
-        DiskCacheBuilder builder = Cache.newDiskCacheBuilder();
+  @Test
+  void shouldThrowWhenDirIsNull() {
+    //given
+    DiskCacheBuilder builder = Cache.newDiskCacheBuilder();
 
-        //when + then
-        assertThatNullPointerException()
-                .isThrownBy(() -> builder.dir(null));
-    }
+    //when + then
+    assertThatNullPointerException()
+        .isThrownBy(() -> builder.dir(null));
+  }
 }

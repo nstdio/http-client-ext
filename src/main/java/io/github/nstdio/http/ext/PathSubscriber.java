@@ -16,10 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
-
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
@@ -31,61 +27,65 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+
 class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
-    private static final ByteBuffer[] EMPTY = new ByteBuffer[0];
-    private final Path path;
-    private final CompletableFuture<Path> future = new CompletableFuture<>();
-    private GatheringByteChannel out;
+  private static final ByteBuffer[] EMPTY = new ByteBuffer[0];
+  private final Path path;
+  private final CompletableFuture<Path> future = new CompletableFuture<>();
+  private GatheringByteChannel out;
 
-    PathSubscriber(Path path) {
-        this.path = path;
+  PathSubscriber(Path path) {
+    this.path = path;
+  }
+
+  @Override
+  public CompletionStage<Path> getBody() {
+    return future;
+  }
+
+  @Override
+  public void onSubscribe(Flow.Subscription subscription) {
+    createChannel();
+  }
+
+  private synchronized void createChannel() {
+    if (out != null) {
+      return;
     }
 
-    @Override
-    public CompletionStage<Path> getBody() {
-        return future;
+    try {
+      out = FileChannel.open(path, WRITE, TRUNCATE_EXISTING);
+    } catch (IOException e) {
+      future.completeExceptionally(e);
     }
+  }
 
-    @Override
-    public void onSubscribe(Flow.Subscription subscription) {
-        createChannel();
+  @Override
+  public void onNext(List<ByteBuffer> item) {
+    try {
+      out.write(item.toArray(EMPTY));
+    } catch (IOException ex) {
+      onError(ex);
     }
+  }
 
-    private synchronized void createChannel() {
-        if (out != null) {
-            return;
-        }
+  private synchronized void close() {
+    closeQuietly(out);
+    out = null;
+  }
 
-        try {
-            out = FileChannel.open(path, WRITE, TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            future.completeExceptionally(e);
-        }
-    }
+  @Override
+  public void onError(Throwable throwable) {
+    close();
+    future.completeExceptionally(throwable);
+  }
 
-    @Override
-    public void onNext(List<ByteBuffer> item) {
-        try {
-            out.write(item.toArray(EMPTY));
-        } catch (IOException ex) {
-            onError(ex);
-        }
-    }
-
-    private synchronized void close() {
-        closeQuietly(out);
-        out = null;
-    }
-
-    @Override
-    public void onError(Throwable throwable) {
-        close();
-        future.completeExceptionally(throwable);
-    }
-
-    @Override
-    public void onComplete() {
-        close();
-        future.complete(path);
-    }
+  @Override
+  public void onComplete() {
+    close();
+    future.complete(path);
+  }
 }

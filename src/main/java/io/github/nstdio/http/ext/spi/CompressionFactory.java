@@ -25,27 +25,26 @@ import java.util.List;
  */
 public interface CompressionFactory {
 
-    /**
-     * The list of supported decompression directives like:
-     * <pre>
-     *      List.of("gzip", "x-gzip")
-     * </pre>
-     *
-     * @return Supported types. Never null.
-     */
-    List<String> supported();
+  /**
+   * The list of supported decompression directives like:
+   * <pre>
+   *      List.of("gzip", "x-gzip")
+   * </pre>
+   *
+   * @return Supported types. Never null.
+   */
+  List<String> supported();
 
-    /**
-     * Wraps the provided {@code InputStream} into stream capable of decompressing {@link #supported()} compression
-     * algorithms.
-     *
-     * @param in   The input stream.
-     * @param type One of {@link #supported()} types.
-     *
-     * @return Wrapped input stream.
-     * @throws IOException              When {@code in} does not represent a supported compression type or I/O error
-     *                                  occures.
-     * @throws IllegalArgumentException When type {@link #supported()} does not contain {@code type}.
-     */
-    InputStream decompressing(InputStream in, String type) throws IOException;
+  /**
+   * Wraps the provided {@code InputStream} into stream capable of decompressing {@link #supported()} compression
+   * algorithms.
+   *
+   * @param in   The input stream.
+   * @param type One of {@link #supported()} types.
+   * @return Wrapped input stream.
+   * @throws IOException              When {@code in} does not represent a supported compression type or I/O error
+   *                                  occures.
+   * @throws IllegalArgumentException When type {@link #supported()} does not contain {@code type}.
+   */
+  InputStream decompressing(InputStream in, String type) throws IOException;
 }

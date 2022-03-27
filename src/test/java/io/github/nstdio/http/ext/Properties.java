@@ -20,23 +20,23 @@ import java.time.Duration;
 import java.util.Optional;
 
 class Properties {
-    private static final String NAMESPACE = "io.github.nstdio.http.ext";
+  private static final String NAMESPACE = "io.github.nstdio.http.ext";
 
-    static Optional<Duration> duration(String propertyName) {
-        return property(propertyName).map(Duration::parse);
-    }
+  static Optional<Duration> duration(String propertyName) {
+    return property(propertyName).map(Duration::parse);
+  }
 
-    static Optional<String> property(String propertyName) {
-        final String prop = withNamespace(propertyName);
-        return Optional.ofNullable(System.getProperty(prop))
-                .or(() -> Optional.ofNullable(System.getenv(propertyToEnv(prop))));
-    }
+  static Optional<String> property(String propertyName) {
+    final String prop = withNamespace(propertyName);
+    return Optional.ofNullable(System.getProperty(prop))
+        .or(() -> Optional.ofNullable(System.getenv(propertyToEnv(prop))));
+  }
 
-    private static String withNamespace(String propertyName) {
-        return propertyName.startsWith(NAMESPACE) ? propertyName : NAMESPACE + '.' + propertyName;
-    }
+  private static String withNamespace(String propertyName) {
+    return propertyName.startsWith(NAMESPACE) ? propertyName : NAMESPACE + '.' + propertyName;
+  }
 
-    private static String propertyToEnv(String prop) {
-        return prop.replace('.', '_').toUpperCase();
-    }
+  private static String propertyToEnv(String prop) {
+    return prop.replace('.', '_').toUpperCase();
+  }
 }

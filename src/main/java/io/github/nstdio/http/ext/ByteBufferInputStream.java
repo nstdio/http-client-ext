@@ -25,173 +25,173 @@ import java.util.List;
 import java.util.Objects;
 
 class ByteBufferInputStream extends InputStream {
-    private final Deque<ByteBuffer> buffers = new ArrayDeque<>();
-    private ByteBuffer mark;
-    private boolean closed;
+  private final Deque<ByteBuffer> buffers = new ArrayDeque<>();
+  private ByteBuffer mark;
+  private boolean closed;
 
-    @Override
-    public int read() throws IOException {
-        ensureOpen();
-        ByteBuffer buf = nextBuffer();
+  @Override
+  public int read() throws IOException {
+    ensureOpen();
+    ByteBuffer buf = nextBuffer();
 
-        if (buf == null) {
-            return -1;
-        }
-
-        int r = buf.get() & 0xff;
-        mark0(r);
-        return r;
+    if (buf == null) {
+      return -1;
     }
 
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        ensureOpen();
-        Objects.checkFromIndexSize(off, len, b.length);
+    int r = buf.get() & 0xff;
+    mark0(r);
+    return r;
+  }
 
-        if (len == 0) {
-            return 0;
-        }
+  @Override
+  public int read(byte[] b, int off, int len) throws IOException {
+    ensureOpen();
+    Objects.checkFromIndexSize(off, len, b.length);
 
-        ByteBuffer buf = nextBuffer();
-        if (buf == null) {
-            return -1;
-        }
-        int end = off + len;
-        int i = off;
-        for (; i < end; i++) {
-            if (!buf.hasRemaining()) {
-                buf = nextBuffer();
-                if (buf == null) break;
-            }
-
-            b[i] = buf.get();
-        }
-
-        int read = i - off;
-
-        mark0(b, off, read);
-        return read;
+    if (len == 0) {
+      return 0;
     }
 
-    @Override
-    public int read(byte[] b) throws IOException {
-        return read(b, 0, b.length);
+    ByteBuffer buf = nextBuffer();
+    if (buf == null) {
+      return -1;
+    }
+    int end = off + len;
+    int i = off;
+    for (; i < end; i++) {
+      if (!buf.hasRemaining()) {
+        buf = nextBuffer();
+        if (buf == null) break;
+      }
+
+      b[i] = buf.get();
     }
 
-    private ByteBuffer nextBuffer() {
-        Deque<ByteBuffer> buffs = buffers;
-        ByteBuffer buf = buffs.peek();
+    int read = i - off;
 
-        while (buf != null && !buf.hasRemaining()) {
-            buffs.poll();
-            buf = buffs.peek();
-        }
+    mark0(b, off, read);
+    return read;
+  }
 
-        return buf;
+  @Override
+  public int read(byte[] b) throws IOException {
+    return read(b, 0, b.length);
+  }
+
+  private ByteBuffer nextBuffer() {
+    Deque<ByteBuffer> buffs = buffers;
+    ByteBuffer buf = buffs.peek();
+
+    while (buf != null && !buf.hasRemaining()) {
+      buffs.poll();
+      buf = buffs.peek();
     }
 
-    @Override
-    public int available() throws IOException {
-        ensureOpen();
+    return buf;
+  }
 
-        int a = 0;
-        for (var buffer : buffers) a += buffer.remaining();
+  @Override
+  public int available() throws IOException {
+    ensureOpen();
 
-        return a;
+    int a = 0;
+    for (var buffer : buffers) a += buffer.remaining();
+
+    return a;
+  }
+
+  @Override
+  public synchronized void reset() throws IOException {
+    if (mark == null) {
+      throw new IOException("nothing to reset");
     }
 
-    @Override
-    public synchronized void reset() throws IOException {
-        if (mark == null) {
-            throw new IOException("nothing to reset");
-        }
+    buffers.push(mark.flip());
+    mark = null;
+  }
 
-        buffers.push(mark.flip());
+  @Override
+  public synchronized void mark(int readlimit) {
+    if (readlimit <= 0) {
+      mark = null;
+    } else {
+      mark = ByteBuffer.allocate(readlimit);
+    }
+  }
+
+  private void mark0(int b) {
+    ByteBuffer m;
+    if ((m = mark) != null) {
+      if (m.hasRemaining()) {
+        m.put((byte) b);
+      } else {
         mark = null;
+      }
     }
+  }
 
-    @Override
-    public synchronized void mark(int readlimit) {
-        if (readlimit <= 0) {
-            mark = null;
-        } else {
-            mark = ByteBuffer.allocate(readlimit);
-        }
-    }
-
-    private void mark0(int b) {
-        ByteBuffer m;
-        if ((m = mark) != null) {
-            if (m.hasRemaining()) {
-                m.put((byte) b);
-            } else {
-                mark = null;
-            }
-        }
-    }
-
-    private void mark0(byte[] b, int off, int len) {
-        ByteBuffer m;
-        if ((m = mark) != null) {
-            if (len <= m.remaining()) {
-                m.put(b, off, len);
-            } else {
-                mark = null;
-            }
-        }
-    }
-
-    @Override
-    public boolean markSupported() {
-        return true;
-    }
-
-    @Override
-    public byte[] readAllBytes() throws IOException {
-        return readNBytes(Integer.MAX_VALUE);
-    }
-
-    @Override
-    public byte[] readNBytes(int len) throws IOException {
-        if (len < 0) {
-            throw new IllegalArgumentException("len < 0");
-        }
-
-        int available = Math.min(available(), len);
-        byte[] buf = new byte[available];
-        read(buf, 0, available);
-
-        return buf;
-    }
-
-    @Override
-    public void close() {
-        buffers.clear();
+  private void mark0(byte[] b, int off, int len) {
+    ByteBuffer m;
+    if ((m = mark) != null) {
+      if (len <= m.remaining()) {
+        m.put(b, off, len);
+      } else {
         mark = null;
-        closed = true;
+      }
+    }
+  }
+
+  @Override
+  public boolean markSupported() {
+    return true;
+  }
+
+  @Override
+  public byte[] readAllBytes() throws IOException {
+    return readNBytes(Integer.MAX_VALUE);
+  }
+
+  @Override
+  public byte[] readNBytes(int len) throws IOException {
+    if (len < 0) {
+      throw new IllegalArgumentException("len < 0");
     }
 
-    private void ensureOpen() throws IOException {
-        if (closed)
-            throw new IOException("closed");
+    int available = Math.min(available(), len);
+    byte[] buf = new byte[available];
+    read(buf, 0, available);
+
+    return buf;
+  }
+
+  @Override
+  public void close() {
+    buffers.clear();
+    mark = null;
+    closed = true;
+  }
+
+  private void ensureOpen() throws IOException {
+    if (closed)
+      throw new IOException("closed");
+  }
+
+  void add(ByteBuffer b) {
+    if (!closed && (b = Buffers.duplicate(b)).hasRemaining()) {
+      buffers.offer(b);
+    }
+  }
+
+  List<ByteBuffer> drainToList() {
+    var buffs = buffers;
+    if (buffs.isEmpty()) {
+      return List.of();
     }
 
-    void add(ByteBuffer b) {
-        if (!closed && (b = Buffers.duplicate(b)).hasRemaining()) {
-            buffers.offer(b);
-        }
-    }
+    var l = List.copyOf(buffs);
+    buffs.clear();
+    mark = null;
 
-    List<ByteBuffer> drainToList() {
-        var buffs = buffers;
-        if (buffs.isEmpty()) {
-            return List.of();
-        }
-
-        var l = List.copyOf(buffs);
-        buffs.clear();
-        mark = null;
-
-        return l;
-    }
+    return l;
+  }
 }

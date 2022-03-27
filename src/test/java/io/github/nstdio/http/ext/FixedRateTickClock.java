@@ -27,32 +27,32 @@ import java.util.concurrent.atomic.AtomicReference;
  * advance this clock.
  */
 class FixedRateTickClock extends Clock {
-    private final AtomicReference<Instant> currentInstantRef;
-    private final ZoneId zone;
-    private final Duration tickDuration;
+  private final AtomicReference<Instant> currentInstantRef;
+  private final ZoneId zone;
+  private final Duration tickDuration;
 
-    FixedRateTickClock(Instant baseInstant, ZoneId zone, Duration tickDuration) {
-        this.currentInstantRef = new AtomicReference<>(baseInstant);
-        this.zone = zone;
-        this.tickDuration = tickDuration;
-    }
+  FixedRateTickClock(Instant baseInstant, ZoneId zone, Duration tickDuration) {
+    this.currentInstantRef = new AtomicReference<>(baseInstant);
+    this.zone = zone;
+    this.tickDuration = tickDuration;
+  }
 
-    static FixedRateTickClock of(Clock baseClock, Duration tickDuration) {
-        return new FixedRateTickClock(baseClock.instant(), baseClock.getZone(), tickDuration);
-    }
+  static FixedRateTickClock of(Clock baseClock, Duration tickDuration) {
+    return new FixedRateTickClock(baseClock.instant(), baseClock.getZone(), tickDuration);
+  }
 
-    @Override
-    public ZoneId getZone() {
-        return zone;
-    }
+  @Override
+  public ZoneId getZone() {
+    return zone;
+  }
 
-    @Override
-    public Clock withZone(ZoneId zone) {
-        return new FixedRateTickClock(currentInstantRef.get(), zone, tickDuration);
-    }
+  @Override
+  public Clock withZone(ZoneId zone) {
+    return new FixedRateTickClock(currentInstantRef.get(), zone, tickDuration);
+  }
 
-    @Override
-    public Instant instant() {
-        return currentInstantRef.updateAndGet(i -> i.plus(tickDuration));
-    }
+  @Override
+  public Instant instant() {
+    return currentInstantRef.updateAndGet(i -> i.plus(tickDuration));
+  }
 }

@@ -16,15 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import static io.github.nstdio.http.ext.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -32,229 +23,235 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
+import static io.github.nstdio.http.ext.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.*;
+
 class LruMultimapTest {
-    private static final ToIntFunction<List<String>> ADD_FN = s -> -1;
-    private static final ToIntFunction<List<String>> THROWING_FN = s -> {
-        throw new IllegalStateException("Should not be invoked!");
-    };
+  private static final ToIntFunction<List<String>> ADD_FN = s -> -1;
+  private static final ToIntFunction<List<String>> THROWING_FN = s -> {
+    throw new IllegalStateException("Should not be invoked!");
+  };
 
-    @Test
-    void shouldReplaceAndNotify() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
+  @Test
+  void shouldReplaceAndNotify() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
 
-        var map = new LruMultimap<String, String>(512, mockEvictionListener);
+    var map = new LruMultimap<String, String>(512, mockEvictionListener);
 
-        //when
-        var putResult1 = map.putSingle("a", "1", strings -> 0);
-        var putResult2 = map.putSingle("a", "2", strings -> 0);
-        var getResult = map.getSingle("a", strings -> 0);
+    //when
+    var putResult1 = map.putSingle("a", "1", strings -> 0);
+    var putResult2 = map.putSingle("a", "2", strings -> 0);
+    var getResult = map.getSingle("a", strings -> 0);
 
-        //then
-        assertThat(map)
-                .hasMapSize(1)
-                .hasSize(1)
-                .hasOnlyValue("a", "2", 0);
-        assertThat(putResult2).containsOnly("2");
-        assertThat(getResult).isEqualTo("2");
+    //then
+    assertThat(map)
+        .hasMapSize(1)
+        .hasSize(1)
+        .hasOnlyValue("a", "2", 0);
+    assertThat(putResult2).containsOnly("2");
+    assertThat(getResult).isEqualTo("2");
 
-        verify(mockEvictionListener).accept("1");
-        verifyNoMoreInteractions(mockEvictionListener);
+    verify(mockEvictionListener).accept("1");
+    verifyNoMoreInteractions(mockEvictionListener);
+  }
+
+  @Test
+  void shouldMaintainLruForLists() {
+    //given
+    var map = new LruMultimap<String, String>(512, null);
+
+    //when + then
+    map.putSingle("a", "1", ADD_FN);
+    var putResult = map.putSingle("a", "2", ADD_FN);
+
+    map.getSingle("a", s -> 0);
+    assertThat(putResult).containsExactly("2", "1");
+    map.getSingle("a", s -> 1);
+    assertThat(putResult).containsExactly("1", "2");
+
+    assertThat(map).hasMapSize(1).hasSize(2);
+  }
+
+  @Test
+  void shouldNotEvictEldestWhenEmpty() {
+    //given
+    var map = new LruMultimap<String, String>(512, null);
+
+    //when + then
+    for (int i = 0; i < 32; i++) {
+      assertFalse(map.evictEldest());
     }
+  }
 
-    @Test
-    void shouldMaintainLruForLists() {
-        //given
-        var map = new LruMultimap<String, String>(512, null);
+  @Test
+  void shouldEvictEldest() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(512, mockEvictionListener);
 
-        //when + then
-        map.putSingle("a", "1", ADD_FN);
-        var putResult = map.putSingle("a", "2", ADD_FN);
+    //when
+    map.putSingle("a", "1", ADD_FN);
+    map.putSingle("a", "2", ADD_FN);
 
-        map.getSingle("a", s -> 0);
-        assertThat(putResult).containsExactly("2", "1");
-        map.getSingle("a", s -> 1);
-        assertThat(putResult).containsExactly("1", "2");
+    map.putSingle("b", "1", ADD_FN);
+    map.putSingle("b", "2", ADD_FN);
 
-        assertThat(map).hasMapSize(1).hasSize(2);
-    }
+    var evictionResult = map.evictEldest();
 
-    @Test
-    void shouldNotEvictEldestWhenEmpty() {
-        //given
-        var map = new LruMultimap<String, String>(512, null);
+    //then
+    assertTrue(evictionResult);
+    assertThat(map).hasMapSize(2).hasSize(3)
+        .hasOnlyValue("a", "2", 0);
 
-        //when + then
-        for (int i = 0; i < 32; i++) {
-            assertFalse(map.evictEldest());
-        }
-    }
+    verify(mockEvictionListener).accept("1");
+    verifyNoMoreInteractions(mockEvictionListener);
+  }
 
-    @Test
-    void shouldEvictEldest() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(512, mockEvictionListener);
+  @Test
+  void shouldRemoveMapEntryWhenLastRemoved() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(512, null);
+    map.addEvictionListener(mockEvictionListener);
 
-        //when
-        map.putSingle("a", "1", ADD_FN);
-        map.putSingle("a", "2", ADD_FN);
+    //when
+    map.putSingle("a", "1", ADD_FN);
 
-        map.putSingle("b", "1", ADD_FN);
-        map.putSingle("b", "2", ADD_FN);
+    map.putSingle("b", "1", ADD_FN);
+    map.putSingle("b", "2", ADD_FN);
 
-        var evictionResult = map.evictEldest();
+    var evictionResult = map.evictEldest();
 
-        //then
-        assertTrue(evictionResult);
-        assertThat(map).hasMapSize(2).hasSize(3)
-                .hasOnlyValue("a", "2", 0);
+    //then
+    assertTrue(evictionResult);
+    assertThat(map).hasMapSize(1).hasSize(2);
 
-        verify(mockEvictionListener).accept("1");
-        verifyNoMoreInteractions(mockEvictionListener);
-    }
+    verify(mockEvictionListener).accept("1");
+    verifyNoMoreInteractions(mockEvictionListener);
+  }
 
-    @Test
-    void shouldRemoveMapEntryWhenLastRemoved() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(512, null);
-        map.addEvictionListener(mockEvictionListener);
+  @Test
+  void shouldRespectMaxSize() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(2, mockEvictionListener);
 
-        //when
-        map.putSingle("a", "1", ADD_FN);
+    //when
+    map.putSingle("b", "2", ADD_FN);
+    map.putSingle("b", "1", ADD_FN);
+    map.putSingle("a", "1", ADD_FN);
 
-        map.putSingle("b", "1", ADD_FN);
-        map.putSingle("b", "2", ADD_FN);
+    //then
+    assertThat(map)
+        .hasMapSize(2)
+        .hasSize(2)
+        .hasOnlyValue("a", "1", 0)
+        .hasOnlyValue("b", "1", 0);
+    verify(mockEvictionListener).accept("2");
+    verifyNoMoreInteractions(mockEvictionListener);
+  }
 
-        var evictionResult = map.evictEldest();
+  @Test
+  void shouldClearAll() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEl = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(23, mockEl);
 
-        //then
-        assertTrue(evictionResult);
-        assertThat(map).hasMapSize(1).hasSize(2);
+    //when
+    map.putSingle("b", "1", ADD_FN);
+    map.putSingle("b", "2", ADD_FN);
+    map.putSingle("b", "3", ADD_FN);
+    map.putSingle("a", "4", ADD_FN);
 
-        verify(mockEvictionListener).accept("1");
-        verifyNoMoreInteractions(mockEvictionListener);
-    }
+    map.clear();
 
-    @Test
-    void shouldRespectMaxSize() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEvictionListener = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(2, mockEvictionListener);
+    //then
+    assertThat(map).hasMapSize(0).hasSize(0);
 
-        //when
-        map.putSingle("b", "2", ADD_FN);
-        map.putSingle("b", "1", ADD_FN);
-        map.putSingle("a", "1", ADD_FN);
+    var inOrder = inOrder(mockEl);
+    inOrder.verify(mockEl).accept("1");
+    inOrder.verify(mockEl).accept("2");
+    inOrder.verify(mockEl).accept("3");
+    inOrder.verify(mockEl).accept("4");
 
-        //then
-        assertThat(map)
-                .hasMapSize(2)
-                .hasSize(2)
-                .hasOnlyValue("a", "1", 0)
-                .hasOnlyValue("b", "1", 0);
-        verify(mockEvictionListener).accept("2");
-        verifyNoMoreInteractions(mockEvictionListener);
-    }
+    inOrder.verifyNoMoreInteractions();
+  }
 
-    @Test
-    void shouldClearAll() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEl = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(23, mockEl);
+  @Test
+  void shouldClearWhenEmpty() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEl = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(23, mockEl);
 
-        //when
-        map.putSingle("b", "1", ADD_FN);
-        map.putSingle("b", "2", ADD_FN);
-        map.putSingle("b", "3", ADD_FN);
-        map.putSingle("a", "4", ADD_FN);
+    //when
+    map.clear();
 
-        map.clear();
+    //then
+    assertThat(map).isEmpty();
+    verifyNoInteractions(mockEl);
+  }
 
-        //then
-        assertThat(map).hasMapSize(0).hasSize(0);
+  @Test
+  void shouldNotGetWhenIndexIncorrect() {
+    var map = new LruMultimap<String, String>(23, null);
 
-        var inOrder = inOrder(mockEl);
-        inOrder.verify(mockEl).accept("1");
-        inOrder.verify(mockEl).accept("2");
-        inOrder.verify(mockEl).accept("3");
-        inOrder.verify(mockEl).accept("4");
+    //when
+    map.putSingle("a", "2", ADD_FN);
+    map.putSingle("a", "1", ADD_FN);
 
-        inOrder.verifyNoMoreInteractions();
-    }
+    //then
+    assertThat(map.getSingle("b", THROWING_FN)).isNull();
+    assertThat(map.getSingle("a", s -> 5)).isNull();
+    assertThat(map.getSingle("a", s -> -1)).isNull();
+  }
 
-    @Test
-    void shouldClearWhenEmpty() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEl = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(23, mockEl);
+  @Test
+  void shouldEvictAllForExistingKey() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEl = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(23, mockEl);
 
-        //when
-        map.clear();
+    //when
+    map.putSingle("a", "1", ADD_FN);
+    map.putSingle("a", "2", ADD_FN);
 
-        //then
-        assertThat(map).isEmpty();
-        verifyNoInteractions(mockEl);
-    }
+    map.evictAll("a");
 
-    @Test
-    void shouldNotGetWhenIndexIncorrect() {
-        var map = new LruMultimap<String, String>(23, null);
+    //then
+    assertThat(map).isEmpty();
+    var inOrder = inOrder(mockEl);
+    inOrder.verify(mockEl).accept("1");
+    inOrder.verify(mockEl).accept("2");
 
-        //when
-        map.putSingle("a", "2", ADD_FN);
-        map.putSingle("a", "1", ADD_FN);
+    inOrder.verifyNoMoreInteractions();
+  }
 
-        //then
-        assertThat(map.getSingle("b", THROWING_FN)).isNull();
-        assertThat(map.getSingle("a", s -> 5)).isNull();
-        assertThat(map.getSingle("a", s -> -1)).isNull();
-    }
+  @Test
+  void shouldEvictAllForNonExistingKey() {
+    //given
+    @SuppressWarnings("unchecked")
+    Consumer<String> mockEl = Mockito.mock(Consumer.class);
+    var map = new LruMultimap<String, String>(23, mockEl);
 
-    @Test
-    void shouldEvictAllForExistingKey() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEl = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(23, mockEl);
+    //when
+    map.putSingle("a", "1", ADD_FN);
+    map.putSingle("a", "2", ADD_FN);
 
-        //when
-        map.putSingle("a", "1", ADD_FN);
-        map.putSingle("a", "2", ADD_FN);
+    map.evictAll("b");
 
-        map.evictAll("a");
-
-        //then
-        assertThat(map).isEmpty();
-        var inOrder = inOrder(mockEl);
-        inOrder.verify(mockEl).accept("1");
-        inOrder.verify(mockEl).accept("2");
-
-        inOrder.verifyNoMoreInteractions();
-    }
-
-    @Test
-    void shouldEvictAllForNonExistingKey() {
-        //given
-        @SuppressWarnings("unchecked")
-        Consumer<String> mockEl = Mockito.mock(Consumer.class);
-        var map = new LruMultimap<String, String>(23, mockEl);
-
-        //when
-        map.putSingle("a", "1", ADD_FN);
-        map.putSingle("a", "2", ADD_FN);
-
-        map.evictAll("b");
-
-        //then
-        assertThat(map).hasMapSize(1).hasSize(2);
-        verifyNoInteractions(mockEl);
-    }
+    //then
+    assertThat(map).hasMapSize(1).hasSize(2);
+    verifyNoInteractions(mockEl);
+  }
 }

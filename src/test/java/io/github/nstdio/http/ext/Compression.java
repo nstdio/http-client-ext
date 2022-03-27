@@ -26,27 +26,27 @@ import java.util.zip.GZIPOutputStream;
 
 class Compression {
 
-    static byte[] gzip(String in) {
-        return compress(in, out -> {
-            try {
-                return new GZIPOutputStream(out, true);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
-        });
-    }
+  static byte[] gzip(String in) {
+    return compress(in, out -> {
+      try {
+        return new GZIPOutputStream(out, true);
+      } catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+  }
 
-    static byte[] deflate(String in) {
-        return compress(in, out -> new DeflaterOutputStream(out, true));
-    }
+  static byte[] deflate(String in) {
+    return compress(in, out -> new DeflaterOutputStream(out, true));
+  }
 
-    private static byte[] compress(String in, Function<OutputStream, DeflaterOutputStream> compressorCreator) {
-        try (var out = new ByteArrayOutputStream(); var compressor = compressorCreator.apply(out)) {
-            compressor.write(in.getBytes(StandardCharsets.UTF_8));
-            compressor.finish();
-            return out.toByteArray();
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
+  private static byte[] compress(String in, Function<OutputStream, DeflaterOutputStream> compressorCreator) {
+    try (var out = new ByteArrayOutputStream(); var compressor = compressorCreator.apply(out)) {
+      compressor.write(in.getBytes(StandardCharsets.UTF_8));
+      compressor.finish();
+      return out.toByteArray();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
     }
+  }
 }

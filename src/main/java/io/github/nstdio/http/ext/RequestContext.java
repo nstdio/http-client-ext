@@ -28,40 +28,40 @@ import java.util.concurrent.atomic.AtomicLong;
 @Accessors(fluent = true)
 @AllArgsConstructor
 final class RequestContext {
-    private final HttpRequest request;
-    private final BodyHandler<?> bodyHandler;
-    private final CacheControl cacheControl;
-    private final AtomicLong requestTime = new AtomicLong();
-    private final AtomicLong responseTime = new AtomicLong();
+  private final HttpRequest request;
+  private final BodyHandler<?> bodyHandler;
+  private final CacheControl cacheControl;
+  private final AtomicLong requestTime = new AtomicLong();
+  private final AtomicLong responseTime = new AtomicLong();
 
-    static RequestContext of(HttpRequest request, BodyHandler<?> responseBodyHandler) {
-        return new RequestContext(request, responseBodyHandler, CacheControl.of(request));
-    }
+  static RequestContext of(HttpRequest request, BodyHandler<?> responseBodyHandler) {
+    return new RequestContext(request, responseBodyHandler, CacheControl.of(request));
+  }
 
-    boolean isCacheable() {
-        if (!"GET".equals(request.method())) return false;
+  boolean isCacheable() {
+    if (!"GET".equals(request.method())) return false;
 
-        return !cacheControl.noStore();
-    }
+    return !cacheControl.noStore();
+  }
 
-    long requestTimeLong() {
-        return requestTime.get();
-    }
+  long requestTimeLong() {
+    return requestTime.get();
+  }
 
-    long responseTimeLong() {
-        return responseTime.get();
-    }
+  long responseTimeLong() {
+    return responseTime.get();
+  }
 
-    @SuppressWarnings("unchecked")
-    <T> BodyHandler<T> bodyHandler() {
-        return (BodyHandler<T>) bodyHandler;
-    }
+  @SuppressWarnings("unchecked")
+  <T> BodyHandler<T> bodyHandler() {
+    return (BodyHandler<T>) bodyHandler;
+  }
 
-    RequestContext withRequest(HttpRequest request) {
-        return new RequestContext(request, this.bodyHandler, this.cacheControl);
-    }
+  RequestContext withRequest(HttpRequest request) {
+    return new RequestContext(request, this.bodyHandler, this.cacheControl);
+  }
 
-    RequestContext withBodyHandler(BodyHandler<?> bodyHandler) {
-        return new RequestContext(this.request, bodyHandler, this.cacheControl);
-    }
+  RequestContext withBodyHandler(BodyHandler<?> bodyHandler) {
+    return new RequestContext(this.request, bodyHandler, this.cacheControl);
+  }
 }

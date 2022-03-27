@@ -16,58 +16,52 @@
 
 package io.github.nstdio.http.ext.archunit;
 
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
-import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.nstdio.http.ext.BodyHandlers;
-import io.github.nstdio.http.ext.BodySubscribers;
-import io.github.nstdio.http.ext.Cache;
-import io.github.nstdio.http.ext.CacheControl;
-import io.github.nstdio.http.ext.CacheEntryMetadata;
-import io.github.nstdio.http.ext.ExtendedHttpClient;
-import io.github.nstdio.http.ext.Predicates;
+import io.github.nstdio.http.ext.*;
 import io.github.nstdio.http.ext.spi.CompressionFactory;
 import io.github.nstdio.http.ext.spi.IdentityCompressionFactory;
 import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
 import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
+import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+
 @AnalyzeClasses(packages = "io.github.nstdio.http.ext", importOptions = {ImportOption.DoNotIncludeTests.class})
 class VisibilityTest {
-    @ArchTest
-    static ArchRule all_classes_expect_listed_should_not_be_public =
-            classes()
-                    .that(not(ExtendedHttpClient.class)
-                            .and(not(ExtendedHttpClient.Builder.class))
-                            .and(not(BodyHandlers.DecompressingBodyHandlerBuilder.class))
-                            .and(not(BodyHandlers.class))
-                            .and(not(BodySubscribers.class))
-                            .and(not(Cache.CacheBuilder.class))
-                            .and(not(Cache.CacheEntry.class))
-                            .and(not(Cache.InMemoryCacheBuilder.class))
-                            .and(not(Cache.DiskCacheBuilder.class))
-                            .and(not(Cache.Writer.class))
-                            .and(not(CacheEntryMetadata.class))
-                            .and(not(Cache.class))
-                            .and(not(Cache.CacheStats.class))
-                            .and(not(CacheControl.CacheControlBuilder.class))
-                            .and(not(CacheControl.class))
-                            .and(not(Predicates.class))
-                            .and(not(CompressionFactory.class))
-                            .and(not(JdkCompressionFactory.class))
-                            .and(not(IdentityCompressionFactory.class))
-                            .and(not(OptionalBrotliCompressionFactory.class))
-                    )
-                    .should()
-                    .notBePublic();
+  @ArchTest
+  static ArchRule all_classes_expect_listed_should_not_be_public =
+      classes()
+          .that(not(ExtendedHttpClient.class)
+              .and(not(ExtendedHttpClient.Builder.class))
+              .and(not(BodyHandlers.DecompressingBodyHandlerBuilder.class))
+              .and(not(BodyHandlers.class))
+              .and(not(BodySubscribers.class))
+              .and(not(Cache.CacheBuilder.class))
+              .and(not(Cache.CacheEntry.class))
+              .and(not(Cache.InMemoryCacheBuilder.class))
+              .and(not(Cache.DiskCacheBuilder.class))
+              .and(not(Cache.Writer.class))
+              .and(not(CacheEntryMetadata.class))
+              .and(not(Cache.class))
+              .and(not(Cache.CacheStats.class))
+              .and(not(CacheControl.CacheControlBuilder.class))
+              .and(not(CacheControl.class))
+              .and(not(Predicates.class))
+              .and(not(CompressionFactory.class))
+              .and(not(JdkCompressionFactory.class))
+              .and(not(IdentityCompressionFactory.class))
+              .and(not(OptionalBrotliCompressionFactory.class))
+          )
+          .should()
+          .notBePublic();
 
-    private static DescribedPredicate<JavaClass> not(Class<?> cls) {
-        return are(DescribedPredicate.not(equivalentTo(cls)));
-    }
+  private static DescribedPredicate<JavaClass> not(Class<?> cls) {
+    return are(DescribedPredicate.not(equivalentTo(cls)));
+  }
 }

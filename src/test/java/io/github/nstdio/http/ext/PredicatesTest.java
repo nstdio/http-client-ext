@@ -16,24 +16,24 @@
 
 package io.github.nstdio.http.ext;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
 
-class PredicatesTest {
-    @Test
-    void shouldMatchGivenUri() {
-        //given
-        URI uri = URI.create("http://example.com");
-        HttpRequest r1 = HttpRequest.newBuilder(uri).build();
-        HttpRequest r2 = HttpRequest.newBuilder(uri.resolve("/path")).build();
+import static org.assertj.core.api.Assertions.assertThat;
 
-        //when + then
-        assertThat(Predicates.uri(uri))
-                .accepts(r1)
-                .rejects(r2);
-    }
+class PredicatesTest {
+  @Test
+  void shouldMatchGivenUri() {
+    //given
+    URI uri = URI.create("http://example.com");
+    HttpRequest r1 = HttpRequest.newBuilder(uri).build();
+    HttpRequest r2 = HttpRequest.newBuilder(uri.resolve("/path")).build();
+
+    //when + then
+    assertThat(Predicates.uri(uri))
+        .accepts(r1)
+        .rejects(r2);
+  }
 }

@@ -23,39 +23,41 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 class IOUtils {
-    private IOUtils() {
-    }
+  private IOUtils() {
+  }
 
-    static void closeQuietly(Closeable c) {
-        if (c != null) {
-            try {
-                c.close();
-            } catch (IOException ignored) {}
-        }
+  static void closeQuietly(Closeable c) {
+    if (c != null) {
+      try {
+        c.close();
+      } catch (IOException ignored) {
+      }
     }
+  }
 
-    static void delete(Path path) {
-        try {
-            Files.delete(path);
-        } catch (IOException ignored) {}
+  static void delete(Path path) {
+    try {
+      Files.delete(path);
+    } catch (IOException ignored) {
     }
+  }
 
-    static long size(Path path) {
-        try {
-            return Files.size(path);
-        } catch (IOException e) {
-            return -1;
-        }
+  static long size(Path path) {
+    try {
+      return Files.size(path);
+    } catch (IOException e) {
+      return -1;
     }
+  }
 
-    static boolean createFile(Path path) {
-        try {
-            Files.createFile(path);
-            return true;
-        } catch (FileAlreadyExistsException e) {
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+  static boolean createFile(Path path) {
+    try {
+      Files.createFile(path);
+      return true;
+    } catch (FileAlreadyExistsException e) {
+      return true;
+    } catch (IOException e) {
+      return false;
     }
+  }
 }
