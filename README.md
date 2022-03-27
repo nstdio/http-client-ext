@@ -1,4 +1,4 @@
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/io.github.nstdio/http-client-ext/badge.svg)](https://maven-badges.herokuapp.com/maven-central/io.github.nstdio/http-client-ext)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.nstdio/http-client-ext.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.nstdio%22%20AND%20a:%22http-client-ext%22)
 [![codecov](https://codecov.io/gh/nstdio/http-client-ext/branch/main/graph/badge.svg)](https://codecov.io/gh/nstdio/http-client-ext)
 
 # HttpClient Extensions
