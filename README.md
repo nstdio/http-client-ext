@@ -100,16 +100,35 @@ service loader will pick up correct dependency. If none of these preferred there
 by providing [CompressionFactory](https://github.com/nstdio/http-client-ext/blob/main/src/main/java/io/github/nstdio/http/ext/spi/CompressionFactory.java)
 
 ### JSON
-We are using [Jackson](https://github.com/FasterXML/jackson-databind) to create Java objects from JSON.
+Currently, two libraries are supported
+
+- [Jackson](https://github.com/FasterXML/jackson-databind)
+- [Gson](https://github.com/google/gson)
+
+just drop one of them as dependency and voilà
 
 ```java
-// simple type
+// will create object using Jackson or Gson
 client.send(request, BodyHandlers.ofJson(User.class));
+```
 
-// complex adhoc type
-client.send(request, BodyHandlers.ofJson(new TypeReference<Map<String, List<String>>>() {}));
+And if special configuration required, SPI can be used 
+```java
+package com.example;
 
-// with existing mapper
-ObjectMapper objectMapper = ...
-client.send(request, responseInfo -> BodySubscribers.ofJson(objectMapper, User.class));
+class JacksonMappingProvider implements JsonMappingProvider {
+  @Override
+  public JsonMapping get() {
+    // configure jackson
+    ObjectMapper mapper = ...
+
+    return new JacksonJsonMapping(mapper);
+  }
+}
+```
+then register this provider like
+```shell
+$ cat src/main/resources/META-INF/services/io.github.nstdio.http.ext.spi.JsonMappingProvider 
+
+com.example.JacksonMappingProvider
 ```

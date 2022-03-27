@@ -22,7 +22,6 @@ module http.client.ext {
 
   requires transitive java.net.http;
 
-
   requires static lombok;
   requires static com.aayushatharva.brotli4j;
   requires static org.brotli.dec;
