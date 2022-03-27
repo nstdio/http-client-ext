@@ -16,6 +16,8 @@
 
 package io.github.nstdio.http.ext;
 
+import io.github.nstdio.http.ext.spi.Classpath;
+
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
@@ -37,11 +39,17 @@ public interface Cache {
   }
 
   /**
-   * Creates a new {@code DiskCacheBuilder} instance.
+   * Creates a new {@code DiskCacheBuilder} instance. Requires Jackson form dumping cache files on disk.
    *
    * @return the new {@code  DiskCacheBuilder}.
+   *
+   * @throws IllegalStateException When Jackson (a.k.a. ObjectMapper) is not in classpath.
    */
   static DiskCacheBuilder newDiskCacheBuilder() {
+    if (!Classpath.isJacksonPresent()) {
+      throw new IllegalStateException("In order to use disk cache please add 'com.fasterxml.jackson.core:jackson-databind' to your dependencies");
+    }
+
     return new DiskCacheBuilder();
   }
 
@@ -58,13 +66,14 @@ public interface Cache {
    * Gets the cache entry associated with {@code request}.
    *
    * @param request The request.
+   *
    * @return the cache entry associated with {@code request} or {@code null}.
    */
   CacheEntry get(HttpRequest request);
 
   /**
-   * Associates {@code request} with {@code entry} and stores it in this cache. The previously (if any) associated
-   * entry will be evicted.
+   * Associates {@code request} with {@code entry} and stores it in this cache. The previously (if any) associated entry
+   * will be evicted.
    *
    * @param request The request.
    * @param entry   The entry.
@@ -94,6 +103,7 @@ public interface Cache {
    * Gets the statistics for this cache.
    *
    * @return The statistics for this cache.
+   *
    * @see CacheStats
    */
   CacheStats stats();
@@ -103,6 +113,7 @@ public interface Cache {
    *
    * @param metadata The metadata.
    * @param <T>      The response body type.
+   *
    * @return a {@code Writer}.
    */
   <T> Writer<T> writer(CacheEntryMetadata metadata);
@@ -179,6 +190,7 @@ public interface Cache {
      * Sets the directory to store cache files.
      *
      * @param dir The directory to store cache files.
+     *
      * @return builder itself.
      */
     public DiskCacheBuilder dir(Path dir) {

@@ -14,25 +14,23 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext.jupiter;
 
-plugins {
-    `kotlin-dsl`
-}
+import org.junit.jupiter.api.extension.ExtendWith;
 
-repositories {
-    gradlePluginPortal()
-}
+import java.lang.annotation.*;
 
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+/**
+ * {@code @DisabledIfOnClasspath} is used to signal that the annotated test class or
+ * test method is <em>disabled</em> only if any of provided classes is currently not on classpath.
+ */
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+@ExtendWith(DisabledIfOnClasspathCondition.class)
+public @interface DisabledIfOnClasspath {
+  /**
+   * The fully qualified class names.
+   */
+  String[] value();
 }

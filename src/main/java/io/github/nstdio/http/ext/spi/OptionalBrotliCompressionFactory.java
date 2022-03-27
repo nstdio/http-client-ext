@@ -20,28 +20,20 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import static io.github.nstdio.http.ext.spi.Classpath.isBrotli4jPresent;
+import static io.github.nstdio.http.ext.spi.Classpath.isOrgBrotliPresent;
+
 public class OptionalBrotliCompressionFactory extends CompressionFactoryBase {
-  private static final boolean isBrotli4JPresent = isPresent("com.aayushatharva.brotli4j.Brotli4jLoader");
-  private static final boolean isOrgBrotliPresent = isPresent("org.brotli.dec.BrotliInputStream");
 
   private final CompressionFactory delegate;
 
   public OptionalBrotliCompressionFactory() {
-    if (isOrgBrotliPresent) {
+    if (isOrgBrotliPresent()) {
       delegate = new BrotliOrgCompressionFactory();
-    } else if (isBrotli4JPresent) {
+    } else if (isBrotli4jPresent()) {
       delegate = new Brotli4JCompressionFactory();
     } else {
       delegate = null;
-    }
-  }
-
-  private static boolean isPresent(String cls) {
-    try {
-      Class.forName(cls);
-      return true;
-    } catch (ClassNotFoundException e) {
-      return false;
     }
   }
 

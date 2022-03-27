@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import io.github.nstdio.http.ext.spi.CompressionFactory;
-import io.github.nstdio.http.ext.spi.IdentityCompressionFactory;
-import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
-import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
+import io.github.nstdio.http.ext.spi.*;
 
 module http.client.ext {
   uses CompressionFactory;
+  uses JsonMappingProvider;
 
   requires transitive java.net.http;
 
-  requires transitive com.fasterxml.jackson.core;
-  requires transitive com.fasterxml.jackson.databind;
 
   requires static lombok;
   requires static com.aayushatharva.brotli4j;
   requires static org.brotli.dec;
+
+  requires static transitive com.fasterxml.jackson.core;
+  requires static transitive com.fasterxml.jackson.databind;
+  requires static transitive com.google.gson;
 
   exports io.github.nstdio.http.ext;
   exports io.github.nstdio.http.ext.spi;
