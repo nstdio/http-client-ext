@@ -19,7 +19,7 @@ package io.github.nstdio.http.ext.spi;
 import static io.github.nstdio.http.ext.spi.Classpath.isGsonPresent;
 import static io.github.nstdio.http.ext.spi.Classpath.isJacksonPresent;
 
-class CompositeJsonMappingProvider extends JsonMappingProvider {
+class CompositeJsonMappingProvider implements JsonMappingProvider {
   private static final String NO_JSON_MAPPING_FOUND = "No JsonMapping implementation found. Please consider to add any of dependencies to classpath: 'com.fasterxml.jackson.core:jackson-databind', 'com.google.code.gson:gson'";
 
   static boolean hasAnyImplementation() {

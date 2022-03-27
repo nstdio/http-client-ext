@@ -23,21 +23,13 @@ import java.util.ServiceLoader.Provider;
 /**
  * The SPI to for {@linkplain JsonMapping}.
  */
-public abstract class JsonMappingProvider {
-
-  /**
-   * Inheritance constructor.
-   */
-  @SuppressWarnings("WeakerAccess")
-  protected JsonMappingProvider() {
-  }
-
+public interface JsonMappingProvider {
   /**
    * Finds the first available {@code JsonMappingProvider}.
    *
    * @return The {@code JsonMappingProvider}.
    */
-  public static JsonMappingProvider provider() {
+  static JsonMappingProvider provider() {
     return loader()
         .findFirst()
         .or(JsonMappingProvider::defaultProvider)
@@ -51,7 +43,7 @@ public abstract class JsonMappingProvider {
    *
    * @throws JsonMappingProviderNotFoundException When requested provider is not found.
    */
-  public static JsonMappingProvider provider(String name) {
+  static JsonMappingProvider provider(String name) {
     return loader()
         .stream()
         .filter(provider -> provider.type().getName().equals(name))
@@ -78,9 +70,5 @@ public abstract class JsonMappingProvider {
    *
    * @return The {@code JsonMapping} instance.
    */
-  public abstract JsonMapping get();
-
-  private static final class DefaultProviderHolder {
-    private static final CompositeJsonMappingProvider DEFAULT_PROVIDER = new CompositeJsonMappingProvider();
-  }
+  JsonMapping get();
 }
