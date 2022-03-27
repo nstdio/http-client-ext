@@ -16,15 +16,6 @@
 
 plugins {
     jacoco
-    id("org.sonarqube")
-}
-
-sonarqube {
-    properties {
-        property("sonar.projectKey", "nstdio_http-client-ext")
-        property("sonar.organization", "nstdio")
-        property("sonar.host.url", "https://sonarcloud.io")
-    }
 }
 
 jacoco {

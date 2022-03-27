@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 import static io.github.nstdio.http.ext.IOUtils.*;
 
 class DiskCache extends SizeConstrainedCache {
-  private final MetadataSerializer metadataSerializer = new JsonMetadataSerializer();
+  private final MetadataSerializer metadataSerializer = new JacksonMetadataSerializer();
   private final Executor executor;
   private final Path dir;
 

@@ -14,25 +14,16 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext.spi;
 
-plugins {
-    `kotlin-dsl`
-}
+/**
+ * Thrown to indicate that requested {@link JsonMappingProvider} is not found.
+ */
+public class JsonMappingProviderNotFoundException extends RuntimeException {
+  private static final long serialVersionUID = 1L;
 
-repositories {
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+  @SuppressWarnings("WeakerAccess")
+  public JsonMappingProviderNotFoundException(String message) {
+    super(message);
+  }
 }

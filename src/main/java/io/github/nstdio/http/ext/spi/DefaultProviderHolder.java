@@ -14,25 +14,8 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext.spi;
 
-plugins {
-    `kotlin-dsl`
-}
-
-repositories {
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+final class DefaultProviderHolder {
+  static final CompositeJsonMappingProvider DEFAULT_PROVIDER = new CompositeJsonMappingProvider();
 }

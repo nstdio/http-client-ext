@@ -30,7 +30,7 @@ import static io.github.nstdio.http.ext.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class JsonMetadataSerializerTest {
+class JacksonMetadataSerializerTest {
   @TempDir
   private Path dir;
 
@@ -38,7 +38,7 @@ class JsonMetadataSerializerTest {
   void shouldReturnNullWhenCannotRead() {
     //given
     var file = dir.resolve("abc");
-    var ser = new JsonMetadataSerializer();
+    var ser = new JacksonMetadataSerializer();
 
     //when
     CacheEntryMetadata metadata = ser.read(file);
@@ -69,7 +69,7 @@ class JsonMetadataSerializerTest {
         .build();
 
     var metadata = new CacheEntryMetadata(10, 15, responseInfo, request, Clock.systemUTC());
-    var ser = new JsonMetadataSerializer();
+    var ser = new JacksonMetadataSerializer();
 
     //when
     ser.write(metadata, file);

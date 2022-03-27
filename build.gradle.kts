@@ -18,6 +18,7 @@ plugins {
     id("net.researchgate.release")
 
     id("io.github.nstdio.http.ext.library-conventions")
+    id("io.github.nstdio.http.ext.test-conventions")
     id("io.github.nstdio.http.ext.quality-conventions")
     id("io.github.nstdio.http.ext.publish-conventions")
 }

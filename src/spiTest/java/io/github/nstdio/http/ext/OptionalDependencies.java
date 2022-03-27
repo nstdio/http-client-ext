@@ -14,25 +14,11 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext;
 
-plugins {
-    `kotlin-dsl`
-}
+public class OptionalDependencies {
+  public static final String JACKSON = "com.fasterxml.jackson.databind.ObjectMapper";
+  public static final String GSON = "com.google.gson.Gson";
 
-repositories {
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+  public static final String[] ALL_JSON = {JACKSON, GSON};
 }

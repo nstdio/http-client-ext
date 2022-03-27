@@ -23,16 +23,15 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.nstdio.http.ext.*;
-import io.github.nstdio.http.ext.spi.CompressionFactory;
-import io.github.nstdio.http.ext.spi.IdentityCompressionFactory;
-import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
-import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
+import io.github.nstdio.http.ext.spi.*;
+import org.junit.jupiter.api.Disabled;
 
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
 @AnalyzeClasses(packages = "io.github.nstdio.http.ext", importOptions = {ImportOption.DoNotIncludeTests.class})
+@Disabled
 class VisibilityTest {
   @ArchTest
   static ArchRule all_classes_expect_listed_should_not_be_public =
@@ -57,6 +56,12 @@ class VisibilityTest {
               .and(not(JdkCompressionFactory.class))
               .and(not(IdentityCompressionFactory.class))
               .and(not(OptionalBrotliCompressionFactory.class))
+              .and(not(JsonMappingProvider.class))
+              .and(not(JsonMapping.class))
+              .and(not(JacksonJsonMapping.class))
+              .and(not(GsonJsonMapping.class))
+              .and(not(JsonMappingProviderNotFoundException.class))
+              .and(not(Classpath.class))
           )
           .should()
           .notBePublic();
