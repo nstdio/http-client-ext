@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext.spi;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Type;
 
 /**
  * The simple strategy for binding JSON to Java objects.
@@ -38,6 +39,20 @@ public interface JsonMapping {
   <T> T read(InputStream in, Class<T> targetType) throws IOException;
 
   /**
+   * Reads JSON data from the {@code in} and creates mapped object of type {@code targetType}. Note that {@code in}
+   * might not be closed by the underlying implementation and caller should try to close {@code in}.
+   *
+   * @param in         The input source.
+   * @param targetType The required type.
+   * @param <T>        The type of object to create.
+   *
+   * @return The object created from JSON.
+   *
+   * @throws IOException When there is a JSON parsing or binding error or I/O error occurred.
+   */
+  <T> T read(InputStream in, Type targetType) throws IOException;
+
+  /**
    * Reads JSON data from the {@code bytes} and creates mapped object of type {@code targetType}.
    *
    * @param bytes      The input source.
@@ -49,4 +64,17 @@ public interface JsonMapping {
    * @throws IOException When there is a JSON parsing or binding error or I/O error occurred.
    */
   <T> T read(byte[] bytes, Class<T> targetType) throws IOException;
+
+  /**
+   * Reads JSON data from the {@code bytes} and creates mapped object of type {@code targetType}.
+   *
+   * @param bytes      The input source.
+   * @param targetType The required type.
+   * @param <T>        The type of object to create.
+   *
+   * @return The object created from JSON.
+   *
+   * @throws IOException When there is a JSON parsing or binding error or I/O error occurred.
+   */
+  <T> T read(byte[] bytes, Type targetType) throws IOException;
 }

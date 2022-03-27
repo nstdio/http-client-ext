@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.Objects;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -49,7 +50,21 @@ public class GsonJsonMapping implements JsonMapping {
   }
 
   @Override
+  public <T> T read(InputStream in, Type targetType) throws IOException {
+    try (var reader = new InputStreamReader(in, UTF_8)) {
+      return gson.fromJson(reader, targetType);
+    } catch (JsonParseException e) {
+      throw new IOException(e);
+    }
+  }
+
+  @Override
   public <T> T read(byte[] bytes, Class<T> targetType) throws IOException {
+    return read(new ByteArrayInputStream(bytes), targetType);
+  }
+
+  @Override
+  public <T> T read(byte[] bytes, Type targetType) throws IOException {
     return read(new ByteArrayInputStream(bytes), targetType);
   }
 }
