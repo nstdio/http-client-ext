@@ -19,6 +19,7 @@
 plugins {
     `java-library`
     jacoco
+    kotlin("jvm")
 }
 
 group = "io.github.nstdio"
@@ -26,6 +27,18 @@ group = "io.github.nstdio"
 java {
     withJavadocJar()
     withSourcesJar()
+}
+
+configurations
+    .filter { arrayOf("compileClasspath", "runtimeClasspath").contains(it.name) }
+    .forEach {
+        it.exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
+    }
+
+sourceSets {
+    main {
+        java.srcDirs -= file("src/main/kotlin")
+    }
 }
 
 val lombokVersion = "1.18.22"

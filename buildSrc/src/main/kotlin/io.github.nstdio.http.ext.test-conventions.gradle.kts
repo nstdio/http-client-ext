@@ -20,6 +20,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.paukov.combinatorics3.Generator
 import java.lang.Boolean
 import kotlin.String
@@ -44,6 +45,7 @@ import kotlin.to
 
 plugins {
     `java-library`
+    idea
     id("de.jjohannes.extra-java-module-info")
 }
 
@@ -52,14 +54,19 @@ val isCI = System.getenv("CI").toBoolean()
 java {
     sourceSets {
         create("spiTest") {
-            compileClasspath += sourceSets.main.get().output
-            runtimeClasspath += sourceSets.main.get().output
+            val output = sourceSets.main.get().output
+            compileClasspath += output
+            runtimeClasspath += output
         }
     }
 }
-
 val sourceSetsSpiTest by sourceSets.named("spiTest")
 val spiTestImplementation by configurations
+
+idea.module {
+    testSourceDirs.addAll(sourceSetsSpiTest.allSource.srcDirs)
+}
+
 
 mapOf(
     "spiTestImplementation" to "testImplementation",
@@ -80,8 +87,8 @@ tasks.withType<Test> {
 }
 
 val junitVersion = "5.8.2"
-val commonIoVersion = "1.3.2"
 val assertJVersion = "3.22.0"
+val mockitoVersion = "4.4.0"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "1.7.36"
 val jacksonVersion = "2.13.2"
@@ -109,15 +116,14 @@ dependencies {
     testImplementation("org.assertj:assertj-core:$assertJVersion")
     testImplementation("com.jayway.jsonpath:json-path-assert:$jsonPathAssertVersion")
 
-    testImplementation("org.apache.commons:commons-io:$commonIoVersion")
-
     /** Jupiter */
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+    testImplementation("org.mockito:mockito-core:$mockitoVersion")
+    testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+
     testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+
     testImplementation("org.awaitility:awaitility:4.2.0")
-    testImplementation("org.mockito:mockito-core:4.4.0")
 
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.32.0")
     testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
@@ -157,6 +163,12 @@ tasks.create<Task>("spiMatrixTest") {
     description = "The aggregator task for all tests"
     group = "verification"
     dependsOn(tasks.filter { it.name.startsWith("spiTest") })
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
 }
 
 tasks.check {

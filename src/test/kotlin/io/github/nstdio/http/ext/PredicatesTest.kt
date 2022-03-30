@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+package io.github.nstdio.http.ext
 
-plugins {
-    `kotlin-dsl`
-}
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.net.URI
+import java.net.http.HttpRequest
 
-repositories {
-    gradlePluginPortal()
-}
+class PredicatesTest {
+    @Test
+    fun shouldMatchGivenUri() {
+        //given
+        val uri = URI.create("http://example.com")
+        val r1 = HttpRequest.newBuilder(uri).build()
+        val r2 = HttpRequest.newBuilder(uri.resolve("/path")).build()
 
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20-RC2")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        //when + then
+        assertThat(Predicates.uri(uri))
+            .accepts(r1)
+            .rejects(r2)
     }
 }
