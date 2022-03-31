@@ -84,4 +84,46 @@ internal class HttpHeadersBuilderTest {
             .hasNoHeader("abc")
             .hasHeaderWithOnlyValue("abcd", "2")
     }
+
+    @Test
+    fun `Should add bulk`() {
+        //when
+        builder.add("abc", listOf("1", "2"))
+
+        //then
+        assertThat(builder.build())
+            .hasHeaderWithValues("abc", "1", "2")
+    }
+
+    @Test
+    fun `Should not add empty list`() {
+        //when
+        builder.add("abc", listOf())
+
+        //then
+        assertThat(builder.build())
+            .isEmpty()
+    }
+
+    @Test
+    fun `Should set bulk list`() {
+        //when
+        builder.add("abc", "1")
+        builder.set("abc", listOf("2", "3"))
+
+        //then
+        assertThat(builder.build())
+            .hasHeaderWithValues("abc", "2", "3")
+    }
+
+    @Test
+    fun `Should not set bulk list empty`() {
+        //when
+        builder.add("abc", "1")
+        builder.set("abc", listOf())
+
+        //then
+        assertThat(builder.build())
+            .isEmpty()
+    }
 }
