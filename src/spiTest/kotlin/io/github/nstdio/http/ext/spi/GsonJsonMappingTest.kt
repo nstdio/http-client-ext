@@ -13,27 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext.spi
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import io.github.nstdio.http.ext.GSON
+import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
 
-plugins {
-    `kotlin-dsl`
-}
-
-repositories {
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20-RC2")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+@EnabledIfOnClasspath(GSON)
+class GsonJsonMappingTest : JsonMappingContract {
+    override fun get(): JsonMapping {
+        return GsonJsonMapping()
     }
 }

@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.hamcrest.BaseMatcher
+import org.hamcrest.Description
+import java.net.http.HttpResponse
 
-plugins {
-    `kotlin-dsl`
-}
+object Matchers {
+    @JvmStatic
+    fun <T> isCached(): BaseMatcher<HttpResponse<T>?> {
+        return object : BaseMatcher<HttpResponse<T>?>() {
+            override fun matches(actual: Any): Boolean {
+                return actual is CachedHttpResponse<*>
+            }
 
-repositories {
-    gradlePluginPortal()
-}
-
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20-RC2")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+            override fun describeTo(description: Description) {
+                description.appendText("a cached response")
+            }
+        }
     }
 }

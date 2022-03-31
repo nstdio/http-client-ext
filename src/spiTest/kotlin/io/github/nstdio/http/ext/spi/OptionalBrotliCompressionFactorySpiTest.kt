@@ -13,27 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext.spi
 
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.Test
 
-plugins {
-    `kotlin-dsl`
-}
+internal class OptionalBrotliCompressionFactorySpiTest {
+    @Test
+    fun shouldSupportSomething() {
+        //given
+        val factory = OptionalBrotliCompressionFactory()
 
-repositories {
-    gradlePluginPortal()
-}
+        //when
+        val actual = factory.supported()
 
-dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.11")
-    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
-    implementation("net.researchgate:gradle-release:2.8.1")
-    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20-RC2")
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+        //then
+        Assertions.assertThat(actual).isNotEmpty
     }
 }
