@@ -25,6 +25,9 @@ plugins {
 group = "io.github.nstdio"
 
 java {
+    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_11
+
     withJavadocJar()
     withSourcesJar()
 }
@@ -49,9 +52,6 @@ dependencies {
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    sourceCompatibility = JavaVersion.VERSION_11.toString()
-    targetCompatibility = JavaVersion.VERSION_11.toString()
-
     options.encoding = "UTF-8"
     options.compilerArgs = listOf("-Xlint:all", "-Xlint:-deprecation")
 }
