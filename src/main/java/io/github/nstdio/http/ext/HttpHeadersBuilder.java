@@ -20,8 +20,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.BiPredicate;
 
 class HttpHeadersBuilder {
+  private static final BiPredicate<String, String> ALWAYS_ALLOW = (s, s2) -> true;
   private final TreeMap<String, List<String>> headersMap;
 
   HttpHeadersBuilder() {
@@ -71,7 +73,7 @@ class HttpHeadersBuilder {
 
   HttpHeadersBuilder remove(String name, String value) {
     List<String> values = headersMap.get(name);
-    if (value != null) {
+    if (values != null) {
       values.remove(value);
       if (values.isEmpty()) {
         headersMap.remove(name);
@@ -86,7 +88,11 @@ class HttpHeadersBuilder {
   }
 
   HttpHeaders build() {
-    return HttpHeaders.of(headersMap, (s, s2) -> true);
+    return build(ALWAYS_ALLOW);
+  }
+
+  HttpHeaders build(BiPredicate<String, String> filter) {
+    return HttpHeaders.of(headersMap, filter);
   }
 
   @Override

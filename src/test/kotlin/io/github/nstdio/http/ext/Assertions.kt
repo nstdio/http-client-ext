@@ -96,6 +96,11 @@ object Assertions {
             return this
         }
 
+        fun isEmpty(): HttpHeadersAssertion {
+            assertThat(actual!!.map()).isEmpty()
+            return this
+        }
+
         fun hasHeaderWithOnlyValue(header: String?, value: String?): HttpHeadersAssertion {
             assertThat(actual!!.allValues(header))
                 .containsExactly(value)
