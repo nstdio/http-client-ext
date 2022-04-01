@@ -38,5 +38,5 @@ release {
 tasks.register("updateReadme", io.github.nstdio.http.ext.ReadmeUpdateTask::class)
 
 tasks.named("afterReleaseBuild") {
-    dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository", "updateReadme")
+    dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository", "updateReadme", "changelog")
 }

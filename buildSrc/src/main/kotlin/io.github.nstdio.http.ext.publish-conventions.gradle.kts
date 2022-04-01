@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+import se.bjurr.gitchangelog.api.model.Tag
+import se.bjurr.gitchangelog.plugin.gradle.GitChangelogTask
+import se.bjurr.gitchangelog.plugin.gradle.HelperParam
+
 plugins {
     signing
     `maven-publish`
 
     id("io.github.gradle-nexus.publish-plugin")
+    id("se.bjurr.gitchangelog.git-changelog-gradle-plugin")
 }
 
 publishing {
@@ -74,4 +79,27 @@ signing {
     useInMemoryPgpKeys(signingKey, signingPassword)
 
     sign(publishing.publications["mavenJava"])
+}
+
+tasks.create("changelog", GitChangelogTask::class) {
+    fromRepo = project.rootDir.path
+    file = File("CHANGELOG.md")
+    handlebarsHelpers = listOf(
+        HelperParam("shortHash") { _: Any, options ->
+            return@HelperParam options.get<String>("hash").substring(0, 7)
+        },
+        HelperParam("compare") { _, options ->
+            val tagNames = options.get<List<Tag>>("tags").map { it.name }
+            val name = options.get<String>("name")
+            val prevTagIdx = tagNames.indexOf(name) + 1
+            val compare = name.takeIf { it != "Unreleased" } ?: "HEAD"
+
+            return@HelperParam if (prevTagIdx < tagNames.size) "compare/${tagNames[prevTagIdx]}...$compare"
+            else "releases/tag/$name"
+        }
+    )
+
+    doFirst {
+        templateContent = file("changelog.mustache").readText()
+    }
 }
