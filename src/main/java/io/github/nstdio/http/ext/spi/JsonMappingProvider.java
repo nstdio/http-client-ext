@@ -39,6 +39,8 @@ public interface JsonMappingProvider {
   /**
    * Finds the {@code JsonMappingProvider} with given name.
    *
+   * @param name The provider fully qualified class name.
+   *
    * @return The {@code JsonMappingProvider} with given name.
    *
    * @throws JsonMappingProviderNotFoundException When requested provider is not found.

@@ -33,10 +33,10 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
   }
 
   /**
-   * The maximum number of cache entries. After reaching the limit the eldest entries will be evicted. Default is
-   * 8192.
+   * The maximum number of cache entries. After reaching the limit the eldest entries will be evicted. Default is 8192.
    *
    * @param maxItems The maximum number of cache entries. Should be positive.
+   *
    * @return builder itself.
    */
   public B maxItems(int maxItems) {
@@ -52,6 +52,8 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
    * The amount of bytes allowed to be stored. Negative value means no memory restriction is made. Note that only
    * response body bytes are counted.
    *
+   * @param size The maximum size in bytes. Negative for no size restriction.
+   *
    * @return builder itself.
    */
   public B size(long size) {
@@ -61,10 +63,11 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
 
   /**
    * Adds given predicate to predicated chain. The calls with requests that did not pass given predicate will not be
-   * subjected to caching facility. Semantically request filter is equivalent to {@code Cache-Control: no-store}
-   * header in request.
+   * subjected to caching facility. Semantically request filter is equivalent to {@code Cache-Control: no-store} header
+   * in request.
    *
    * @param filter The request filter.
+   *
    * @return builder itself.
    */
   public B requestFilter(Predicate<HttpRequest> filter) {
@@ -80,11 +83,12 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
   }
 
   /**
-   * Adds given predicate to predicated chain. The calls resulting with response that did not pass given predicate
-   * will not be subjected to caching facility. Semantically response filter is equivalent to {@code Cache-Control:
-   * no-store} header in response.
+   * Adds given predicate to predicated chain. The calls resulting with response that did not pass given predicate will
+   * not be subjected to caching facility. Semantically response filter is equivalent to {@code Cache-Control: no-store}
+   * header in response.
    *
    * @param filter The request filter.
+   *
    * @return builder itself.
    */
   public B responseFilter(Predicate<ResponseInfo> filter) {
