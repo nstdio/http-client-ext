@@ -1,0 +1,33 @@
+# Changelog
+All notable changes to this project will be documented in this file.
+
+{{#tags}}
+## [{{name}}](https://github.com/{{ownerName}}/{{repoName}}/{{compare}}){{#if tagDate .}} - {{tagDate .}} {{/if}}
+
+---
+
+        {{#ifContainsType commits type='feat'}}
+### ⭐  Features
+            {{#commits}}
+                {{#ifCommitType . type='feat'}}
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{shortHash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hashFull}}))
+                {{/ifCommitType}}
+            {{/commits}}
+        {{/ifContainsType}}
+        {{#ifContainsType commits type='fix'}}
+### 🐞  Bug Fixes
+            {{#commits}}
+                {{#ifCommitType . type='fix'}}
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{shortHash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hashFull}}))
+                {{/ifCommitType}}
+            {{/commits}}
+        {{/ifContainsType}}
+        {{#ifContainsType commits type='chore'}}
+### ♻️ Improvements
+            {{#commits}}
+                {{#ifCommitType . type='chore'}}
+ - {{#eachCommitScope .}} **{{.}}** {{/eachCommitScope}} {{{commitDescription .}}} ([{{shortHash}}](https://github.com/{{ownerName}}/{{repoName}}/commit/{{hashFull}}))
+                {{/ifCommitType}}
+            {{/commits}}
+        {{/ifContainsType}}
+{{/tags}}

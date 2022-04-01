@@ -28,6 +28,13 @@ dependencies {
     implementation("net.researchgate:gradle-release:2.8.1")
     implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20-RC2")
+    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.71.9") {
+        isTransitive = false
+    }
+    implementation("se.bjurr.gitchangelog:git-changelog-lib:1.165.2") {
+        exclude("org.gitlab", "java-gitlab-api")
+        exclude("org.ow2.asm", "asm")
+    }
 }
 
 kotlinDslPluginOptions {

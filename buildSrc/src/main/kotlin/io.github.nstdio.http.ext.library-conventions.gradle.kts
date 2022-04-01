@@ -38,6 +38,10 @@ configurations
         it.exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
     }
 
+tasks.named("compileKotlin") {
+    enabled = false
+}
+
 sourceSets {
     main {
         java.srcDirs -= file("src/main/kotlin")
