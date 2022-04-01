@@ -49,6 +49,7 @@ public final class BodyHandlers {
    *
    * @param targetType The type.
    * @param <T>        The required type.
+   *
    * @return The JSON body handler.
    */
   public static <T> BodyHandler<Supplier<T>> ofJson(Class<T> targetType) {
@@ -75,6 +76,7 @@ public final class BodyHandlers {
      * Sets whether throw exception when compression directive not supported or not.
      *
      * @param failOnUnsupportedDirectives Whether throw exception when compression directive not supported or not
+     *
      * @return this for fluent chaining.
      */
     public DecompressingBodyHandlerBuilder failOnUnsupportedDirectives(boolean failOnUnsupportedDirectives) {
@@ -86,6 +88,7 @@ public final class BodyHandlers {
      * Sets whether throw exception when unknown compression directive encountered or not.
      *
      * @param failOnUnknownDirectives Whether throw exception when unknown compression directive encountered or not
+     *
      * @return this for fluent chaining.
      */
     public DecompressingBodyHandlerBuilder failOnUnknownDirectives(boolean failOnUnknownDirectives) {
@@ -112,6 +115,9 @@ public final class BodyHandlers {
      * Creates the new decompressing body handler.
      * <p>
      * Please use {@link #build()} if {@code downstream} is {@link HttpResponse.BodyHandlers#ofInputStream()}.
+     *
+     * @param <T>        The type of the response body.
+     * @param downstream The downstream handler.
      *
      * @return The builder for decompressing body handler.
      */

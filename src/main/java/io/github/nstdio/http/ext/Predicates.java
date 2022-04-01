@@ -35,6 +35,10 @@ public final class Predicates {
 
   /**
    * The {@code Predicate} that matches {@code HttpRequest}s with given {@code uri}.
+   *
+   * @param uri The uri to match.
+   *
+   * @return The {@code Predicate} that matches {@code HttpRequest}s with given {@code uri}.
    */
   public static Predicate<HttpRequest> uri(URI uri) {
     Objects.requireNonNull(uri);
