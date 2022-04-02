@@ -42,18 +42,20 @@ import static io.github.nstdio.http.ext.IOUtils.size;
 
 class DiskCache extends SizeConstrainedCache {
   private final MetadataSerializer metadataSerializer;
+  private final StreamFactory streamFactory;
   private final Executor executor;
   private final Path dir;
 
   DiskCache(Path dir) {
-    this(1 << 13, -1, new JacksonMetadataSerializer(), dir);
+    this(-1, 1 << 13, new JacksonMetadataSerializer(), new SimpleStreamFactory(), dir);
   }
 
-  DiskCache(int maxItems, long maxBytes, MetadataSerializer metadataSerializer, Path dir) {
+  DiskCache(long maxBytes, int maxItems, MetadataSerializer metadataSerializer, StreamFactory streamFactory, Path dir) {
     super(maxItems, maxBytes, null);
     addEvictionListener(this::deleteQuietly);
 
     this.metadataSerializer = metadataSerializer;
+    this.streamFactory = streamFactory;
     this.dir = dir;
     this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
 
@@ -74,7 +76,7 @@ class DiskCache extends SizeConstrainedCache {
           .filter(entryPaths -> Files.exists(entryPaths.body()))
           .map(entryPaths -> {
             var metadata = metadataSerializer.read(entryPaths.metadata());
-            return metadata != null ? new DiskCacheEntry(entryPaths, metadata) : null;
+            return metadata != null ? new DiskCacheEntry(entryPaths, streamFactory, metadata) : null;
           })
           .filter(Objects::nonNull)
           .forEach(entry -> put(entry.metadata().request(), entry));
@@ -121,12 +123,12 @@ class DiskCache extends SizeConstrainedCache {
     return new Writer<>() {
       @Override
       public BodySubscriber<Path> subscriber() {
-        return new PathSubscriber(entryPaths.body());
+        return new PathSubscriber(streamFactory, entryPaths.body());
       }
 
       @Override
       public Consumer<Path> finisher() {
-        return path -> put(metadata.request(), new DiskCacheEntry(entryPaths, metadata));
+        return path -> put(metadata.request(), new DiskCacheEntry(entryPaths, streamFactory, metadata));
       }
     };
   }
@@ -143,19 +145,21 @@ class DiskCache extends SizeConstrainedCache {
   @Accessors(fluent = true)
   private static class DiskCacheEntry implements CacheEntry {
     private final EntryPaths path;
+    private final StreamFactory streamFactory;
     private final CacheEntryMetadata metadata;
 
     private final long bodySize;
 
-    private DiskCacheEntry(EntryPaths path, CacheEntryMetadata metadata) {
+    private DiskCacheEntry(EntryPaths path, StreamFactory streamFactory, CacheEntryMetadata metadata) {
       this.path = path;
+      this.streamFactory = streamFactory;
       this.metadata = metadata;
       this.bodySize = size(path.body());
     }
 
     @Override
     public void subscribeTo(Subscriber<List<ByteBuffer>> sub) {
-      Subscription subscription = new PathReadingSubscription(sub, path.body());
+      Subscription subscription = new PathReadingSubscription(sub, streamFactory, path.body());
       sub.onSubscribe(subscription);
     }
 

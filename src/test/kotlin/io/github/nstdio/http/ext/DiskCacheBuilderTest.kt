@@ -15,28 +15,42 @@
  */
 package io.github.nstdio.http.ext
 
+import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.assertj.core.api.Assertions.assertThatIllegalStateException
 import org.assertj.core.api.Assertions.assertThatNullPointerException
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 
 internal class DiskCacheBuilderTest {
-    @Test
-    fun shouldThrowWhenBuildWithoutDir() {
-        //given
-        val builder = Cache.newDiskCacheBuilder()
+  @ParameterizedTest
+  @ValueSource(ints = [0, -1, -50, Int.MIN_VALUE])
+  fun `Should throw when max items is not positive`(maxItems: Int) {
+    //given
+    val builder = Cache.newDiskCacheBuilder()
 
-        //when + then
-        assertThatIllegalStateException()
-            .isThrownBy { builder.build() }
-    }
+    //when + then
+    assertThatIllegalArgumentException()
+      .isThrownBy { builder.maxItems(maxItems) }
+  }
 
-    @Test
-    fun shouldThrowWhenDirIsNull() {
-        //given
-        val builder = Cache.newDiskCacheBuilder()
+  @Test
+  fun shouldThrowWhenBuildWithoutDir() {
+    //given
+    val builder = Cache.newDiskCacheBuilder()
 
-        //when + then
-        assertThatNullPointerException()
-            .isThrownBy { builder.dir(null) }
-    }
+    //when + then
+    assertThatIllegalStateException()
+      .isThrownBy { builder.build() }
+  }
+
+  @Test
+  fun shouldThrowWhenDirIsNull() {
+    //given
+    val builder = Cache.newDiskCacheBuilder()
+
+    //when + then
+    assertThatNullPointerException()
+      .isThrownBy { builder.dir(null) }
+  }
 }

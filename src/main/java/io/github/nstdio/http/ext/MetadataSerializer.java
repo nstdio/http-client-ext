@@ -20,17 +20,25 @@ import io.github.nstdio.http.ext.spi.Classpath;
 
 import java.nio.file.Path;
 
+import static io.github.nstdio.http.ext.spi.Classpath.isGsonPresent;
+
 interface MetadataSerializer {
-  static MetadataSerializer findAvailable() {
+  static void requireAvailability() {
+    if (!Classpath.isJacksonPresent() && !isGsonPresent()) {
+      throw new IllegalStateException("In order to use disk cache please add either Jackson or Gson to your dependencies");
+    }
+  }
+
+  static MetadataSerializer findAvailable(StreamFactory streamFactory) {
     if (Classpath.isJacksonPresent()) {
-      return new JacksonMetadataSerializer();
+      return new JacksonMetadataSerializer(streamFactory);
     }
 
-    if (Classpath.isGsonPresent()) {
-      return new GsonMetadataSerializer();
+    if (isGsonPresent()) {
+      return new GsonMetadataSerializer(streamFactory);
     }
 
-    throw new IllegalStateException("In order to use disk cache please add either Jackson or Gson to your dependencies");
+    return null;
   }
 
   void write(CacheEntryMetadata metadata, Path path);

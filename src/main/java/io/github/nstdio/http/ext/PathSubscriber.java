@@ -19,8 +19,7 @@ package io.github.nstdio.http.ext;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.channels.GatheringByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -32,12 +31,17 @@ import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
-  private static final ByteBuffer[] EMPTY = new ByteBuffer[0];
+  private final StreamFactory streamFactory;
   private final Path path;
   private final CompletableFuture<Path> future = new CompletableFuture<>();
-  private GatheringByteChannel out;
+  private WritableByteChannel out;
 
   PathSubscriber(Path path) {
+    this(new SimpleStreamFactory(), path);
+  }
+
+  PathSubscriber(StreamFactory streamFactory, Path path) {
+    this.streamFactory = streamFactory;
     this.path = path;
   }
 
@@ -57,7 +61,7 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
     }
 
     try {
-      out = FileChannel.open(path, WRITE, TRUNCATE_EXISTING);
+      out = streamFactory.writable(path, WRITE, TRUNCATE_EXISTING);
     } catch (IOException e) {
       future.completeExceptionally(e);
     }
@@ -66,7 +70,9 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
   @Override
   public void onNext(List<ByteBuffer> item) {
     try {
-      out.write(item.toArray(EMPTY));
+      for (ByteBuffer buffer : item) {
+        out.write(buffer);
+      }
     } catch (IOException ex) {
       onError(ex);
     }
