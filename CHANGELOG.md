@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 ---
 
 ### ♻️ Improvements
+ -  **perf**  Optimize header value splitting. ([16d8f72](https://github.com/nstdio/http-client-ext/commit/16d8f72de94f9bd8de8ada9ea779ce3ba5a6be8e))
+ -  **doc**  Add changelog. ([9ae5bcf](https://github.com/nstdio/http-client-ext/commit/9ae5bcf5ec4730d36e037401a8da168af76ed7b4))
  -  **doc**  Polish Javadoc. ([fbf12cc](https://github.com/nstdio/http-client-ext/commit/fbf12cc75f69e13de9f02bcdae339eb01487e165))
  -  **test**  Add test for asserting exception in JdkCompressionFactory. ([4498f0d](https://github.com/nstdio/http-client-ext/commit/4498f0d1fa43c10e1b84ca85e9a3221666a89861))
  -  **build**  Update Gradle 7.4.1 -> 7.4.2. ([260419d](https://github.com/nstdio/http-client-ext/commit/260419deff2a6402d1fc8d263412d0c0cc6953ac))

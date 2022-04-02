@@ -27,8 +27,12 @@ import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.net.http.HttpResponse.ResponseInfo;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
@@ -124,6 +128,7 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     }
 
     return Headers.splitComma(encodingOpt.get())
+        .stream()
         .map(s -> Map.entry(s, decompressionFn(s)))
         .filter(e -> e.getValue() != IDENTITY)
         .collect(toMap(Entry::getKey, Entry::getValue, (f1, f2) -> f1, LinkedHashMap::new));

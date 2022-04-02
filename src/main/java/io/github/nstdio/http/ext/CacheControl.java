@@ -71,8 +71,8 @@ public class CacheControl {
 
   public static CacheControl parse(String value) {
     var builder = builder();
-    splitComma(value).map(String::toLowerCase).forEach(s -> {
-      switch (s) {
+    for (String s : splitComma(value)) {
+      switch (s.toLowerCase()) {
         case "no-cache":
           builder.noCache();
           break;
@@ -96,7 +96,7 @@ public class CacheControl {
           break;
         }
       }
-    });
+    }
     return builder.build();
   }
 

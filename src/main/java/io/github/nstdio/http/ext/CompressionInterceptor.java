@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -77,7 +78,8 @@ class CompressionInterceptor implements Interceptor {
     String contentEncoding = response.headers()
         .firstValue(HEADER_CONTENT_ENCODING)
         .stream()
-        .flatMap(Headers::splitComma)
+        .map(Headers::splitComma)
+        .flatMap(Collection::stream)
         .filter(not(directives::contains))
         .collect(joining(","));
 

@@ -26,10 +26,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -83,11 +87,28 @@ class Headers {
   private Headers() {
   }
 
-  static Stream<String> splitComma(String headerValue) {
-    return COMMA_PATTERN
-        .splitAsStream(headerValue)
-        .map(String::trim)
-        .filter(not(String::isEmpty));
+  static List<String> splitComma(String value) {
+    List<String> parts = null;
+
+    int i = 0;
+    int len = value.length();
+    while (i != -1 && i < len) {
+      int j = value.indexOf(',', i);
+      boolean found = j != -1;
+      String split = (found ? value.substring(i, j) : value.substring(i)).trim();
+
+      if (!split.isEmpty()) {
+        if (parts == null) {
+          parts = new ArrayList<>(1);
+        }
+
+        parts.add(split);
+      }
+
+      i = found ? j + 1 : j;
+    }
+
+    return parts != null ? parts : List.of();
   }
 
   static Optional<String> firstValue(HttpHeaders headers, String name) {
@@ -115,7 +136,7 @@ class Headers {
         return true;
       }
 
-      if (splitComma(value).anyMatch("*"::equals)) {
+      if (splitComma(value).contains("*")) {
         return true;
       }
     }
