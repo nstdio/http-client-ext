@@ -30,12 +30,12 @@ public class CacheControl {
   private static final Pattern VALUE_DIRECTIVES_PATTERN = Pattern.compile("(max-age|max-stale|min-fresh|stale-if-error|stale-while-revalidate)=(?:([0-9]+)|\"([0-9]+)\")");
 
   //@formatter:off
-  private static final int NO_CACHE = 1 << 1;
-  private static final int NO_STORE = 1 << 2;
+  private static final int NO_CACHE        = 1 << 1;
+  private static final int NO_STORE        = 1 << 2;
   private static final int MUST_REVALIDATE = 1 << 3;
-  private static final int NO_TRANSFORM = 1 << 4;
-  private static final int IMMUTABLE = 1 << 5;
-  private static final int ONLY_IF_CACHED = 1 << 6;
+  private static final int NO_TRANSFORM    = 1 << 4;
+  private static final int IMMUTABLE       = 1 << 5;
+  private static final int ONLY_IF_CACHED  = 1 << 6;
   //@formatter:on
 
   public static final CacheControl FORCE_CACHE = builder().onlyIfCached().maxAge(Long.MAX_VALUE).build();
