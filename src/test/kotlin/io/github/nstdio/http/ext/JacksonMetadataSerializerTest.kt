@@ -17,6 +17,7 @@ package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.net.URI
@@ -40,7 +41,7 @@ internal class JacksonMetadataSerializerTest {
         val metadata = ser.read(file)
 
         //then
-        org.junit.jupiter.api.Assertions.assertNull(metadata)
+        assertNull(metadata)
     }
 
     @Test

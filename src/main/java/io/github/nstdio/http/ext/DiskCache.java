@@ -36,21 +36,24 @@ import java.util.concurrent.Flow.Subscription;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import static io.github.nstdio.http.ext.IOUtils.*;
+import static io.github.nstdio.http.ext.IOUtils.createFile;
+import static io.github.nstdio.http.ext.IOUtils.delete;
+import static io.github.nstdio.http.ext.IOUtils.size;
 
 class DiskCache extends SizeConstrainedCache {
-  private final MetadataSerializer metadataSerializer = new JacksonMetadataSerializer();
+  private final MetadataSerializer metadataSerializer;
   private final Executor executor;
   private final Path dir;
 
   DiskCache(Path dir) {
-    this(1 << 13, -1, dir);
+    this(1 << 13, -1, new JacksonMetadataSerializer(), dir);
   }
 
-  DiskCache(int maxItems, long maxBytes, Path dir) {
+  DiskCache(int maxItems, long maxBytes, MetadataSerializer metadataSerializer, Path dir) {
     super(maxItems, maxBytes, null);
     addEvictionListener(this::deleteQuietly);
 
+    this.metadataSerializer = metadataSerializer;
     this.dir = dir;
     this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
 

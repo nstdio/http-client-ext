@@ -16,8 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import io.github.nstdio.http.ext.spi.Classpath;
-
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
@@ -46,11 +44,7 @@ public interface Cache {
    * @throws IllegalStateException When Jackson (a.k.a. ObjectMapper) is not in classpath.
    */
   static DiskCacheBuilder newDiskCacheBuilder() {
-    if (!Classpath.isJacksonPresent()) {
-      throw new IllegalStateException("In order to use disk cache please add 'com.fasterxml.jackson.core:jackson-databind' to your dependencies");
-    }
-
-    return new DiskCacheBuilder();
+    return new DiskCacheBuilder(MetadataSerializer.findAvailable());
   }
 
   /**
@@ -182,8 +176,10 @@ public interface Cache {
    */
   class DiskCacheBuilder extends ConstrainedCacheBuilder<DiskCacheBuilder> {
     private Path dir;
+    private final MetadataSerializer serializer;
 
-    DiskCacheBuilder() {
+    DiskCacheBuilder(MetadataSerializer serializer) {
+      this.serializer = serializer;
     }
 
     /**
@@ -204,7 +200,7 @@ public interface Cache {
         throw new IllegalStateException("dir cannot be null");
       }
 
-      return build(new DiskCache(maxItems, size, dir));
+      return build(new DiskCache(maxItems, size, serializer, dir));
     }
   }
 }
