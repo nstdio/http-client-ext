@@ -18,7 +18,14 @@ package io.github.nstdio.http.ext;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
@@ -45,18 +52,23 @@ import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_CODE;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_HEADERS;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_REQUEST;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_REQUEST_TIME;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_RESPONSE;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_RESPONSE_TIME;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_VERSION;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FILED_NAME_REQUEST_METHOD;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FILED_NAME_REQUEST_TIMEOUT;
+import static io.github.nstdio.http.ext.MetadataSerializationFields.FILED_NAME_REQUEST_URI;
 import static java.net.http.HttpRequest.BodyPublishers.noBody;
-import static java.nio.file.StandardOpenOption.*;
+import static java.nio.file.StandardOpenOption.CREATE;
+import static java.nio.file.StandardOpenOption.READ;
+import static java.nio.file.StandardOpenOption.WRITE;
 
 class JacksonMetadataSerializer implements MetadataSerializer {
 
-  private static final String FIELD_NAME_VERSION = "version";
-  private static final String FIELD_NAME_REQUEST_TIME = "requestTime";
-  private static final String FIELD_NAME_RESPONSE_TIME = "responseTime";
-  private static final String FIELD_NAME_REQUEST = "request";
-  private static final String FIELD_NAME_RESPONSE = "response";
-  private static final String FIELD_NAME_HEADERS = "headers";
-  private static final String FIELD_NAME_CODE = "code";
   private final ObjectWriter writer;
   private final ObjectReader reader;
 
@@ -180,14 +192,14 @@ class JacksonMetadataSerializer implements MetadataSerializer {
     @Override
     public void serialize(HttpRequest value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
       gen.writeStartObject();
-      gen.writeStringField("method", value.method());
+      gen.writeStringField(FILED_NAME_REQUEST_METHOD, value.method());
 
       String timeoutString = value.timeout().map(Duration::toString).orElse(null);
       if (timeoutString != null) {
-        gen.writeStringField("timeout", timeoutString);
+        gen.writeStringField(FILED_NAME_REQUEST_TIMEOUT, timeoutString);
       }
 
-      gen.writeStringField("uri", value.uri().toASCIIString());
+      gen.writeStringField(FILED_NAME_REQUEST_URI, value.uri().toASCIIString());
       Integer versionOrd = value.version().map(Enum::ordinal).orElse(null);
       if (versionOrd != null) {
         gen.writeNumberField(FIELD_NAME_VERSION, versionOrd);
@@ -214,10 +226,10 @@ class JacksonMetadataSerializer implements MetadataSerializer {
 
       while ((fieldName = p.nextFieldName()) != null) {
         switch (fieldName) {
-          case "method":
+          case FILED_NAME_REQUEST_METHOD:
             builder.method(p.nextTextValue(), noBody());
             break;
-          case "timeout":
+          case FILED_NAME_REQUEST_TIMEOUT:
             String timeout = p.nextTextValue();
             builder.timeout(Duration.parse(timeout));
             break;
@@ -225,7 +237,7 @@ class JacksonMetadataSerializer implements MetadataSerializer {
             int version = p.nextIntValue(-1);
             builder.version(HttpClient.Version.values()[version]);
             break;
-          case "uri":
+          case FILED_NAME_REQUEST_URI:
             builder.uri(URI.create(p.nextTextValue()));
             break;
           case FIELD_NAME_HEADERS:

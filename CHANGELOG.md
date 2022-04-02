@@ -5,8 +5,10 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+### ⭐  Features
+ -  Disk cache supports Gson as well. ([997c185](https://github.com/nstdio/http-client-ext/commit/997c185615da53bd998ae2b7e270fb6b604b563e))
 ### ♻️ Improvements
- -  **perf**  Optimize header value splitting. ([16d8f72](https://github.com/nstdio/http-client-ext/commit/16d8f72de94f9bd8de8ada9ea779ce3ba5a6be8e))
+ -  **perf**  Optimize header value splitting. ([e1873c7](https://github.com/nstdio/http-client-ext/commit/e1873c7ab7694e15e69bec4186b0c7ce006debe5))
  -  **doc**  Add changelog. ([9ae5bcf](https://github.com/nstdio/http-client-ext/commit/9ae5bcf5ec4730d36e037401a8da168af76ed7b4))
  -  **doc**  Polish Javadoc. ([fbf12cc](https://github.com/nstdio/http-client-ext/commit/fbf12cc75f69e13de9f02bcdae339eb01487e165))
  -  **test**  Add test for asserting exception in JdkCompressionFactory. ([4498f0d](https://github.com/nstdio/http-client-ext/commit/4498f0d1fa43c10e1b84ca85e9a3221666a89861))

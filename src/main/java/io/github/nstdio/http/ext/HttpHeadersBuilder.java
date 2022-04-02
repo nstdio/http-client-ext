@@ -66,7 +66,12 @@ class HttpHeadersBuilder {
 
   HttpHeadersBuilder set(String name, List<String> value) {
     List<String> values = new ArrayList<>(value);
-    headersMap.put(name, values);
+
+    return setTrusted(name, values);
+  }
+
+  HttpHeadersBuilder setTrusted(String name, List<String> value) {
+    headersMap.put(name, value);
 
     return this;
   }

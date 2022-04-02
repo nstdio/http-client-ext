@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package io.github.nstdio.http.ext
 
-import io.github.nstdio.http.ext.jupiter.DisabledIfOnClasspath
-import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
 
-internal class DiskCacheBuilderSpiTest {
-  @Nested
-  @DisabledIfOnClasspath(JACKSON, GSON)
-  internal inner class WithoutJacksonTest {
-    @Test
-    fun shouldDescriptiveException() {
-      Assertions.assertThatIllegalStateException()
-        .isThrownBy { Cache.newDiskCacheBuilder() }
-        .withMessage("In order to use disk cache please add either Jackson or Gson to your dependencies")
-    }
+@EnabledIfOnClasspath(JACKSON)
+internal class JacksonMetadataSerializerSpiTest : MetadataSerializerContract {
+  override fun serializer(): MetadataSerializer {
+    return JacksonMetadataSerializer()
   }
 }

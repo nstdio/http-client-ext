@@ -16,9 +16,23 @@
 
 package io.github.nstdio.http.ext;
 
+import io.github.nstdio.http.ext.spi.Classpath;
+
 import java.nio.file.Path;
 
 interface MetadataSerializer {
+  static MetadataSerializer findAvailable() {
+    if (Classpath.isJacksonPresent()) {
+      return new JacksonMetadataSerializer();
+    }
+
+    if (Classpath.isGsonPresent()) {
+      return new GsonMetadataSerializer();
+    }
+
+    throw new IllegalStateException("In order to use disk cache please add either Jackson or Gson to your dependencies");
+  }
+
   void write(CacheEntryMetadata metadata, Path path);
 
   CacheEntryMetadata read(Path path);
