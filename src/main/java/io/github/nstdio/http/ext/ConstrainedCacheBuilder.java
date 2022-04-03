@@ -21,13 +21,14 @@ import java.net.http.HttpResponse.ResponseInfo;
 import java.util.Objects;
 import java.util.function.Predicate;
 
+import static io.github.nstdio.http.ext.Preconditions.checkArgument;
 import static io.github.nstdio.http.ext.Predicates.alwaysTrue;
 
 abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> implements Cache.CacheBuilder {
   int maxItems = 1 << 13;
   long size = -1;
-  private Predicate<HttpRequest> requestFilter;
-  private Predicate<ResponseInfo> responseFilter;
+  Predicate<HttpRequest> requestFilter;
+  Predicate<ResponseInfo> responseFilter;
 
   ConstrainedCacheBuilder() {
   }
@@ -40,9 +41,7 @@ abstract class ConstrainedCacheBuilder<B extends ConstrainedCacheBuilder<B>> imp
    * @return builder itself.
    */
   public B maxItems(int maxItems) {
-    if (maxItems <= 0) {
-      throw new IllegalArgumentException("maxItems should be positive");
-    }
+    checkArgument(maxItems > 0, "maxItems should be positive");
 
     this.maxItems = maxItems;
     return self();

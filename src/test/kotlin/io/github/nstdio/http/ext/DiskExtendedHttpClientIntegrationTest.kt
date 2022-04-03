@@ -28,47 +28,53 @@ import java.nio.file.Files
 import java.time.Clock
 
 internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
-    @RegisterExtension
-    val wm: WireMockExtension = WireMockExtension.newInstance()
-        .configureStaticDsl(true)
-        .failOnUnmatchedRequests(true)
-        .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-        .build()
+  @RegisterExtension
+  val wm: WireMockExtension = WireMockExtension.newInstance()
+    .configureStaticDsl(true)
+    .failOnUnmatchedRequests(true)
+    .options(WireMockConfiguration.wireMockConfig().dynamicPort())
+    .build()
 
-    private val delegate = HttpClient.newHttpClient()
-    private var cacheDir: File? = null
-    private var client: ExtendedHttpClient? = null
-    private var cache: DiskCache? = null
+  private val delegate = HttpClient.newHttpClient()
+  private lateinit var cacheDir: File
+  private lateinit var client: ExtendedHttpClient
+  private lateinit var cache: Cache
 
-    @BeforeEach
-    @Throws(IOException::class)
-    fun setUp() {
-        val dir = Files.createTempDirectory("diskcache").toFile()
-        dir.deleteOnExit()
-        cache = DiskCache(dir.toPath())
-        cacheDir = dir
-        client = ExtendedHttpClient(delegate, cache, Clock.systemUTC())
-    }
+  @BeforeEach
+  @Throws(IOException::class)
+  fun setUp() {
+    val dir = Files.createTempDirectory("diskcache").toFile()
+    dir.deleteOnExit()
 
-    @AfterEach
-    fun tearDown() {
-        cache!!.evictAll()
-        cacheDir?.listFiles()?.forEach { it.delete() }
-    }
+    cache = Cache.newDiskCacheBuilder()
+      .dir(dir.toPath())
+      .encrypted()
+      .key(Crypto.pbe())
+      .cipherAlgorithm("AES")
+      .build()
+    cacheDir = dir
+    client = ExtendedHttpClient(delegate, cache, Clock.systemUTC())
+  }
 
-    override fun client(): ExtendedHttpClient {
-        return client!!
-    }
+  @AfterEach
+  fun tearDown() {
+    cache.evictAll()
+    cacheDir.listFiles()?.forEach { it.delete() }
+  }
 
-    override fun cache(): Cache {
-        return cache!!
-    }
+  override fun client(): ExtendedHttpClient {
+    return client
+  }
 
-    override fun wiremockRuntimeInfo(): WireMockRuntimeInfo {
-        return wm.runtimeInfo
-    }
+  override fun cache(): Cache {
+    return cache
+  }
 
-    override fun client(clock: Clock): ExtendedHttpClient {
-        return ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
-    }
+  override fun wiremockRuntimeInfo(): WireMockRuntimeInfo {
+    return wm.runtimeInfo
+  }
+
+  override fun client(clock: Clock): ExtendedHttpClient {
+    return ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+  }
 }

@@ -19,7 +19,6 @@ package io.github.nstdio.http.ext;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -33,11 +32,13 @@ class PathReadingSubscription implements Subscription {
   private static final int DEFAULT_BUFF_CAPACITY = 1 << 14;
   private final Subscriber<List<ByteBuffer>> subscriber;
   private final AtomicBoolean completed = new AtomicBoolean(false);
+  private final StreamFactory streamFactory;
   private final Path path;
   private ReadableByteChannel channel;
 
-  PathReadingSubscription(Subscriber<List<ByteBuffer>> subscriber, Path path) {
+  PathReadingSubscription(Subscriber<List<ByteBuffer>> subscriber, StreamFactory streamFactory, Path path) {
     this.subscriber = subscriber;
+    this.streamFactory = streamFactory;
     this.path = path;
   }
 
@@ -54,7 +55,7 @@ class PathReadingSubscription implements Subscription {
 
     try {
       if (channel == null) {
-        channel = Files.newByteChannel(path);
+        channel = streamFactory.readable(path);
       }
 
       var chan = channel;

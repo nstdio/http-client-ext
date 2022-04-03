@@ -41,7 +41,6 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse.ResponseInfo;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
@@ -71,11 +70,17 @@ class JacksonMetadataSerializer implements MetadataSerializer {
 
   private final ObjectWriter writer;
   private final ObjectReader reader;
+  private final StreamFactory streamFactory;
 
   JacksonMetadataSerializer() {
+    this(new SimpleStreamFactory());
+  }
+
+  JacksonMetadataSerializer(StreamFactory streamFactory) {
     ObjectMapper mapper = createMapper();
-    writer = mapper.writerFor(CacheEntryMetadata.class);
-    reader = mapper.readerFor(CacheEntryMetadata.class);
+    this.writer = mapper.writerFor(CacheEntryMetadata.class);
+    this.reader = mapper.readerFor(CacheEntryMetadata.class);
+    this.streamFactory = streamFactory;
   }
 
   private static JsonMappingException unexpectedFieldException(JsonParser p, String fieldName) {
@@ -104,7 +109,7 @@ class JacksonMetadataSerializer implements MetadataSerializer {
 
   @Override
   public void write(CacheEntryMetadata metadata, Path path) {
-    try (var out = new GZIPOutputStream(Files.newOutputStream(path, WRITE, CREATE))) {
+    try (var out = new GZIPOutputStream(streamFactory.output(path, WRITE, CREATE))) {
       writer.writeValue(out, metadata);
     } catch (IOException ignore) {
       // noop
@@ -113,7 +118,7 @@ class JacksonMetadataSerializer implements MetadataSerializer {
 
   @Override
   public CacheEntryMetadata read(Path path) {
-    try (var in = new GZIPInputStream(Files.newInputStream(path, READ))) {
+    try (var in = new GZIPInputStream(streamFactory.input(path, READ))) {
       return reader.readValue(in);
     } catch (IOException e) {
       return null;

@@ -18,11 +18,15 @@ package io.github.nstdio.http.ext.jupiter;
 
 import org.junit.jupiter.api.extension.ExtendWith;
 
-import java.lang.annotation.*;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * {@code @DisabledIfOnClasspath} is used to signal that the annotated test class or
- * test method is <em>disabled</em> only if any of provided classes is currently not on classpath.
+ * {@code @DisabledIfOnClasspath} is used to signal that the annotated test class or test method is <em>disabled</em>
+ * only if any of provided classes is currently not on classpath.
  */
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

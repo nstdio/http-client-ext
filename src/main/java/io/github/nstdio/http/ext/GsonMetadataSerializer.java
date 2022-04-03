@@ -30,13 +30,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.ResponseInfo;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static io.github.nstdio.http.ext.IOUtils.bufferedReader;
+import static io.github.nstdio.http.ext.IOUtils.bufferedWriter;
 import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_CODE;
 import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_HEADERS;
 import static io.github.nstdio.http.ext.MetadataSerializationFields.FIELD_NAME_REQUEST;
@@ -51,30 +52,37 @@ import static java.net.http.HttpRequest.BodyPublishers.noBody;
 
 class GsonMetadataSerializer implements MetadataSerializer {
   private final Gson gson;
+  private final StreamFactory streamFactory;
 
   GsonMetadataSerializer() {
+    this(new SimpleStreamFactory());
+  }
+
+  GsonMetadataSerializer(StreamFactory streamFactory) {
     var headers = new HttpHeadersTypeAdapter();
     var request = new HttpRequestTypeAdapter(headers);
     var response = new ResponseInfoTypeAdapter(headers);
 
-    gson = new GsonBuilder()
+    this.gson = new GsonBuilder()
         .disableHtmlEscaping()
         .registerTypeAdapter(CacheEntryMetadata.class, new CacheEntryMetadataTypeAdapter(request, response))
         .create();
+    this.streamFactory = streamFactory;
   }
 
   @Override
   public void write(CacheEntryMetadata metadata, Path path) {
-    try (var out = Files.newBufferedWriter(path)) {
+    try (var out = bufferedWriter(streamFactory.output(path))) {
       gson.toJson(metadata, out);
     } catch (IOException ignored) {
     }
   }
 
+
   @Override
   public CacheEntryMetadata read(Path path) {
-    try (var out = Files.newBufferedReader(path)) {
-      return gson.fromJson(out, CacheEntryMetadata.class);
+    try (var in = bufferedReader(streamFactory.input(path))) {
+      return gson.fromJson(in, CacheEntryMetadata.class);
     } catch (IOException ignored) {
       return null;
     }

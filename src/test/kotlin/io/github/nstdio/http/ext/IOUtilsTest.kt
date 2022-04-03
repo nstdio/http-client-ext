@@ -17,6 +17,7 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.IOUtils.createFile
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -25,40 +26,61 @@ import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.NoSuchAlgorithmException
 
 class IOUtilsTest {
-    @Test
-    fun shouldNotRethrowClosingException() {
-        //given
-        val c = Closeable { throw IOException() }
+  @Test
+  fun shouldNotRethrowClosingException() {
+    //given
+    val c = Closeable { throw IOException() }
 
-        //when + then
-        IOUtils.closeQuietly(c)
-    }
+    //when + then
+    IOUtils.closeQuietly(c)
+  }
 
-    @Test
-    fun shouldReturnNegativeWhenFileNotExists() {
-        //given
-        val path = Path.of("abc")
+  @Test
+  fun `Should not throw when null`() {
+    IOUtils.closeQuietly(null)
+  }
 
-        //when
-        val size = IOUtils.size(path)
+  @Test
+  fun `Should add IOException to suppressed exceptions`() {
+    //given
+    val io = IOException("I/O error occurred!")
+    val c = Closeable { throw io }
+    val th = NoSuchAlgorithmException()
 
-        //then
-        assertEquals(-1, size)
-    }
+    //when
+    IOUtils.closeQuietly(c, th)
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReturnTrueIfFileExists(@TempDir temp: Path) {
-        //given
-        val path = temp.resolve("abc")
-        Files.createFile(path)
+    //then
+    assertThat(th)
+      .hasSuppressedException(io);
+  }
 
-        //when
-        val created = createFile(path)
+  @Test
+  fun shouldReturnNegativeWhenFileNotExists() {
+    //given
+    val path = Path.of("abc")
 
-        //then
-        assertTrue(created)
-    }
+    //when
+    val size = IOUtils.size(path)
+
+    //then
+    assertEquals(-1, size)
+  }
+
+  @Test
+  @Throws(IOException::class)
+  fun shouldReturnTrueIfFileExists(@TempDir temp: Path) {
+    //given
+    val path = temp.resolve("abc")
+    Files.createFile(path)
+
+    //when
+    val created = createFile(path)
+
+    //then
+    assertTrue(created)
+  }
 }

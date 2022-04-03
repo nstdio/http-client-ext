@@ -25,52 +25,68 @@ import com.tngtech.archunit.junit.ArchTest
 import com.tngtech.archunit.lang.ArchRule
 import com.tngtech.archunit.lang.conditions.ArchPredicates.are
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition
-import io.github.nstdio.http.ext.*
+import io.github.nstdio.http.ext.BodyHandlers
 import io.github.nstdio.http.ext.BodyHandlers.DecompressingBodyHandlerBuilder
+import io.github.nstdio.http.ext.BodySubscribers
+import io.github.nstdio.http.ext.Cache
 import io.github.nstdio.http.ext.Cache.DiskCacheBuilder
+import io.github.nstdio.http.ext.Cache.EncryptedDiskCacheBuilder
 import io.github.nstdio.http.ext.Cache.InMemoryCacheBuilder
+import io.github.nstdio.http.ext.CacheControl
 import io.github.nstdio.http.ext.CacheControl.CacheControlBuilder
-import io.github.nstdio.http.ext.spi.*
-import org.junit.jupiter.api.Disabled
+import io.github.nstdio.http.ext.CacheEntryMetadata
+import io.github.nstdio.http.ext.ExtendedHttpClient
+import io.github.nstdio.http.ext.Predicates
+import io.github.nstdio.http.ext.spi.Classpath
+import io.github.nstdio.http.ext.spi.CompressionFactory
+import io.github.nstdio.http.ext.spi.GsonJsonMapping
+import io.github.nstdio.http.ext.spi.IdentityCompressionFactory
+import io.github.nstdio.http.ext.spi.JacksonJsonMapping
+import io.github.nstdio.http.ext.spi.JdkCompressionFactory
+import io.github.nstdio.http.ext.spi.JsonMapping
+import io.github.nstdio.http.ext.spi.JsonMappingProvider
+import io.github.nstdio.http.ext.spi.JsonMappingProviderNotFoundException
+import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory
+
 
 @AnalyzeClasses(packages = ["io.github.nstdio.http.ext"], importOptions = [DoNotIncludeTests::class])
-@Disabled
 internal object VisibilityTest {
-    @ArchTest
-    @Suppress("unused")
-    var all_classes_expect_listed_should_not_be_public: ArchRule = ArchRuleDefinition.classes()
-        .that(
-            not(ExtendedHttpClient::class.java)
-                .and(not(ExtendedHttpClient.Builder::class.java))
-                .and(not(DecompressingBodyHandlerBuilder::class.java))
-                .and(not(BodyHandlers::class.java))
-                .and(not(BodySubscribers::class.java))
-                .and(not(Cache.CacheBuilder::class.java))
-                .and(not(Cache.CacheEntry::class.java))
-                .and(not(InMemoryCacheBuilder::class.java))
-                .and(not(DiskCacheBuilder::class.java))
-                .and(not(Cache.Writer::class.java))
-                .and(not(CacheEntryMetadata::class.java))
-                .and(not(Cache::class.java))
-                .and(not(Cache.CacheStats::class.java))
-                .and(not(CacheControlBuilder::class.java))
-                .and(not(CacheControl::class.java))
-                .and(not(Predicates::class.java))
-                .and(not(CompressionFactory::class.java))
-                .and(not(JdkCompressionFactory::class.java))
-                .and(not(IdentityCompressionFactory::class.java))
-                .and(not(OptionalBrotliCompressionFactory::class.java))
-                .and(not(JsonMappingProvider::class.java))
-                .and(not(JsonMapping::class.java))
-                .and(not(JacksonJsonMapping::class.java))
-                .and(not(GsonJsonMapping::class.java))
-                .and(not(JsonMappingProviderNotFoundException::class.java))
-                .and(not(Classpath::class.java))
-        )
-        .should()
-        .notBePublic()
+  @ArchTest
+  @Suppress("unused")
+  var all_classes_expect_listed_should_not_be_public: ArchRule = ArchRuleDefinition.classes()
+    .that(
+      not(ExtendedHttpClient::class.java)
+        .and(not(ExtendedHttpClient.Builder::class.java))
+        .and(not(DecompressingBodyHandlerBuilder::class.java))
+        .and(not(BodyHandlers::class.java))
+        .and(not(BodySubscribers::class.java))
+        .and(not(Cache.CacheBuilder::class.java))
+        .and(not(Cache.CacheEntry::class.java))
+        .and(not(InMemoryCacheBuilder::class.java))
+        .and(not(DiskCacheBuilder::class.java))
+        .and(not(EncryptedDiskCacheBuilder::class.java))
+        .and(not(Cache.Writer::class.java))
+        .and(not(CacheEntryMetadata::class.java))
+        .and(not(Cache::class.java))
+        .and(not(Cache.CacheStats::class.java))
+        .and(not(CacheControlBuilder::class.java))
+        .and(not(CacheControl::class.java))
+        .and(not(Predicates::class.java))
+        .and(not(CompressionFactory::class.java))
+        .and(not(JdkCompressionFactory::class.java))
+        .and(not(IdentityCompressionFactory::class.java))
+        .and(not(OptionalBrotliCompressionFactory::class.java))
+        .and(not(JsonMappingProvider::class.java))
+        .and(not(JsonMapping::class.java))
+        .and(not(JacksonJsonMapping::class.java))
+        .and(not(GsonJsonMapping::class.java))
+        .and(not(JsonMappingProviderNotFoundException::class.java))
+        .and(not(Classpath::class.java))
+    )
+    .should()
+    .notBePublic()
 
-    private fun not(cls: Class<*>): DescribedPredicate<JavaClass> {
-        return are(not(equivalentTo(cls)))
-    }
+  private fun not(cls: Class<*>): DescribedPredicate<JavaClass> {
+    return are(not(equivalentTo(cls)))
+  }
 }

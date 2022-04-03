@@ -16,21 +16,36 @@
 
 package io.github.nstdio.http.ext;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 class IOUtils {
   private IOUtils() {
   }
 
   static void closeQuietly(Closeable c) {
+    closeQuietly(c, null);
+  }
+
+  static void closeQuietly(Closeable c, Throwable thrown) {
     if (c != null) {
       try {
         c.close();
-      } catch (IOException ignored) {
+      } catch (IOException e) {
+        if (thrown != null) {
+          thrown.addSuppressed(e);
+        }
       }
     }
   }
@@ -59,5 +74,13 @@ class IOUtils {
     } catch (IOException e) {
       return false;
     }
+  }
+
+  static BufferedReader bufferedReader(InputStream in) {
+    return new BufferedReader(new InputStreamReader(in, UTF_8));
+  }
+
+  static BufferedWriter bufferedWriter(OutputStream out) {
+    return new BufferedWriter(new OutputStreamWriter(out, UTF_8));
   }
 }
