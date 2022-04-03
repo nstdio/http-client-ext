@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
-import java.util.regex.Pattern;
 
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
@@ -51,7 +50,6 @@ class Headers {
   static final String HEADER_LAST_MODIFIED = "Last-Modified";
   static final String HEADER_WARNING = "Warning";
   static final BiPredicate<String, String> ALLOW_ALL = (s, s2) -> true;
-  private static final Pattern COMMA_PATTERN = Pattern.compile(",", Pattern.LITERAL);
   private static final DateTimeFormatter ASCTIME_DATE_TIME = new DateTimeFormatterBuilder()
       .appendPattern("EEE MMM")
       .appendLiteral(' ')
@@ -162,6 +160,11 @@ class Headers {
     }
 
     return builder.build();
+  }
+
+  static boolean hasConditions(HttpHeaders h) {
+    return h.firstValue(HEADER_IF_MODIFIED_SINCE).isPresent()
+        || h.firstValue(HEADER_IF_NONE_MATCH).isPresent();
   }
 
   static Optional<Instant> parseInstant(HttpHeaders headers, String headerName) {
