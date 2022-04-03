@@ -73,15 +73,15 @@ class EncryptedStreamFactory implements StreamFactory {
   }
 
   private Cipher cipher() {
-    var thCipher = threadLocalCipher;
+    var tl = threadLocalCipher;
 
-    if (thCipher.get() == null) {
-      var cipher = createCipher();
-      thCipher.set(cipher);
-      return cipher;
+    if (tl.get() == null) {
+      Cipher c = createCipher();
+      tl.set(c);
+      return c;
     }
 
-    return thCipher.get();
+    return tl.get();
   }
 
   private boolean hasProvider() {
