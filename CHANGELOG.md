@@ -3,11 +3,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.0...HEAD)
 
----
-
 ## [v2.1.0](https://github.com/nstdio/http-client-ext/compare/v2.0.0...v2.1.0)
-
----
 
 ### ⭐  Features
  -  Optional encryption for disk cache. ([3a1af2d](https://github.com/nstdio/http-client-ext/commit/3a1af2d7ffd832210cf588483699911b81817a15))
@@ -25,8 +21,6 @@ All notable changes to this project will be documented in this file.
  -  **doc**  Change Maven central badge ([740de64](https://github.com/nstdio/http-client-ext/commit/740de64fd62fd9e51b77c2adf98381ee660e820c))
 ## [v2.0.0](https://github.com/nstdio/http-client-ext/compare/v1.5.1...v2.0.0)
 
----
-
 ### ⭐  Features
  -  Add complex type support for JSON mappings. ([1617f77](https://github.com/nstdio/http-client-ext/commit/1617f77b7472af1ea325dd85c8135992fa2d4968))
  -  SPI for JSON mapping. ([70b8e0f](https://github.com/nstdio/http-client-ext/commit/70b8e0f7834dcc756ea753272cc974d7f26a2fd5))
@@ -39,13 +33,9 @@ All notable changes to this project will be documented in this file.
  -  Reformat code. ([6dda31e](https://github.com/nstdio/http-client-ext/commit/6dda31ec759632b2e0dc9d4ab4737b5ea346cd61))
 ## [v1.5.1](https://github.com/nstdio/http-client-ext/compare/v1.5.0...v1.5.1)
 
----
-
 ### 🐞  Bug Fixes
  -  **build**  Escape Kotlin string interpolation. ([1366d26](https://github.com/nstdio/http-client-ext/commit/1366d261b60a81a897013c07d94bf963ca390346))
 ## [v1.5.0](https://github.com/nstdio/http-client-ext/compare/v1.4.0...v1.5.0)
-
----
 
 ### ⭐  Features
  -  **cache**  Cache statistics. ([3ad0d64](https://github.com/nstdio/http-client-ext/commit/3ad0d646a6aed093ccd265d3e4828b3e6c49ea9a))
@@ -63,8 +53,6 @@ All notable changes to this project will be documented in this file.
  -  Shorten module configuration. ([fedf8b8](https://github.com/nstdio/http-client-ext/commit/fedf8b8d6e81e2270cc74a5e1c5a045e966816ae))
 ## [v1.4.0](https://github.com/nstdio/http-client-ext/compare/v1.3.0...v1.4.0)
 
----
-
 ### ⭐  Features
  -  **comp**  SPI for compression. ([3eb9061](https://github.com/nstdio/http-client-ext/commit/3eb9061030cff8f741077ccf48fc6b3dc8fdfcb0))
 ### ♻️ Improvements
@@ -75,8 +63,6 @@ All notable changes to this project will be documented in this file.
  -  Polish javadoc. ([7cb13e9](https://github.com/nstdio/http-client-ext/commit/7cb13e9e7583a6032f94bbe9834757edcde17244))
 ## [v1.3.0](https://github.com/nstdio/http-client-ext/compare/v1.2.2...v1.3.0)
 
----
-
 ### ⭐  Features
  -  **cache**  Add support for stale-if-error Cache-Control extension. ([a42139f](https://github.com/nstdio/http-client-ext/commit/a42139f5d08b37232dd97cf3aa612076689e7ced))
 ### ♻️ Improvements
@@ -86,25 +72,15 @@ All notable changes to this project will be documented in this file.
  -  Extract common IO parts. ([843aac5](https://github.com/nstdio/http-client-ext/commit/843aac5f4932344992ca2a916fc2508fc818cdca))
 ## [v1.2.2](https://github.com/nstdio/http-client-ext/compare/v1.2.1...v1.2.2)
 
----
-
 ### ♻️ Improvements
  -  **deps**  Bump mockito-core from 4.3.1 to 4.4.0 ([a5dd1e2](https://github.com/nstdio/http-client-ext/commit/a5dd1e27b676680a5965bdf66df8df5b1eafedb5))
 ## [v1.2.1](https://github.com/nstdio/http-client-ext/compare/v1.2.0...v1.2.1)
 
----
-
 ## [v1.2.0](https://github.com/nstdio/http-client-ext/compare/v1.1.1...v1.2.0)
-
----
 
 ## [v1.1.1](https://github.com/nstdio/http-client-ext/compare/vv1.1.0...v1.1.1)
 
----
-
 ## [vv1.1.0](https://github.com/nstdio/http-client-ext/compare/v1.0.3...vv1.1.0)
-
----
 
 ### ⭐  Features
  -  Options to control failing on malformed, unknown directives. ([ba7604a](https://github.com/nstdio/http-client-ext/commit/ba7604ae981445dff84d11879f6744f140e85ea0))
@@ -122,13 +98,9 @@ All notable changes to this project will be documented in this file.
  -  **ci**  Use setup-java's Gradle cache. ([cac390a](https://github.com/nstdio/http-client-ext/commit/cac390ab07fe510399229458165166fb8de8db1a))
 ## [v1.0.3](https://github.com/nstdio/http-client-ext/compare/v1.0.2...v1.0.3)
 
----
-
 ### ♻️ Improvements
  -  **ci**  Remove caching from release.yml. ([a7c385b](https://github.com/nstdio/http-client-ext/commit/a7c385b0d852a30bb56ab1d153e1c343117704f4))
 ## [v1.0.2](https://github.com/nstdio/http-client-ext/compare/v1.0.1...v1.0.2)
-
----
 
 ### 🐞  Bug Fixes
  -  Fix static import in tests. ([a5208fa](https://github.com/nstdio/http-client-ext/commit/a5208fafb501c5da4d248d824e56d873c6cebe8f))
@@ -136,8 +108,6 @@ All notable changes to this project will be documented in this file.
  -  Relocate all classes. ([0a89cb0](https://github.com/nstdio/http-client-ext/commit/0a89cb0a9a4b8a69dd575258b44865b30f2832f2))
  -  Add license. ([0f6fa1b](https://github.com/nstdio/http-client-ext/commit/0f6fa1b0c4b1a88c829e7fd66b67b4021c761453))
 ## [v1.0.1](https://github.com/nstdio/http-client-ext/releases/tag/v1.0.1)
-
----
 
 ### 🐞  Bug Fixes
  -  Configure git committer identity to perform release commits. ([e9d3a20](https://github.com/nstdio/http-client-ext/commit/e9d3a208bb6b0efe1bc32a39027e238cd86d4181))
