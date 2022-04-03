@@ -80,9 +80,7 @@ class CachingInterceptor implements Interceptor {
   }
 
   private static boolean hasConditions(HttpRequest request) {
-    var headers = request.headers();
-    return headers.firstValue(HEADER_IF_MODIFIED_SINCE).isPresent()
-        || headers.firstValue(HEADER_IF_NONE_MATCH).isPresent();
+    return Headers.hasConditions(request.headers());
   }
 
   @Override

@@ -109,6 +109,16 @@ internal class HeadersTest {
     assertThat(actual).isEqualTo(expected)
   }
 
+  @ParameterizedTest
+  @MethodSource("hasConditionsData")
+  fun hasConditions(headers: HttpHeaders, expected: Boolean) {
+    //when
+    val actual = Headers.hasConditions(headers)
+
+    //then
+    assertThat(actual).isEqualTo(expected)
+  }
+
   companion object {
     @JvmStatic
     fun parseDateData(): Array<Array<Any?>> {
@@ -117,6 +127,16 @@ internal class HeadersTest {
         arrayOf("Sunday, 06-Nov-94 08:49:37 GMT", Instant.parse("1994-11-06T08:49:37Z")),
         arrayOf("Sun Nov  6 08:49:37 1994", Instant.parse("1994-11-06T08:49:37Z")),
         arrayOf("invalid text", null)
+      )
+    }
+
+    @JvmStatic
+    fun hasConditionsData(): Array<Array<Any>> {
+      return arrayOf(
+        arrayOf(HttpHeadersBuilder().add("If-Modified-Since", "abc").build(), true),
+        arrayOf(HttpHeadersBuilder().add("If-None-Match", "abc").build(), true),
+        arrayOf(HttpHeadersBuilder().add("If-None-Match", "abc").add("If-Modified-Since", "abc").build(), true),
+        arrayOf(HttpHeadersBuilder().add("If-Range", "abc").build(), false),
       )
     }
 
