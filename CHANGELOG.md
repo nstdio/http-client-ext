@@ -6,7 +6,8 @@ All notable changes to this project will be documented in this file.
 ---
 
 ### ⭐  Features
- -  Disk cache supports Gson as well. ([997c185](https://github.com/nstdio/http-client-ext/commit/997c185615da53bd998ae2b7e270fb6b604b563e))
+ -  Optional encryption for disk cache. ([3a1af2d](https://github.com/nstdio/http-client-ext/commit/3a1af2d7ffd832210cf588483699911b81817a15))
+ -  Disk cache supports Gson as well. ([5f26718](https://github.com/nstdio/http-client-ext/commit/5f26718d22a88173efebee56e2855c13652744db))
 ### ♻️ Improvements
  -  **perf**  Optimize header value splitting. ([e1873c7](https://github.com/nstdio/http-client-ext/commit/e1873c7ab7694e15e69bec4186b0c7ce006debe5))
  -  **doc**  Add changelog. ([9ae5bcf](https://github.com/nstdio/http-client-ext/commit/9ae5bcf5ec4730d36e037401a8da168af76ed7b4))
