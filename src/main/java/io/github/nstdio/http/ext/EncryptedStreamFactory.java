@@ -21,7 +21,6 @@ import lombok.SneakyThrows;
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -49,6 +48,7 @@ class EncryptedStreamFactory implements StreamFactory {
   private final String transformation;
   private final String algorithm;
   private final String provider;
+  private final ThreadLocal<Cipher> threadLocalCipher;
 
   public EncryptedStreamFactory(StreamFactory delegate, Key publicKey, Key privateKey, String transformation, String provider) {
     this.delegate = delegate;
@@ -57,6 +57,7 @@ class EncryptedStreamFactory implements StreamFactory {
     this.transformation = transformation;
     this.algorithm = algo(transformation);
     this.provider = provider;
+    this.threadLocalCipher = new ThreadLocal<>();
   }
 
   private static String algo(String transformation) {
@@ -64,10 +65,23 @@ class EncryptedStreamFactory implements StreamFactory {
     return i == -1 ? transformation : transformation.substring(0, i);
   }
 
-  private Cipher cipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
+  @SneakyThrows
+  private Cipher createCipher() {
     return hasProvider()
         ? Cipher.getInstance(transformation, provider)
         : Cipher.getInstance(transformation);
+  }
+
+  private Cipher cipher() {
+    var thCipher = threadLocalCipher;
+
+    if (thCipher.get() == null) {
+      var cipher = createCipher();
+      thCipher.set(cipher);
+      return cipher;
+    }
+
+    return thCipher.get();
   }
 
   private boolean hasProvider() {
