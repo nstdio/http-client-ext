@@ -38,10 +38,10 @@ internal class ByteBufferInputStreamTest {
     @ParameterizedTest
     @MethodSource("fullReadingData")
     @Throws(IOException::class)
-    fun fullReading(bytes: ByteArray?) {
+    fun fullReading(bytes: ByteArray) {
         //given
         val `is` = ByteBufferInputStream()
-        Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer? -> `is`.add(b) })
+        Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer -> `is`.add(b) })
 
         //when
         val actual = IOUtils.toByteArray(`is`)

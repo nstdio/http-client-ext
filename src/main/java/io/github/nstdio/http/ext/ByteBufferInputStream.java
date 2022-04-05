@@ -58,13 +58,18 @@ class ByteBufferInputStream extends InputStream {
     }
     int end = off + len;
     int i = off;
-    for (; i < end; i++) {
-      if (!buf.hasRemaining()) {
-        buf = nextBuffer();
-        if (buf == null) break;
+    while (i < end) {
+      int rem = buf.remaining();
+
+      if (rem == 0) {
+        if ((buf = nextBuffer()) == null) break;
+
+        rem = buf.remaining();
       }
 
-      b[i] = buf.get();
+      int needed = Math.min(len - i, rem);
+      buf.get(b, i, needed);
+      i += needed;
     }
 
     int read = i - off;
