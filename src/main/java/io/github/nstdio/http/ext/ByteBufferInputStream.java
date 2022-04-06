@@ -85,11 +85,10 @@ class ByteBufferInputStream extends InputStream {
 
   private ByteBuffer nextBuffer() {
     Deque<ByteBuffer> buffs = buffers;
-    ByteBuffer buf = buffs.peek();
+    ByteBuffer buf;
 
-    while (buf != null && !buf.hasRemaining()) {
+    while ((buf = buffs.peek()) != null && !buf.hasRemaining()) {
       buffs.poll();
-      buf = buffs.peek();
     }
 
     return buf;
