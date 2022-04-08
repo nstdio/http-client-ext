@@ -87,9 +87,9 @@ internal class CacheControlTest {
       .immutable()
       .build()
     val expected = """
-      no-cache, no-store, must-revalidate, no-transform, immutable, only-if-cached, must-understand, 
+      no-cache, no-store, must-revalidate, no-transform, immutable, only-if-cached, must-understand,
       max-age=$maxAge, max-stale=$maxStale, min-fresh=$minFresh, stale-if-error=$staleIfError, stale-while-revalidate=$staleWhileRevalidate
-    """.trimIndent().replace("\n", "")
+    """.trimIndent().replace("\n", " ")
 
     //when + then
     cc.toString().shouldBe(expected)
