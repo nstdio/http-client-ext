@@ -30,12 +30,13 @@ public class CacheControl {
   private static final Pattern VALUE_DIRECTIVES_PATTERN = Pattern.compile("(max-age|max-stale|min-fresh|stale-if-error|stale-while-revalidate)=(?:([0-9]+)|\"([0-9]+)\")");
 
   //@formatter:off
-  private static final int NO_CACHE        = 1 << 1;
-  private static final int NO_STORE        = 1 << 2;
-  private static final int MUST_REVALIDATE = 1 << 3;
-  private static final int NO_TRANSFORM    = 1 << 4;
-  private static final int IMMUTABLE       = 1 << 5;
-  private static final int ONLY_IF_CACHED  = 1 << 6;
+  private static final int NO_CACHE         = 1 << 1;
+  private static final int NO_STORE         = 1 << 2;
+  private static final int MUST_REVALIDATE  = 1 << 3;
+  private static final int NO_TRANSFORM     = 1 << 4;
+  private static final int IMMUTABLE        = 1 << 5;
+  private static final int ONLY_IF_CACHED   = 1 << 6;
+  private static final int MUST_UNDERSTAND  = 1 << 7;
   //@formatter:on
 
   public static final CacheControl FORCE_CACHE = builder().onlyIfCached().maxAge(Long.MAX_VALUE).build();
@@ -90,6 +91,9 @@ public class CacheControl {
           break;
         case "only-if-cached":
           builder.onlyIfCached();
+          break;
+        case "must-understand":
+          builder.mustUnderstand();
           break;
         default: {
           parseValue(builder, s);
@@ -161,7 +165,7 @@ public class CacheControl {
   }
 
   public boolean noStore() {
-    return isSet(flags, NO_STORE);
+    return !mustUnderstand() && isSet(flags, NO_STORE);
   }
 
   public boolean mustRevalidate() {
@@ -220,16 +224,21 @@ public class CacheControl {
     return isSet(flags, ONLY_IF_CACHED);
   }
 
+  public boolean mustUnderstand() {
+    return isSet(flags, MUST_UNDERSTAND);
+  }
+
   @Override
   public String toString() {
     var sb = new StringBuilder();
     if (noCache()) sb.append("no-cache");
-    if (noStore()) appendComma(sb).append("no-store");
+    if (isSet(flags, NO_STORE)) appendComma(sb).append("no-store");
     if (mustRevalidate()) appendComma(sb).append("must-revalidate");
 
     if (noTransform()) appendComma(sb).append("no-transform");
     if (immutable()) appendComma(sb).append("immutable");
     if (onlyIfCached()) appendComma(sb).append("only-if-cached");
+    if (mustUnderstand()) appendComma(sb).append("must-understand");
 
     if (maxAge > -1) appendComma(sb).append("max-age=").append(maxAge);
     if (maxStale > -1) appendComma(sb).append("max-stale=").append(maxStale);
@@ -309,6 +318,11 @@ public class CacheControl {
 
     public CacheControlBuilder onlyIfCached() {
       flags = set(flags, ONLY_IF_CACHED);
+      return this;
+    }
+
+    public CacheControlBuilder mustUnderstand() {
+      flags = set(flags, MUST_UNDERSTAND);
       return this;
     }
 
