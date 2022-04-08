@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.0...HEAD)
 
+### ⭐  Features
+ -  Add `must-understand` CacheControl header directive support. ([f0582bf](https://github.com/nstdio/http-client-ext/commit/f0582bf0104488a902d89cc4925291e7b74b4846))
+### ♻️ Improvements
+ -  **perf**  Store Cipher instance in ThreadLocal. ([1e1a5a1](https://github.com/nstdio/http-client-ext/commit/1e1a5a1443dd50f6148df1a936d3f43fadee96f7))
 ## [v2.1.0](https://github.com/nstdio/http-client-ext/compare/v2.0.0...v2.1.0)
 
 ### ⭐  Features
