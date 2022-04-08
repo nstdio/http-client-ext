@@ -42,10 +42,6 @@ class DiskCache extends SizeConstrainedCache {
   private final Executor executor;
   private final Path dir;
 
-  DiskCache(Path dir) {
-    this(-1, 1 << 13, new JacksonMetadataSerializer(), new SimpleStreamFactory(), dir);
-  }
-
   DiskCache(long maxBytes, int maxItems, MetadataSerializer metadataSerializer, StreamFactory streamFactory, Path dir) {
     super(maxItems, maxBytes, null);
     addEvictionListener(this::deleteQuietly);
