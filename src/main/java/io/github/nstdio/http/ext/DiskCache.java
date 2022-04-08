@@ -16,10 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
-
 import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
@@ -133,16 +129,28 @@ class DiskCache extends SizeConstrainedCache {
     };
   }
 
-  @Getter
-  @Accessors(fluent = true)
-  @RequiredArgsConstructor(staticName = "of")
   private static class EntryPaths {
     private final Path body;
     private final Path metadata;
+
+    private EntryPaths(Path body, Path metadata) {
+      this.body = body;
+      this.metadata = metadata;
+    }
+
+    public static EntryPaths of(Path body, Path metadata) {
+      return new EntryPaths(body, metadata);
+    }
+
+    Path body() {
+      return body;
+    }
+
+    Path metadata() {
+      return metadata;
+    }
   }
 
-  @Getter
-  @Accessors(fluent = true)
   private static class DiskCacheEntry implements CacheEntry {
     private final EntryPaths path;
     private final StreamFactory streamFactory;
@@ -166,6 +174,14 @@ class DiskCache extends SizeConstrainedCache {
     @Override
     public long bodySize() {
       return bodySize;
+    }
+
+    EntryPaths path() {
+      return path;
+    }
+
+    public CacheEntryMetadata metadata() {
+      return this.metadata;
     }
   }
 }

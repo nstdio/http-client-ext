@@ -16,9 +16,6 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -141,8 +138,6 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     return (directives = List.copyOf(computeDirectives(headers).keySet()));
   }
 
-  @Getter
-  @Accessors(fluent = true)
   static class Options {
     static final Options LENIENT = new Options(false, false);
     private final boolean failOnUnsupportedDirectives;
@@ -151,6 +146,14 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
     Options(boolean failOnUnsupportedDirectives, boolean failOnUnknownDirectives) {
       this.failOnUnsupportedDirectives = failOnUnsupportedDirectives;
       this.failOnUnknownDirectives = failOnUnknownDirectives;
+    }
+
+    boolean failOnUnsupportedDirectives() {
+      return this.failOnUnsupportedDirectives;
+    }
+
+    boolean failOnUnknownDirectives() {
+      return this.failOnUnknownDirectives;
     }
   }
 }

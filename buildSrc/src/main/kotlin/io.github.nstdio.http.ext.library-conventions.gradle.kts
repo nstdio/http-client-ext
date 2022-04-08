@@ -17,45 +17,47 @@
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 plugins {
-    `java-library`
-    jacoco
-    kotlin("jvm")
+  `java-library`
+  jacoco
+  kotlin("jvm")
 }
 
 group = "io.github.nstdio"
 
 java {
-    targetCompatibility = JavaVersion.VERSION_11
-    sourceCompatibility = JavaVersion.VERSION_11
+  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_11
 
-    withJavadocJar()
-    withSourcesJar()
+  withJavadocJar()
+  withSourcesJar()
 }
 
 configurations
-    .filter { arrayOf("compileClasspath", "runtimeClasspath").contains(it.name) }
-    .forEach {
-        it.exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
-    }
+  .filter { arrayOf("compileClasspath", "runtimeClasspath").contains(it.name) }
+  .forEach {
+    it.exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
+  }
 
 tasks.named("compileKotlin") {
-    enabled = false
+  enabled = false
 }
 
 sourceSets {
-    main {
-        java.srcDirs -= file("src/main/kotlin")
-    }
+  main {
+    java.srcDirs -= file("src/main/kotlin")
+  }
 }
 
 val lombokVersion = "1.18.22"
-
+val lombokEnabled = false
 dependencies {
+  if (lombokEnabled) {
     compileOnly("org.projectlombok:lombok:$lombokVersion")
     annotationProcessor("org.projectlombok:lombok:$lombokVersion")
+  }
 }
 
 tasks.withType<JavaCompile>().configureEach {
-    options.encoding = "UTF-8"
-    options.compilerArgs = listOf("-Xlint:all", "-Xlint:-deprecation")
+  options.encoding = "UTF-8"
+  options.compilerArgs = listOf("-Xlint:all", "-Xlint:-deprecation")
 }

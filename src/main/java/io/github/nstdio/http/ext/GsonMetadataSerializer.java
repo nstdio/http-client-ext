@@ -22,7 +22,6 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import io.github.nstdio.http.ext.ImmutableResponseInfo.ResponseInfoBuilder;
-import lombok.RequiredArgsConstructor;
 
 import java.io.IOException;
 import java.net.URI;
@@ -131,9 +130,12 @@ class GsonMetadataSerializer implements MetadataSerializer {
     }
   }
 
-  @RequiredArgsConstructor
   private static class HttpRequestTypeAdapter extends TypeAdapter<HttpRequest> {
     private final TypeAdapter<HttpHeaders> headersTypeAdapter;
+
+    HttpRequestTypeAdapter(TypeAdapter<HttpHeaders> headersTypeAdapter) {
+      this.headersTypeAdapter = headersTypeAdapter;
+    }
 
     @Override
     public void write(JsonWriter out, HttpRequest value) throws IOException {
@@ -190,9 +192,12 @@ class GsonMetadataSerializer implements MetadataSerializer {
     }
   }
 
-  @RequiredArgsConstructor
   private static class ResponseInfoTypeAdapter extends TypeAdapter<ResponseInfo> {
     private final TypeAdapter<HttpHeaders> headersTypeAdapter;
+
+    ResponseInfoTypeAdapter(TypeAdapter<HttpHeaders> headersTypeAdapter) {
+      this.headersTypeAdapter = headersTypeAdapter;
+    }
 
     @Override
     public void write(JsonWriter out, ResponseInfo value) throws IOException {
@@ -237,10 +242,14 @@ class GsonMetadataSerializer implements MetadataSerializer {
     }
   }
 
-  @RequiredArgsConstructor
   private static class CacheEntryMetadataTypeAdapter extends TypeAdapter<CacheEntryMetadata> {
     private final TypeAdapter<HttpRequest> requestTypeAdapter;
     private final TypeAdapter<ResponseInfo> responseTypeAdapter;
+
+    CacheEntryMetadataTypeAdapter(TypeAdapter<HttpRequest> requestTypeAdapter, TypeAdapter<ResponseInfo> responseTypeAdapter) {
+      this.requestTypeAdapter = requestTypeAdapter;
+      this.responseTypeAdapter = responseTypeAdapter;
+    }
 
     @Override
     public void write(JsonWriter out, CacheEntryMetadata value) throws IOException {

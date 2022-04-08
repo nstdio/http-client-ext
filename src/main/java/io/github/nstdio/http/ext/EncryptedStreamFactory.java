@@ -16,11 +16,10 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.SneakyThrows;
-
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
+import javax.crypto.NoSuchPaddingException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -29,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.security.AlgorithmParameters;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -65,18 +65,22 @@ class EncryptedStreamFactory implements StreamFactory {
     return i == -1 ? transformation : transformation.substring(0, i);
   }
 
-  @SneakyThrows
-  private Cipher createCipher() {
+  private Cipher createCipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
     return hasProvider()
         ? Cipher.getInstance(transformation, provider)
         : Cipher.getInstance(transformation);
   }
 
-  private Cipher cipher() {
+  private Cipher cipher() throws IOException {
     var tl = threadLocalCipher;
 
     if (tl.get() == null) {
-      Cipher c = createCipher();
+      Cipher c;
+      try {
+        c = createCipher();
+      } catch (NoSuchPaddingException | NoSuchAlgorithmException | NoSuchProviderException e) {
+        throw new IOException(e);
+      }
       tl.set(c);
       return c;
     }
@@ -94,10 +98,14 @@ class EncryptedStreamFactory implements StreamFactory {
         : AlgorithmParameters.getInstance(algorithm);
   }
 
-  @SneakyThrows
-  private Cipher encryptCipher() {
+  private Cipher encryptCipher() throws IOException {
     Cipher cipher = cipher();
-    cipher.init(ENCRYPT_MODE, privateKey);
+    try {
+      cipher.init(ENCRYPT_MODE, privateKey);
+    } catch (InvalidKeyException e) {
+      throw new IOException(e);
+    }
+
     return cipher;
   }
 
