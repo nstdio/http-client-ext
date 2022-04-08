@@ -16,13 +16,13 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.Delegate;
-
+import javax.net.ssl.SSLSession;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Optional;
 
 class Responses {
   private Responses() {
@@ -46,13 +46,47 @@ class Responses {
         .build();
   }
 
-  @RequiredArgsConstructor
   static class DelegatingHttpResponse<T> implements HttpResponse<T> {
-    @Delegate
     private final HttpResponse<T> delegate;
+
+    DelegatingHttpResponse(HttpResponse<T> delegate) {
+      this.delegate = delegate;
+    }
 
     HttpResponse<T> delegate() {
       return delegate;
+    }
+
+    public int statusCode() {
+      return delegate.statusCode();
+    }
+
+    public HttpRequest request() {
+      return delegate.request();
+    }
+
+    public Optional<HttpResponse<T>> previousResponse() {
+      return delegate.previousResponse();
+    }
+
+    public HttpHeaders headers() {
+      return delegate.headers();
+    }
+
+    public T body() {
+      return delegate.body();
+    }
+
+    public Optional<SSLSession> sslSession() {
+      return delegate.sslSession();
+    }
+
+    public URI uri() {
+      return delegate.uri();
+    }
+
+    public HttpClient.Version version() {
+      return delegate.version();
     }
   }
 }

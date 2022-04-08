@@ -16,25 +16,30 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.Builder;
-import lombok.RequiredArgsConstructor;
-
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse.ResponseInfo;
 
-@Builder(builderClassName = "ResponseInfoBuilder")
-@RequiredArgsConstructor
 class ImmutableResponseInfo implements ResponseInfo {
   private final int statusCode;
   private final HttpHeaders headers;
   private final Version version;
+
+  private ImmutableResponseInfo(int statusCode, HttpHeaders headers, Version version) {
+    this.statusCode = statusCode;
+    this.headers = headers;
+    this.version = version;
+  }
 
   static ResponseInfoBuilder toBuilder(ResponseInfo info) {
     return builder()
         .version(info.version())
         .headers(info.headers())
         .statusCode(info.statusCode());
+  }
+
+  public static ResponseInfoBuilder builder() {
+    return new ResponseInfoBuilder();
   }
 
   @Override
@@ -53,5 +58,30 @@ class ImmutableResponseInfo implements ResponseInfo {
   }
 
   static class ResponseInfoBuilder {
+    private int statusCode;
+    private HttpHeaders headers;
+    private Version version;
+
+    ResponseInfoBuilder() {
+    }
+
+    public ResponseInfoBuilder statusCode(int statusCode) {
+      this.statusCode = statusCode;
+      return this;
+    }
+
+    public ResponseInfoBuilder headers(HttpHeaders headers) {
+      this.headers = headers;
+      return this;
+    }
+
+    public ResponseInfoBuilder version(Version version) {
+      this.version = version;
+      return this;
+    }
+
+    public ImmutableResponseInfo build() {
+      return new ImmutableResponseInfo(statusCode, headers, version);
+    }
   }
 }

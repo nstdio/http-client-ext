@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext;
 
 import io.github.nstdio.http.ext.Cache.CacheEntry;
 import io.github.nstdio.http.ext.Cache.CacheStats;
-import lombok.RequiredArgsConstructor;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -37,10 +36,14 @@ import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
-@RequiredArgsConstructor
 class CachingInterceptor implements Interceptor {
   private final Cache cache;
   private final Clock clock;
+
+  CachingInterceptor(Cache cache, Clock clock) {
+    this.cache = cache;
+    this.clock = clock;
+  }
 
   private static HttpRequest applyConditions(HttpRequest request, CacheEntryMetadata metadata) {
     var builder = toBuilder(request);

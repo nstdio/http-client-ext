@@ -17,8 +17,11 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.IOUtils.bufferedWriter
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatIOException
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.throwable.shouldHaveCauseInstanceOf
+import io.kotest.matchers.throwable.shouldHaveMessage
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -36,7 +39,9 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
+import java.security.InvalidKeyException
 import java.security.Key
+import java.security.NoSuchProviderException
 import kotlin.io.path.readText
 
 class EncryptedStreamFactoryTest {
@@ -61,8 +66,8 @@ class EncryptedStreamFactoryTest {
     val plain = path.readText()
 
     //then
-    assertThat(decrypted).isEqualTo(expected)
-    assertThat(plain).isNotEqualTo(expected)
+    decrypted.shouldBe(expected)
+    plain.shouldNotBe(expected)
   }
 
   @Test
@@ -82,16 +87,44 @@ class EncryptedStreamFactoryTest {
     given(delegate.output(any(), any())).willReturn(mockOut)
 
     //when + then
-    assertThatIOException()
-      .isThrownBy { factory.input(Path.of("abc")) }
-      .withMessage("expected")
+    shouldThrowExactly<IOException> { factory.input(Path.of("abc")) }
+      .shouldHaveMessage("expected")
+
+    shouldThrowExactly<IOException> { factory.output(Path.of("abc")) }
+      .shouldHaveMessage("expected")
 
     verify(mockIs, times(2)).close()
-
-    assertThatIOException()
-      .isThrownBy { factory.output(Path.of("abc")) }
-      .withMessage("expected")
     verify(mockOut).close()
+  }
+
+  @Test
+  fun `Should throw when provider does not exists`() {
+    //given
+    val delegate = mock(StreamFactory::class.java)
+    val key = Crypto.pbe()
+
+    val factory = EncryptedStreamFactory(delegate, key, key, "AES/CBC/PKCS5Padding", "plain-text-cryptography")
+
+    //when + then
+    shouldThrowExactly<IOException> { factory.input(Path.of("any")) }
+      .shouldHaveCauseInstanceOf<NoSuchProviderException>()
+
+    shouldThrowExactly<IOException> { factory.output(Path.of("any")) }
+      .shouldHaveCauseInstanceOf<NoSuchProviderException>()
+  }
+
+  @Test
+  fun `Should throw when key is invalid`() {
+    //given
+    val delegate = mock(StreamFactory::class.java)
+    val key = Crypto.rsaKeyPair()
+    val transform = "AES/CBC/PKCS5Padding"
+
+    val factory = EncryptedStreamFactory(delegate, key.public, key.private, transform, null)
+
+    //when + then
+    shouldThrowExactly<IOException> { factory.output(Path.of("any")) }
+      .shouldHaveCauseInstanceOf<InvalidKeyException>()
   }
 
   private fun InputStream.readText(): String {

@@ -16,23 +16,22 @@
 
 package io.github.nstdio.http.ext;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.experimental.Accessors;
-
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodyHandler;
 import java.util.concurrent.atomic.AtomicLong;
 
-@Getter
-@Accessors(fluent = true)
-@AllArgsConstructor
 final class RequestContext {
   private final HttpRequest request;
   private final BodyHandler<?> bodyHandler;
   private final CacheControl cacheControl;
   private final AtomicLong requestTime = new AtomicLong();
   private final AtomicLong responseTime = new AtomicLong();
+
+  private RequestContext(HttpRequest request, BodyHandler<?> bodyHandler, CacheControl cacheControl) {
+    this.request = request;
+    this.bodyHandler = bodyHandler;
+    this.cacheControl = cacheControl;
+  }
 
   static RequestContext of(HttpRequest request, BodyHandler<?> responseBodyHandler) {
     return new RequestContext(request, responseBodyHandler, CacheControl.of(request));
@@ -58,10 +57,26 @@ final class RequestContext {
   }
 
   RequestContext withRequest(HttpRequest request) {
-    return new RequestContext(request, this.bodyHandler, this.cacheControl);
+    return new RequestContext(request, bodyHandler, cacheControl);
   }
 
   RequestContext withBodyHandler(BodyHandler<?> bodyHandler) {
-    return new RequestContext(this.request, bodyHandler, this.cacheControl);
+    return new RequestContext(request, bodyHandler, this.cacheControl);
+  }
+
+  HttpRequest request() {
+    return request;
+  }
+
+  CacheControl cacheControl() {
+    return cacheControl;
+  }
+
+  AtomicLong requestTime() {
+    return requestTime;
+  }
+
+  AtomicLong responseTime() {
+    return responseTime;
   }
 }
