@@ -17,6 +17,7 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.IOUtils.bufferedWriter
+import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -34,6 +35,7 @@ import org.mockito.BDDMockito.times
 import org.mockito.BDDMockito.verify
 import org.mockito.Mockito.any
 import org.mockito.Mockito.mock
+import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -42,6 +44,7 @@ import java.nio.file.Path
 import java.security.InvalidKeyException
 import java.security.Key
 import java.security.NoSuchProviderException
+import java.security.ProviderException
 import kotlin.io.path.readText
 
 class EncryptedStreamFactoryTest {
@@ -116,15 +119,35 @@ class EncryptedStreamFactoryTest {
   @Test
   fun `Should throw when key is invalid`() {
     //given
-    val delegate = mock(StreamFactory::class.java)
-    val key = Crypto.rsaKeyPair()
-    val transform = "AES/CBC/PKCS5Padding"
+    val delegate = mock(StreamFactory::class.java).also {
+      given(it.input(any())).willReturn(InputStream.nullInputStream())
+    }
 
-    val factory = EncryptedStreamFactory(delegate, key.public, key.private, transform, null)
+    val factory = Crypto.rsaKeyPair().let {
+      EncryptedStreamFactory(delegate, it.public, it.private, "AES/CBC/PKCS5Padding", null)
+    }
 
     //when + then
-    shouldThrowExactly<IOException> { factory.output(Path.of("any")) }
-      .shouldHaveCauseInstanceOf<InvalidKeyException>()
+    assertSoftly {
+      shouldThrowExactly<IOException> { factory.output(Path.of("any")) }
+        .shouldHaveCauseInstanceOf<InvalidKeyException>()
+
+      shouldThrowExactly<IOException> { factory.input(Path.of("any")) }
+        .shouldHaveCauseInstanceOf<ProviderException>()
+    }
+  }
+
+  @Test
+  fun `Should throw eof when cannot read header length`() {
+    //given
+    val delegate = mock(StreamFactory::class.java)
+    given(delegate.input(any())).willReturn(InputStream.nullInputStream())
+
+    val key = Crypto.pbe()
+    val factory = EncryptedStreamFactory(delegate, key, key, "AES/CBC/PKCS5Padding", null)
+
+    //when + then
+    shouldThrowExactly<EOFException> { factory.input(Path.of("any")) }
   }
 
   private fun InputStream.readText(): String {

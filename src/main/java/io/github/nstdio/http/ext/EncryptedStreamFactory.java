@@ -22,6 +22,7 @@ import javax.crypto.CipherOutputStream;
 import javax.crypto.NoSuchPaddingException;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -155,7 +156,7 @@ class EncryptedStreamFactory implements StreamFactory {
   private AlgorithmParameters readParams(InputStream is, Cipher c) throws Exception {
     if (c.getParameters() != null) {
       try {
-        int len = new DataInputStream(is).readInt();
+        int len = readInt(is);
         byte[] encodedParams = is.readNBytes(len);
         var parameters = algorithmParameters();
         parameters.init(encodedParams);
@@ -168,6 +169,20 @@ class EncryptedStreamFactory implements StreamFactory {
     }
 
     return null;
+  }
+
+  /**
+   * It's not worth to instantiate {@link DataInputStream}.
+   */
+  private int readInt(InputStream is) throws IOException {
+    int ch1 = is.read();
+    int ch2 = is.read();
+    int ch3 = is.read();
+    int ch4 = is.read();
+    if ((ch1 | ch2 | ch3 | ch4) < 0)
+      throw new EOFException();
+
+    return ((ch1 << 24) + (ch2 << 16) + (ch3 << 8) + (ch4));
   }
 
   private IOException asIOException(Exception e) {
