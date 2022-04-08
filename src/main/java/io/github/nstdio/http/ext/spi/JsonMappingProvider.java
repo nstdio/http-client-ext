@@ -28,6 +28,8 @@ public interface JsonMappingProvider {
    * Finds the first available {@code JsonMappingProvider}.
    *
    * @return The {@code JsonMappingProvider}.
+   *
+   * @throws JsonMappingProviderNotFoundException When cannot find any provider.
    */
   static JsonMappingProvider provider() {
     return loader()
