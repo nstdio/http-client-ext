@@ -18,7 +18,6 @@
 
 plugins {
   `java-library`
-  jacoco
   kotlin("jvm")
 }
 

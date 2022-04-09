@@ -112,6 +112,7 @@ dependencies {
 
     testImplementation("org.awaitility:awaitility:4.2.0")
 
+    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
     testImplementation("com.github.tomakehurst:wiremock-jre8:2.32.0")
     testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
 

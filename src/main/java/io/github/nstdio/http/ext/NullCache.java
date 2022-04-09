@@ -42,7 +42,7 @@ class NullCache implements Cache {
   }
 
   @SuppressWarnings("unchecked")
-  static <T> Writer<T> writer() {
+  static <T> Writer<T> blackhole() {
     return (Writer<T>) WRITER;
   }
 
@@ -78,6 +78,6 @@ class NullCache implements Cache {
 
   @Override
   public <T> Writer<T> writer(CacheEntryMetadata metadata) {
-    return writer();
+    return blackhole();
   }
 }

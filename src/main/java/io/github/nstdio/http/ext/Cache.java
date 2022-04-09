@@ -314,7 +314,7 @@ public interface Cache {
     private String validAlgorithm(String algo) throws NoSuchPaddingException, NoSuchAlgorithmException {
       checkArgument(algo != null, "algorithm cannot be null");
       String[] parts = algo.split("/");
-      if (parts.length == 3 && parts[2].equals("NoPadding")) {
+      if (parts.length == 3 && "NoPadding".equals(parts[2])) {
         throw new IllegalArgumentException("NoPadding transformations are not supported");
       }
 

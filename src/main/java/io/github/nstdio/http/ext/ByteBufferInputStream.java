@@ -105,7 +105,7 @@ class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public synchronized void reset() throws IOException {
+  public void reset() throws IOException {
     if (mark == null) {
       throw new IOException("nothing to reset");
     }
@@ -115,7 +115,7 @@ class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public synchronized void mark(int readlimit) {
+  public void mark(int readlimit) {
     if (readlimit <= 0) {
       mark = null;
     } else {
