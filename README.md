@@ -21,6 +21,11 @@ implementation 'io.github.nstdio:http-client-ext:2.1.0'
     <version>2.1.0</version>
 </dependency>
 ```
+### Features
+
+- [Caching](#Caching), both in memory and disk.
+- [Decompression](#Decompression): `gzip, deflate`
+- [JSON](#JSON) mappings
 
 ### Caching
 
@@ -52,7 +57,7 @@ HttpResponse<String> cachedResponse = client.send(request, ofString());
 and all available configurations for in memory cache:
 
 ```java
-Cache cache = Cache.newInMemoryCacheBuilder()
+Cache inMemory = Cache.newInMemoryCacheBuilder()
         .maxItems(4096) // number of responses can be cached
         .size(10 * 1000 * 1000) // maximum size of the entire cache in bytes, -1 for no constraint
         .requestFilter(request -> request.uri().getHost().equals("api.github.com")) // cache only requests that match given predicate
@@ -60,9 +65,30 @@ Cache cache = Cache.newInMemoryCacheBuilder()
         .build();
 ```
 
-the exact same configuration applies to persistent builder with addition of [DiskCacheBuilder#dir](https://github.com/nstdio/http-client-ext/blob/main/src/main/java/io/github/nstdio/http/ext/Cache.java#L163)
+Above-mentioned configurations also applies to persistent cache with some additions
 
-### Decompression (gzip, deflate)
+```
+Path cacheDir = ...
+Cache disk = Cache.newDiskCacheBuilder()
+        .dir(cacheDir)
+        .build();        
+```
+If request/response contains sensitive information one might want to store it encrypted:
+
+```
+Path cacheDir = ...
+SecretKey secretKey = ...
+
+Cache encrypted = Cache.newDiskCacheBuilder()
+        .dir(cacheDir)
+        .encrypted()
+        .key(secretKey)
+        .cipherAlgorithm("AES")
+        .build();
+```
+will create persistent cache which encrypts data by user provided key.
+
+### Decompression
 Here is an example of transparent encoding feature
 
 ```java
