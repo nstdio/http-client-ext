@@ -20,6 +20,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.ResponseInfo;
 import java.util.function.Predicate;
 
+import static io.github.nstdio.http.ext.NullCache.blackhole;
+
 class FilteringCache implements Cache {
   private final Cache delegate;
   private final Predicate<HttpRequest> requestFilter;
@@ -77,6 +79,6 @@ class FilteringCache implements Cache {
       return delegate.writer(metadata);
     }
 
-    return NullCache.writer();
+    return blackhole();
   }
 }

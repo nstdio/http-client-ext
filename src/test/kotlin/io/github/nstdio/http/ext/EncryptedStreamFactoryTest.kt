@@ -23,6 +23,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.throwable.shouldHaveCauseInstanceOf
 import io.kotest.matchers.throwable.shouldHaveMessage
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
@@ -50,6 +51,11 @@ import kotlin.io.path.readText
 class EncryptedStreamFactoryTest {
   @TempDir
   private lateinit var dir: Path
+
+  @AfterEach
+  fun setup() {
+    EncryptedStreamFactory.clear()
+  }
 
   @ParameterizedTest
   @MethodSource("rwData")

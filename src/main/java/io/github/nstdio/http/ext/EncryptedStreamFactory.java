@@ -33,6 +33,9 @@ import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
 import static javax.crypto.Cipher.DECRYPT_MODE;
@@ -43,13 +46,15 @@ import static javax.crypto.Cipher.ENCRYPT_MODE;
  * parameters (if any) are stores within the file itself as first few bytes.
  */
 class EncryptedStreamFactory implements StreamFactory {
+  private static final ThreadLocal<Map<CipherCacheKey, Cipher>> threadLocalCipher = ThreadLocal.withInitial(() -> new HashMap<>(1));
+
   private final StreamFactory delegate;
   private final Key publicKey;
   private final Key privateKey;
   private final String transformation;
   private final String algorithm;
   private final String provider;
-  private final ThreadLocal<Cipher> threadLocalCipher;
+  private final CipherCacheKey cacheKey;
 
   public EncryptedStreamFactory(StreamFactory delegate, Key publicKey, Key privateKey, String transformation, String provider) {
     this.delegate = delegate;
@@ -58,7 +63,7 @@ class EncryptedStreamFactory implements StreamFactory {
     this.transformation = transformation;
     this.algorithm = algo(transformation);
     this.provider = provider;
-    this.threadLocalCipher = new ThreadLocal<>();
+    this.cacheKey = new CipherCacheKey(transformation, provider);
   }
 
   private static String algo(String transformation) {
@@ -66,27 +71,32 @@ class EncryptedStreamFactory implements StreamFactory {
     return i == -1 ? transformation : transformation.substring(0, i);
   }
 
-  private Cipher createCipher() throws NoSuchPaddingException, NoSuchAlgorithmException, NoSuchProviderException {
-    return hasProvider()
-        ? Cipher.getInstance(transformation, provider)
-        : Cipher.getInstance(transformation);
+  static void clear() {
+    threadLocalCipher.get().clear();
+  }
+
+  private Cipher createCipher() throws IOException {
+    try {
+      return hasProvider()
+          ? Cipher.getInstance(transformation, provider)
+          : Cipher.getInstance(transformation);
+    } catch (NoSuchPaddingException | NoSuchAlgorithmException | NoSuchProviderException e) {
+      throw new IOException(e);
+    }
   }
 
   private Cipher cipher() throws IOException {
-    var tl = threadLocalCipher;
+    Map<CipherCacheKey, Cipher> cipherCache = threadLocalCipher.get();
+    CipherCacheKey k = cacheKey;
 
-    if (tl.get() == null) {
-      Cipher c;
-      try {
-        c = createCipher();
-      } catch (NoSuchPaddingException | NoSuchAlgorithmException | NoSuchProviderException e) {
-        throw new IOException(e);
-      }
-      tl.set(c);
-      return c;
+    // cannot use computeIfAbsent because if checked exception
+    Cipher c = cipherCache.get(k);
+    if (c == null) {
+      c = createCipher();
+      cipherCache.put(k, c);
     }
 
-    return tl.get();
+    return c;
   }
 
   private boolean hasProvider() {
@@ -190,5 +200,28 @@ class EncryptedStreamFactory implements StreamFactory {
       return ((IOException) e);
 
     return new IOException(e);
+  }
+
+  static final class CipherCacheKey {
+    private final String transformation;
+    private final String provider;
+
+    private CipherCacheKey(String transformation, String provider) {
+      this.transformation = transformation;
+      this.provider = provider;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      CipherCacheKey that = (CipherCacheKey) o;
+      return transformation.equals(that.transformation) && Objects.equals(provider, that.provider);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(transformation, provider);
+    }
   }
 }

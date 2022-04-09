@@ -30,6 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static io.github.nstdio.http.ext.IOUtils.createFile;
@@ -55,11 +56,12 @@ class DiskCache extends SizeConstrainedCache {
   }
 
   private void restore() {
-    var namePredicate = Pattern.compile("[a-f0-9]{32}_m").asMatchPredicate();
+    var fileNamePattern = Pattern.compile("[a-f0-9]{32}_m").asMatchPredicate();
+    Predicate<Path> pathPredicate = p -> fileNamePattern.test(p.getFileName().toString());
 
     try (var stream = Files.list(dir)) {
       stream
-          .filter(path -> namePredicate.test(path.getFileName().toString()))
+          .filter(pathPredicate)
           .filter(Files::isRegularFile)
           .map(metadataPath -> {
             Path bodyPath = metadataPath.resolveSibling(metadataPath.getFileName().toString().substring(0, 32));
@@ -109,7 +111,7 @@ class DiskCache extends SizeConstrainedCache {
   public Writer<Path> writer(CacheEntryMetadata metadata) {
     EntryPaths entryPaths = pathsFor();
     if (!createFile(entryPaths.body())) {
-      return NullCache.writer();
+      return NullCache.blackhole();
     }
 
     return new Writer<>() {

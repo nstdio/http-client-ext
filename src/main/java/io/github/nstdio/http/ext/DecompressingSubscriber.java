@@ -22,6 +22,7 @@ import java.io.UncheckedIOException;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -143,7 +144,7 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
     return ByteBuffer.allocate(bufferSize);
   }
 
-  private void add(List<ByteBuffer> decompressed, ByteBuffer buf) {
+  private void add(Collection<ByteBuffer> decompressed, ByteBuffer buf) {
     if (buf.position() > 0) {
       decompressed.add(buf.flip());
     }
