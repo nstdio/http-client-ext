@@ -138,7 +138,7 @@ just drop one of them as dependency and voilà
 client.send(request, BodyHandlers.ofJson(User.class));
 ```
 
-And if special configuration required, SPI can be used 
+And if special configuration required
 ```java
 package com.example;
 
@@ -152,9 +152,10 @@ class JacksonMappingProvider implements JsonMappingProvider {
   }
 }
 ```
-then register this provider like
-```shell
-$ cat src/main/resources/META-INF/services/io.github.nstdio.http.ext.spi.JsonMappingProvider 
+then  standard SPI registration can be used or custom provider can be registered manually:
 
-com.example.JacksonMappingProvider
+```java
+JacksonMappingProvider jackson = ...
+
+JsonMappingProvider.addProvider(jackson);
 ```

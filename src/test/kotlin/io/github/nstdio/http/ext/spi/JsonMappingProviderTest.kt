@@ -15,18 +15,58 @@
  */
 package io.github.nstdio.http.ext.spi
 
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.throwable.shouldHaveMessage
+import io.kotest.matchers.types.shouldBeSameInstanceAs
+import io.kotest.matchers.types.shouldNotBeSameInstanceAs
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito.mock
 
 internal class JsonMappingProviderTest {
-    @Test
-    fun shouldThrowWhenProviderNotFound() {
-        //given
-        val providerName = "abc"
+  @AfterEach
+  fun `tear down`() {
+    JsonMappingProviders.clear()
+  }
 
-        //when + then
-        assertThatExceptionOfType(RuntimeException::class.java)
-            .isThrownBy { JsonMappingProvider.provider(providerName) }
-            .withMessageEndingWith(providerName)
+  @Test
+  fun shouldThrowWhenProviderNotFound() {
+    //given
+    val providerName = "abc"
+
+    //when + then
+    shouldThrowExactly<JsonMappingProviderNotFoundException> { JsonMappingProvider.provider(providerName) }
+      .shouldHaveMessage("JsonMappingProvider not found: $providerName")
+  }
+
+  @Test
+  fun `Should add provider and get it`() {
+    //given
+    val mockProvider = mock(JsonMappingProvider::class.java)
+    val providerName = mockProvider.javaClass.name
+
+    //when
+    JsonMappingProvider.addProvider(mockProvider)
+
+    //then
+    JsonMappingProvider.provider().shouldBeSameInstanceAs(mockProvider)
+    JsonMappingProvider.provider(providerName).shouldBeSameInstanceAs(mockProvider)
+  }
+
+  @Test
+  fun `Should remove provider`() {
+    //given
+    val mockProvider = mock(JsonMappingProvider::class.java)
+    val providerName = mockProvider.javaClass.name
+
+    //when
+    JsonMappingProvider.addProvider(mockProvider)
+    JsonMappingProvider.removeProvider(providerName)
+
+    //then
+    JsonMappingProvider.provider().shouldNotBeSameInstanceAs(mockProvider)
+    shouldThrowExactly<JsonMappingProviderNotFoundException> {
+      JsonMappingProvider.provider(providerName).shouldNotBeSameInstanceAs(mockProvider)
     }
+  }
 }

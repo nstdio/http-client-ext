@@ -16,9 +16,7 @@
 
 package io.github.nstdio.http.ext.spi;
 
-import java.util.Optional;
-import java.util.ServiceLoader;
-import java.util.ServiceLoader.Provider;
+import static java.util.Objects.requireNonNull;
 
 /**
  * The SPI to for {@linkplain JsonMapping}.
@@ -32,10 +30,7 @@ public interface JsonMappingProvider {
    * @throws JsonMappingProviderNotFoundException When cannot find any provider.
    */
   static JsonMappingProvider provider() {
-    return loader()
-        .findFirst()
-        .or(JsonMappingProvider::defaultProvider)
-        .orElseThrow(() -> new JsonMappingProviderNotFoundException("Cannot find any JsonMappingProvider."));
+    return JsonMappingProviders.provider();
   }
 
   /**
@@ -48,25 +43,25 @@ public interface JsonMappingProvider {
    * @throws JsonMappingProviderNotFoundException When requested provider is not found.
    */
   static JsonMappingProvider provider(String name) {
-    return loader()
-        .stream()
-        .filter(provider -> provider.type().getName().equals(name))
-        .findFirst()
-        .map(Provider::get)
-        .or(() -> defaultProvider().filter(provider -> provider.getClass().getName().equals(name)))
-        .orElseThrow(() -> new JsonMappingProviderNotFoundException("JsonMappingProvider not found: " + name));
+    return JsonMappingProviders.provider(name);
   }
 
-  private static Optional<JsonMappingProvider> defaultProvider() {
-    if (CompositeJsonMappingProvider.hasAnyImplementation()) {
-      return Optional.of(DefaultProviderHolder.DEFAULT_PROVIDER);
-    } else {
-      return Optional.empty();
-    }
+  /**
+   * Adds {@code provider}.
+   *
+   * @param provider The provider to add.
+   */
+  static void addProvider(JsonMappingProvider provider) {
+    JsonMappingProviders.addProvider(requireNonNull(provider, "provider cannot be null"));
   }
 
-  private static ServiceLoader<JsonMappingProvider> loader() {
-    return ServiceLoader.load(JsonMappingProvider.class);
+  /**
+   * Removes provider with name {@code name}.
+   *
+   * @param name The provider name to remove.
+   */
+  static void removeProvider(String name) {
+    JsonMappingProviders.removeProvider(requireNonNull(name, "name cannot be null"));
   }
 
   /**
