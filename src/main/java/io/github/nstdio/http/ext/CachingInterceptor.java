@@ -33,6 +33,8 @@ import static io.github.nstdio.http.ext.ExtendedHttpClient.toBuilder;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
 import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
+import static io.github.nstdio.http.ext.Responses.isSafeRequest;
+import static io.github.nstdio.http.ext.Responses.isSuccessful;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toList;
 
@@ -181,19 +183,7 @@ class CachingInterceptor implements Interceptor {
   }
 
   private <T> boolean shouldInvalidate(HttpResponse<T> response) {
-    return isSuccessful(response) && isUnsafe(response.request());
-  }
-
-  private boolean isSuccessful(HttpResponse<?> response) {
-    int statusCode;
-    return (statusCode = response.statusCode()) >= 200 && statusCode < 400;
-  }
-
-  private boolean isUnsafe(HttpRequest request) {
-    var method = request.method();
-    return "POST".equalsIgnoreCase(method)
-        || "PUT".equalsIgnoreCase(method)
-        || "DELETE".equalsIgnoreCase(method);
+    return isSuccessful(response) && !isSafeRequest(response);
   }
 
   private CacheEntry cacheEntry(RequestContext ctx) {
