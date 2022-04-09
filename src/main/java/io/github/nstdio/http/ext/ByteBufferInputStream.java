@@ -105,42 +105,46 @@ class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public void reset() throws IOException {
+  public synchronized void reset() throws IOException {
     if (mark == null) {
       throw new IOException("nothing to reset");
     }
 
     buffers.push(mark.flip());
+    unsetMark();
+  }
+
+  private void unsetMark() {
     mark = null;
   }
 
   @Override
-  public void mark(int readlimit) {
+  public synchronized void mark(int readlimit) {
     if (readlimit <= 0) {
-      mark = null;
+      unsetMark();
     } else {
       mark = ByteBuffer.allocate(readlimit);
     }
   }
 
-  private void mark0(int b) {
+  private synchronized void mark0(int b) {
     ByteBuffer m;
     if ((m = mark) != null) {
       if (m.hasRemaining()) {
         m.put((byte) b);
       } else {
-        mark = null;
+        unsetMark();
       }
     }
   }
 
-  private void mark0(byte[] b, int off, int len) {
+  private synchronized void mark0(byte[] b, int off, int len) {
     ByteBuffer m;
     if ((m = mark) != null) {
       if (len <= m.remaining()) {
         m.put(b, off, len);
       } else {
-        mark = null;
+        unsetMark();
       }
     }
   }
@@ -171,7 +175,7 @@ class ByteBufferInputStream extends InputStream {
   @Override
   public void close() {
     buffers.clear();
-    mark = null;
+    unsetMark();
     closed = true;
   }
 
@@ -194,7 +198,7 @@ class ByteBufferInputStream extends InputStream {
 
     var l = List.copyOf(buffs);
     buffs.clear();
-    mark = null;
+    unsetMark();
 
     return l;
   }
