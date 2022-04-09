@@ -1,10 +1,15 @@
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.nstdio/http-client-ext.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.nstdio%22%20AND%20a:%22http-client-ext%22)
-[![codecov](https://codecov.io/gh/nstdio/http-client-ext/branch/main/graph/badge.svg)](https://codecov.io/gh/nstdio/http-client-ext)
-
 # HttpClient Extensions
 
 The project provides useful extensions to
 JDK's [HttpClient](https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html).
+
+### Status
+| Type          | Status |
+|---------------| ------ |
+| Build         | [![Build](https://github.com/nstdio/http-client-ext/actions/workflows/build.yaml/badge.svg)](https://github.com/nstdio/http-client-ext/actions/workflows/build.yaml)
+| Artifact      | [![Maven Central](https://img.shields.io/maven-central/v/io.github.nstdio/http-client-ext.svg?label=Maven%20Central)](https://search.maven.org/search?q=g:%22io.github.nstdio%22%20AND%20a:%22http-client-ext%22)
+| Javadoc       | [![javadoc](https://javadoc.io/badge2/io.github.nstdio/http-client-ext/javadoc.svg)](https://javadoc.io/doc/io.github.nstdio/http-client-ext)
+| Code coverage | [![codecov](https://codecov.io/gh/nstdio/http-client-ext/branch/main/graph/badge.svg)](https://codecov.io/gh/nstdio/http-client-ext) 
 
 ### Gradle
 
