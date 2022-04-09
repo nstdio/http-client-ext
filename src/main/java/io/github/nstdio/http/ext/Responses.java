@@ -46,6 +46,16 @@ class Responses {
         .build();
   }
 
+  static boolean isSuccessful(HttpResponse<?> response) {
+    int statusCode;
+    return (statusCode = response.statusCode()) >= 200 && statusCode < 400;
+  }
+
+  static boolean isSafeRequest(HttpResponse<?> response) {
+    var method = response.request().method();
+    return "GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method);
+  }
+
   static class DelegatingHttpResponse<T> implements HttpResponse<T> {
     private final HttpResponse<T> delegate;
 
