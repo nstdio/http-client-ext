@@ -16,7 +16,12 @@
 
 package io.github.nstdio.http.ext;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.ToIntFunction;
 
@@ -60,7 +65,7 @@ class LruMultimap<K, V> {
   }
 
   List<V> putSingle(K key, V value, ToIntFunction<List<V>> idxFn) {
-    List<V> vs = m.computeIfAbsent(key, k -> new ArrayList<>());
+    List<V> vs = m.computeIfAbsent(key, k -> new ArrayList<>(1));
 
     int i;
     if (!vs.isEmpty() && (i = idxFn.applyAsInt(vs)) != -1) {
@@ -107,10 +112,12 @@ class LruMultimap<K, V> {
   void evictAll(K k) {
     List<V> old = m.remove(k);
     if (old != null) {
-      while (!old.isEmpty()) {
-        notifyEvicted(removeEldest(old));
-        size--;
+      int len = old.size();
+      for (int i = len - 1; i >= 0; i--) {
+        notifyEvicted(old.get(i));
       }
+
+      this.size -= len;
     }
   }
 
