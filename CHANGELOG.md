@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.0...HEAD)
 
 ### ⭐  Features
+ -  Replace JSON metadata serializers with binary version. ([9c3c576](https://github.com/nstdio/http-client-ext/commit/9c3c5762ea52f15396a4bb1982d202a178706653))
+ -  Dynamic JsonMappingProvider registration. ([4975edd](https://github.com/nstdio/http-client-ext/commit/4975edd1e5cbf5ed08953e04aaf79166f1678c58))
  -  Add `must-understand` CacheControl header directive support. ([f0582bf](https://github.com/nstdio/http-client-ext/commit/f0582bf0104488a902d89cc4925291e7b74b4846))
 ### ♻️ Improvements
+ -  Optimize encrypted file header length reading ([7cd8c1f](https://github.com/nstdio/http-client-ext/commit/7cd8c1fabd15b28f91c02dea4aaa9dd80c5d489e))
  -  **perf**  Store Cipher instance in ThreadLocal. ([1e1a5a1](https://github.com/nstdio/http-client-ext/commit/1e1a5a1443dd50f6148df1a936d3f43fadee96f7))
 ## [v2.1.0](https://github.com/nstdio/http-client-ext/compare/v2.0.0...v2.1.0)
 
