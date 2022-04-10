@@ -15,45 +15,152 @@
  */
 package io.github.nstdio.http.ext
 
+import io.github.nstdio.http.ext.ExtendedHttpClient.Builder
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.throwable.shouldHaveCause
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
-import org.mockito.BDDMockito
-import org.mockito.Mockito
+import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.inOrder
+import org.mockito.Mockito.any
+import org.mockito.Mockito.mock
 import java.io.IOException
+import java.net.Authenticator
+import java.net.CookieHandler
+import java.net.ProxySelector
 import java.net.SocketTimeoutException
 import java.net.URI
 import java.net.http.HttpClient
+import java.net.http.HttpClient.Version
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.BodyHandlers.ofString
 import java.time.Clock
+import java.time.Duration
+import java.util.concurrent.CompletionException
+import java.util.concurrent.Executor
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLParameters
 
 internal class ExtendedHttpClientTest {
-    private var client: ExtendedHttpClient? = null
-    private var mockHttpClient: HttpClient? = null
+  private lateinit var client: ExtendedHttpClient
+  private lateinit var mockHttpClient: HttpClient
 
-    @BeforeEach
-    fun setUp() {
-        mockHttpClient = Mockito.mock(HttpClient::class.java)
-        client = ExtendedHttpClient(mockHttpClient, NullCache.INSTANCE, Clock.systemUTC())
+  @BeforeEach
+  fun setUp() {
+    mockHttpClient = mock(HttpClient::class.java)
+    client = ExtendedHttpClient(mockHttpClient, NullCache.INSTANCE, Clock.systemUTC())
+  }
+
+  @ParameterizedTest
+  @ValueSource(classes = [IOException::class, InterruptedException::class, SocketTimeoutException::class])
+  fun shouldPropagateExceptions(th: Class<Throwable>) {
+    //given
+    val request = HttpRequest.newBuilder().uri(URI.create("https://example.com")).build()
+    given(mockHttpClient.send(any(), any<BodyHandler<Any>>())).willThrow(th)
+
+    //when + then
+    assertThatExceptionOfType(th)
+      .isThrownBy { client.send(request, ofString()) }
+  }
+
+  @ParameterizedTest
+  @MethodSource("notUnwrappedExceptions")
+  fun `Should throw CompletionException with cause`(th: Throwable) {
+    //given
+    val request = HttpRequest.newBuilder().uri(URI.create("https://example.com")).build()
+    given(mockHttpClient.send(any(), any<BodyHandler<Any>>())).willThrow(th)
+
+
+    //when + then
+    shouldThrowExactly<CompletionException> { client.send(request, ofString()) }
+      .shouldHaveCause { it.shouldBeSameInstanceAs(th) }
+  }
+
+  @Test
+  fun `Should forward calls to delegate`() {
+    //when
+    client.cookieHandler()
+    client.connectTimeout()
+    client.followRedirects()
+    client.proxy()
+    client.sslContext()
+    client.sslParameters()
+    client.authenticator()
+    client.version()
+    client.executor()
+    client.newWebSocketBuilder()
+
+    //then
+    val inOrder = inOrder(mockHttpClient)
+    inOrder.verify(mockHttpClient).cookieHandler()
+    inOrder.verify(mockHttpClient).connectTimeout()
+    inOrder.verify(mockHttpClient).followRedirects()
+    inOrder.verify(mockHttpClient).proxy()
+    inOrder.verify(mockHttpClient).sslContext()
+    inOrder.verify(mockHttpClient).sslParameters()
+    inOrder.verify(mockHttpClient).authenticator()
+    inOrder.verify(mockHttpClient).version()
+    inOrder.verify(mockHttpClient).executor()
+    inOrder.verify(mockHttpClient).newWebSocketBuilder()
+  }
+
+  @Nested
+  inner class BuilderTest {
+    @Test
+    fun `Should forward calls to delegate`() {
+      //given
+      val mockDelegate = mock(HttpClient.Builder::class.java)
+      val mockCookieHandler = mock(CookieHandler::class.java)
+      val mockSSLContext = mock(SSLContext::class.java)
+      val mockSSLParameters = mock(SSLParameters::class.java)
+      val mockProxySelector = mock(ProxySelector::class.java)
+      val mockAuthenticator = mock(Authenticator::class.java)
+      val mockExecutor = mock(Executor::class.java)
+      val builder = Builder(mockDelegate)
+
+      //when
+      builder
+        .cookieHandler(mockCookieHandler)
+        .connectTimeout(Duration.ofSeconds(30))
+        .sslContext(mockSSLContext)
+        .sslParameters(mockSSLParameters)
+        .version(Version.HTTP_2)
+        .priority(500)
+        .followRedirects(HttpClient.Redirect.ALWAYS)
+        .proxy(mockProxySelector)
+        .authenticator(mockAuthenticator)
+        .executor(mockExecutor)
+
+      //then
+      val inOrder = inOrder(mockDelegate)
+      inOrder.verify(mockDelegate).cookieHandler(mockCookieHandler)
+      inOrder.verify(mockDelegate).connectTimeout(Duration.ofSeconds(30))
+      inOrder.verify(mockDelegate).sslContext(mockSSLContext)
+      inOrder.verify(mockDelegate).sslParameters(mockSSLParameters)
+      inOrder.verify(mockDelegate).version(Version.HTTP_2)
+      inOrder.verify(mockDelegate).priority(500)
+      inOrder.verify(mockDelegate).followRedirects(HttpClient.Redirect.ALWAYS)
+      inOrder.verify(mockDelegate).proxy(mockProxySelector)
+      inOrder.verify(mockDelegate).authenticator(mockAuthenticator)
+      inOrder.verify(mockDelegate).executor(mockExecutor)
     }
+  }
 
-    @ParameterizedTest
-    @ValueSource(classes = [IOException::class, InterruptedException::class, IllegalStateException::class, RuntimeException::class, OutOfMemoryError::class, SocketTimeoutException::class])
-    @Throws(
-        Exception::class
-    )
-    fun shouldPropagateExceptions(th: Class<Throwable>) {
-        //given
-        val request = HttpRequest.newBuilder().uri(URI.create("https://example.com")).build()
-        BDDMockito.given(mockHttpClient!!.send(Mockito.any(), Mockito.any<BodyHandler<Any>>())).willThrow(th)
-
-        //when + then
-        assertThatExceptionOfType(th)
-            .isThrownBy { client!!.send(request, ofString()) }
-        assertThrows(th) { client!!.send(request, ofString()) }
+  companion object {
+    @JvmStatic
+    fun notUnwrappedExceptions(): List<Throwable> {
+      return listOf(
+        RuntimeException("abc"),
+        IllegalStateException("abc"),
+        OutOfMemoryError("abcd")
+      )
     }
+  }
 }

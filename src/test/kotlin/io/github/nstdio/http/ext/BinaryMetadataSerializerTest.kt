@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.nstdio.http.ext
 
-import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
-@EnabledIfOnClasspath(GSON)
-internal class GsonMetadataSerializerSpiTest : MetadataSerializerContract {
+internal class BinaryMetadataSerializerTest : MetadataSerializerContract {
+  @TempDir
+  private lateinit var tempDir: Path
+
   override fun serializer(): MetadataSerializer {
-    return GsonMetadataSerializer()
+    return BinaryMetadataSerializer(SimpleStreamFactory())
   }
+
+  override fun tempDir() = tempDir
 }

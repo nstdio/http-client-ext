@@ -16,19 +16,11 @@
 
 package io.github.nstdio.http.ext;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 class IOUtils {
   private IOUtils() {
@@ -74,13 +66,5 @@ class IOUtils {
     } catch (IOException e) {
       return false;
     }
-  }
-
-  static BufferedReader bufferedReader(InputStream in) {
-    return new BufferedReader(new InputStreamReader(in, UTF_8));
-  }
-
-  static BufferedWriter bufferedWriter(OutputStream out) {
-    return new BufferedWriter(new OutputStreamWriter(out, UTF_8));
   }
 }
