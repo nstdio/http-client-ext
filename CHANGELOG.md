@@ -1,7 +1,9 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.0...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.1...HEAD)
+
+## [v2.1.1](https://github.com/nstdio/http-client-ext/compare/v2.1.0...v2.1.1)
 
 ### ⭐  Features
  -  Replace JSON metadata serializers with binary version. ([9c3c576](https://github.com/nstdio/http-client-ext/commit/9c3c5762ea52f15396a4bb1982d202a178706653))
