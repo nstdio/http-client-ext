@@ -16,7 +16,6 @@
 
 package io.github.nstdio.http.ext
 
-import io.github.nstdio.http.ext.IOUtils.bufferedWriter
 import io.kotest.assertions.assertSoftly
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.shouldBe
@@ -36,10 +35,12 @@ import org.mockito.BDDMockito.times
 import org.mockito.BDDMockito.verify
 import org.mockito.Mockito.any
 import org.mockito.Mockito.mock
+import java.io.BufferedWriter
 import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.security.InvalidKeyException
@@ -70,7 +71,7 @@ class EncryptedStreamFactoryTest {
     val path = dir.resolve("sample")
 
     //when
-    bufferedWriter(writeFactory.output(path)).use { it.write(expected) }
+    writeFactory.output(path).toWriter().use { it.write(expected) }
     val decrypted = readFactory.input(path).use { it.readText() }
     val plain = path.readText()
 
@@ -159,6 +160,8 @@ class EncryptedStreamFactoryTest {
   private fun InputStream.readText(): String {
     return String(readAllBytes(), UTF_8)
   }
+
+  private fun OutputStream.toWriter() = BufferedWriter(OutputStreamWriter(this, UTF_8))
 
   companion object {
     @JvmStatic

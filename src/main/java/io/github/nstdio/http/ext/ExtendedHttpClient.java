@@ -62,7 +62,7 @@ public class ExtendedHttpClient extends HttpClient {
    * @return an {@code ExtendedHttpClient.Builder}
    */
   public static ExtendedHttpClient.Builder newBuilder() {
-    return new ExtendedHttpClient.Builder();
+    return new ExtendedHttpClient.Builder(HttpClient.newBuilder());
   }
 
   /**
@@ -200,7 +200,7 @@ public class ExtendedHttpClient extends HttpClient {
     return ctx -> {
       try {
         return completedFuture(delegate.send(ctx.request(), ctx.bodyHandler()));
-      } catch (IOException | InterruptedException e) {
+      } catch (Throwable e) {
         return CompletableFuture.failedFuture(e);
       }
     };
@@ -221,11 +221,12 @@ public class ExtendedHttpClient extends HttpClient {
   }
 
   public static class Builder implements HttpClient.Builder {
-    private final HttpClient.Builder delegate = HttpClient.newBuilder();
+    private final HttpClient.Builder delegate;
     private boolean transparentEncoding;
     private Cache cache = Cache.noop();
 
-    Builder() {
+    Builder(HttpClient.Builder delegate) {
+      this.delegate = delegate;
     }
 
     //<editor-fold desc="Delegating Methods">

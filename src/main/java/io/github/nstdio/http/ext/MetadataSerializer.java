@@ -18,26 +18,10 @@ package io.github.nstdio.http.ext;
 
 import java.nio.file.Path;
 
-import static io.github.nstdio.http.ext.spi.Classpath.isGsonPresent;
-import static io.github.nstdio.http.ext.spi.Classpath.isJacksonPresent;
-
 interface MetadataSerializer {
-  static void requireAvailability() {
-    if (!isJacksonPresent() && !isGsonPresent()) {
-      throw new IllegalStateException("In order to use disk cache please add either Jackson or Gson to your dependencies");
-    }
-  }
 
   static MetadataSerializer findAvailable(StreamFactory streamFactory) {
-    if (isJacksonPresent()) {
-      return new JacksonMetadataSerializer(streamFactory);
-    }
-
-    if (isGsonPresent()) {
-      return new GsonMetadataSerializer(streamFactory);
-    }
-
-    return null;
+    return new BinaryMetadataSerializer(streamFactory);
   }
 
   void write(CacheEntryMetadata metadata, Path path);

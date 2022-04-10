@@ -41,21 +41,6 @@
         <Bug pattern="EI_EXPOSE_REP2"/>
     </Match>
     <Match>
-        <Class name="io.github.nstdio.http.ext.GsonMetadataSerializer$HttpRequestTypeAdapter"/>
-        <Method name="read"/>
-        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
-    </Match>
-    <Match>
-        <Class name="io.github.nstdio.http.ext.GsonMetadataSerializer$ResponseInfoTypeAdapter"/>
-        <Method name="read"/>
-        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
-    </Match>
-    <Match>
-        <Class name="io.github.nstdio.http.ext.GsonMetadataSerializer$CacheEntryMetadataTypeAdapter"/>
-        <Method name="read"/>
-        <Bug pattern="SF_SWITCH_NO_DEFAULT"/>
-    </Match>
-    <Match>
         <Class name="io.github.nstdio.http.ext.DiskCache"/>
         <Method name="restore"/>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE"/>
@@ -95,5 +80,14 @@
         <Class name="io.github.nstdio.http.ext.IOUtils"/>
         <Method name="createFile"/>
         <Bug pattern="EXS_EXCEPTION_SOFTENING_RETURN_FALSE"/>
+    </Match>
+    <Match>
+        <Class name="~io\.github\.nstdio\.http\.ext\.BinaryMetadataSerializer\$Externalizable.+"/>
+        <BugCode name="SECOBDES, IMC"/>
+    </Match>
+    <Match>
+        <Class name="io.github.nstdio.http.ext.BinaryMetadataSerializer"/>
+        <Method name="read"/>
+        <BugCode name="SECOBDES"/>
     </Match>
 </FindBugsFilter>

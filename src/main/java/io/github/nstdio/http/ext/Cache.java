@@ -47,15 +47,11 @@ public interface Cache {
   }
 
   /**
-   * Creates a new {@code DiskCacheBuilder} instance. Requires Jackson form dumping cache files on disk.
+   * Creates a new {@code DiskCacheBuilder} instance.
    *
    * @return the new {@code  DiskCacheBuilder}.
-   *
-   * @throws IllegalStateException When Jackson (a.k.a. ObjectMapper) is not in classpath.
    */
   static DiskCacheBuilder newDiskCacheBuilder() {
-    MetadataSerializer.requireAvailability();
-
     return new DiskCacheBuilder();
   }
 

@@ -15,20 +15,6 @@
  */
 package io.github.nstdio.http.ext
 
-import io.github.nstdio.http.ext.jupiter.DisabledIfOnClasspath
-import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.Nested
-import org.junit.jupiter.api.Test
+internal class InMemoryCacheEntryTest {
 
-internal class DiskCacheBuilderSpiTest {
-  @Nested
-  @DisabledIfOnClasspath(JACKSON, GSON)
-  internal inner class WithoutJacksonTest {
-    @Test
-    fun shouldDescriptiveException() {
-      Assertions.assertThatIllegalStateException()
-        .isThrownBy { Cache.newDiskCacheBuilder() }
-        .withMessage("In order to use disk cache please add either Jackson or Gson to your dependencies")
-    }
-  }
 }

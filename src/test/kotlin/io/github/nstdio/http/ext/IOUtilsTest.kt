@@ -17,6 +17,7 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.IOUtils.createFile
+import io.kotest.matchers.booleans.shouldBeFalse
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -82,5 +83,14 @@ class IOUtilsTest {
 
     //then
     assertTrue(created)
+  }
+
+  @Test
+  fun `should return false if cannot create`(@TempDir temp: Path) {
+    //given
+    val path = temp.resolve("``````///dsadksaihfu///2e1```")
+
+    //then
+    createFile(path).shouldBeFalse()
   }
 }
