@@ -81,6 +81,11 @@ signing {
     sign(publishing.publications["mavenJava"])
 }
 
+tasks.withType<AbstractArchiveTask>().configureEach {
+    isPreserveFileTimestamps = false
+    isReproducibleFileOrder = true
+}
+
 tasks.create("changelog", GitChangelogTask::class) {
     fromRepo = project.rootDir.path
     file = File("CHANGELOG.md")
