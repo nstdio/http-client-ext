@@ -72,12 +72,12 @@ tasks.withType<Test> {
 
 val junitVersion = "5.8.2"
 val assertJVersion = "3.22.0"
-val kotestAssertionsVersion = "5.2.2"
+val kotestAssertionsVersion = "5.2.3"
 val mockitoVersion = "4.4.0"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "1.7.36"
-val jacksonVersion = "2.13.2"
-val brotli4JVersion = "1.6.0"
+val jacksonVersion = "2.13.2.2"
+val brotli4JVersion = "1.7.1"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.9.0"
 
@@ -90,7 +90,6 @@ val spiDeps = listOf(
     "org.brotli:dec:$brotliOrgVersion",
     "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion",
     "com.google.code.gson:gson:$gsonVersion",
-    "javax.json.bind:javax.json.bind-api:1.0",
     "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 )
 
@@ -113,7 +112,7 @@ dependencies {
     testImplementation("org.awaitility:awaitility:4.2.0")
 
     testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.32.0")
+    testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.1")
     testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
 
     spiDeps.forEach { spiTestImplementation(it) }

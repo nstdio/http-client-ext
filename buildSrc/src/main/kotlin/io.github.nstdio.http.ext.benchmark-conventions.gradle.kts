@@ -18,6 +18,13 @@ plugins {
   id("me.champeau.jmh")
 }
 
+val jmhVersion = "1.35"
+
+dependencies {
+  jmh ("org.openjdk.jmh:jmh-core:$jmhVersion")
+  jmh ("org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion")
+}
+
 jmh {
   includeTests.set(false)
 }
