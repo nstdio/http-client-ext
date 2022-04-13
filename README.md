@@ -78,7 +78,7 @@ Cache inMemory = Cache.newInMemoryCacheBuilder()
 
 Above-mentioned configurations also applies to persistent cache with some additions
 
-```
+```java
 Path cacheDir = ...
 Cache disk = Cache.newDiskCacheBuilder()
         .dir(cacheDir)
@@ -86,7 +86,7 @@ Cache disk = Cache.newDiskCacheBuilder()
 ```
 If request/response contains sensitive information one might want to store it encrypted:
 
-```
+```java
 Path cacheDir = ...
 SecretKey secretKey = ...
 
