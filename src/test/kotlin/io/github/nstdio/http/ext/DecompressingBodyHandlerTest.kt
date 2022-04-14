@@ -17,6 +17,7 @@
 
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.apache.commons.io.IOUtils
 import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
@@ -48,161 +49,170 @@ import java.util.zip.InflaterInputStream
 
 @ExtendWith(MockitoExtension::class)
 internal class DecompressingBodyHandlerTest {
-    private lateinit var handler: DecompressingBodyHandler<*>
+  private lateinit var handler: DecompressingBodyHandler<*>
 
-    @Mock
-    private lateinit var mockHandler: BodyHandler<Any>
+  @Mock
+  private lateinit var mockHandler: BodyHandler<Any>
 
-    @Mock
-    private lateinit var mockSubscriber: BodySubscriber<Any>
+  @Mock
+  private lateinit var mockSubscriber: BodySubscriber<Any>
 
-    @BeforeEach
-    fun setUp() {
-        handler = DecompressingBodyHandler(mockHandler, DecompressingBodyHandler.Options(false, false))
-    }
+  @BeforeEach
+  fun setUp() {
+    handler = DecompressingBodyHandler(mockHandler, DecompressingBodyHandler.Options(false, false))
+  }
 
-    @AfterEach
-    fun tearDown() {
-        Mockito.verifyNoInteractions(mockSubscriber)
-    }
+  @AfterEach
+  fun tearDown() {
+    Mockito.verifyNoInteractions(mockSubscriber)
+  }
 
-    @Test
-    fun shouldReturnOriginalSub() {
-        //given
-        val responseInfo = ImmutableResponseInfo.builder()
-            .headers(HttpHeaders.of(Map.of(), Headers.ALLOW_ALL))
-            .build()
-        given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber)
+  @Test
+  fun shouldReturnOriginalSub() {
+    //given
+    val responseInfo = ImmutableResponseInfo.builder()
+      .headers(HttpHeaders.of(Map.of(), Headers.ALLOW_ALL))
+      .build()
+    given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber)
 
-        //when
-        val actual = handler.apply(responseInfo)
+    //when
+    val actual = handler.apply(responseInfo)
 
-        //then
-        Assertions.assertThat(actual).isSameAs(mockSubscriber)
-        verify(mockHandler).apply(responseInfo)
-        verifyNoMoreInteractions(mockHandler)
-    }
+    //then
+    Assertions.assertThat(actual).isSameAs(mockSubscriber)
+    verify(mockHandler).apply(responseInfo)
+    verifyNoMoreInteractions(mockHandler)
+  }
 
-    @Test
-    fun shouldReturnDirectSubscriptionWhenDirect() {
-        val options = DecompressingBodyHandler.Options(false, false)
-        val handler = DecompressingBodyHandler.ofDirect(options)
-        val responseInfo = ImmutableResponseInfo.builder()
-            .headers(HttpHeadersBuilder().add("Content-Encoding", "gzip").build())
-            .build()
+  @Test
+  fun shouldReturnDirectSubscriptionWhenDirect() {
+    val options = DecompressingBodyHandler.Options(false, false)
+    val handler = DecompressingBodyHandler.ofDirect(options)
+    val responseInfo = ImmutableResponseInfo.builder()
+      .headers(HttpHeadersBuilder().add("Content-Encoding", "gzip").build())
+      .build()
 
-        //when
-        val actual = handler.apply(responseInfo)
+    //when
+    val actual = handler.apply(responseInfo)
 
-        //then
-        Assertions.assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber::class.java)
-    }
+    //then
+    Assertions.assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber::class.java)
+  }
 
-    @Test
-    fun shouldReturnOriginalSubWhenDirectivesUnsupported() {
-        //given
-        val responseInfo = ImmutableResponseInfo.builder()
-            .headers(HttpHeadersBuilder().add(Headers.HEADER_CONTENT_ENCODING, "compress,br,identity1,abc").build())
-            .build()
-        given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber)
+  @Test
+  fun shouldReturnOriginalSubWhenDirectivesUnsupported() {
+    //given
+    val responseInfo = ImmutableResponseInfo.builder()
+      .headers(HttpHeadersBuilder().add(Headers.HEADER_CONTENT_ENCODING, "compress,br,identity1,abc").build())
+      .build()
+    given(mockHandler.apply(responseInfo)).willReturn(mockSubscriber)
 
-        //when
-        val actual = handler.apply(responseInfo)
+    //when
+    val actual = handler.apply(responseInfo)
 
-        //then
-        Assertions.assertThat(actual).isSameAs(mockSubscriber)
-        verify(mockHandler).apply(responseInfo)
-        verifyNoMoreInteractions(mockHandler)
+    //then
+    Assertions.assertThat(actual).isSameAs(mockSubscriber)
+    verify(mockHandler).apply(responseInfo)
+    verifyNoMoreInteractions(mockHandler)
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["gzip", "x-gzip"])
+  @Throws(
+    IOException::class
+  )
+  fun shouldReturnGzipInputStream(directive: String?) {
+    val gzipContent = ByteArrayInputStream(Compression.gzip("abc"))
+
+    //when
+    val fn = handler.decompressionFn(directive)
+    val `in` = fn.apply(gzipContent)
+
+    //then
+    Assertions.assertThat(`in`).isInstanceOf(GZIPInputStream::class.java)
+    Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+  }
+
+  @Test
+  @Throws(IOException::class)
+  fun shouldReturnDeflateInputStream() {
+    val deflateContent = ByteArrayInputStream(Compression.deflate("abc"))
+
+    //when
+    val fn = handler.decompressionFn("deflate")
+    val `in` = fn.apply(deflateContent)
+
+    //then
+    Assertions.assertThat(`in`).isInstanceOf(InflaterInputStream::class.java)
+    Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+  }
+
+  @Nested
+  internal inner class FailureControlOptionsTest {
+    @ParameterizedTest
+    @ValueSource(strings = ["compress", "br"])
+    fun shouldThrowUnsupportedOperationException(directive: String?) {
+      //given
+      val handler = BodyHandlers.decompressingBuilder()
+        .failOnUnsupportedDirectives(true)
+        .failOnUnknownDirectives(true)
+        .build(mockHandler) as DecompressingBodyHandler
+
+      //when + then
+      assertThatExceptionOfType(UnsupportedOperationException::class.java)
+        .isThrownBy { handler.decompressionFn(directive) }
+        .withMessage("Compression directive '%s' is not supported", directive)
     }
 
     @ParameterizedTest
-    @ValueSource(strings = ["gzip", "x-gzip"])
-    @Throws(
-        IOException::class
-    )
-    fun shouldReturnGzipInputStream(directive: String?) {
-        val gzipContent = ByteArrayInputStream(Compression.gzip("abc"))
-
-        //when
-        val fn = handler.decompressionFn(directive)
-        val `in` = fn.apply(gzipContent)
-
-        //then
-        Assertions.assertThat(`in`).isInstanceOf(GZIPInputStream::class.java)
-        Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+    @ValueSource(strings = ["", "abc", "gz", "a"])
+    fun shouldThrowIllegalArgumentException(directive: String?) {
+      val handler = BodyHandlers.decompressingBuilder()
+        .failOnUnsupportedDirectives(true)
+        .failOnUnknownDirectives(true)
+        .build(mockHandler) as DecompressingBodyHandler
+      //when + then
+      assertThatIllegalArgumentException()
+        .isThrownBy { handler.decompressionFn(directive) }
+        .withMessage("Unknown compression directive '%s'", directive)
     }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReturnDeflateInputStream() {
-        val deflateContent = ByteArrayInputStream(Compression.deflate("abc"))
+    @ParameterizedTest
+    @ValueSource(strings = ["compress", "br"])
+    @DisplayName("Should not throw exception when 'failOnUnsupportedDirectives' is 'false'")
+    fun shouldNotThrowUnsupportedOperationException(directive: String?) {
+      //given
+      val handler = BodyHandlers.decompressingBuilder()
+        .failOnUnsupportedDirectives(false)
+        .failOnUnknownDirectives(true)
+        .build(mockHandler) as DecompressingBodyHandler
+      val s = InputStream.nullInputStream()
 
-        //when
-        val fn = handler.decompressionFn("deflate")
-        val `in` = fn.apply(deflateContent)
+      //when
+      val fn = handler.decompressionFn(directive)
+      val actual = fn.apply(s)
 
-        //then
-        Assertions.assertThat(`in`).isInstanceOf(InflaterInputStream::class.java)
-        Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+      //then
+      actual shouldBeSameInstanceAs s
     }
 
-    @Nested
-    internal inner class FailureControlOptionsTest {
-        @ParameterizedTest
-        @ValueSource(strings = ["compress", "br"])
-        fun shouldThrowUnsupportedOperationException(directive: String?) {
-            //given
-            val options = DecompressingBodyHandler.Options(true, true)
-            val handler = DecompressingBodyHandler(mockHandler, options)
+    @ParameterizedTest
+    @ValueSource(strings = ["", "abc", "gz", "a"])
+    @DisplayName("Should not throw exception when 'failOnUnknownDirectives' is 'false'")
+    fun shouldNotIllegalArgumentException(directive: String?) {
+      //given
+      val handler = BodyHandlers.decompressingBuilder()
+        .failOnUnsupportedDirectives(true)
+        .failOnUnknownDirectives(false)
+        .build(mockHandler) as DecompressingBodyHandler
+      val s = InputStream.nullInputStream()
 
-            //when + then
-            assertThatExceptionOfType(UnsupportedOperationException::class.java)
-                .isThrownBy { handler.decompressionFn(directive) }
-                .withMessage("Compression directive '%s' is not supported", directive)
-        }
+      //when
+      val fn = handler.decompressionFn(directive)
+      val actual = fn.apply(s)
 
-        @ParameterizedTest
-        @ValueSource(strings = ["", "abc", "gz", "a"])
-        fun shouldThrowIllegalArgumentException(directive: String?) {
-            val handler = DecompressingBodyHandler(mockHandler, DecompressingBodyHandler.Options(true, true))
-            //when + then
-            assertThatIllegalArgumentException()
-                .isThrownBy { handler.decompressionFn(directive) }
-                .withMessage("Unknown compression directive '%s'", directive)
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = ["compress", "br"])
-        @DisplayName("Should not throw exception when 'failOnUnsupportedDirectives' is 'false'")
-        fun shouldNotThrowUnsupportedOperationException(directive: String?) {
-            //given
-            val options = DecompressingBodyHandler.Options(false, true)
-            val handler = DecompressingBodyHandler(mockHandler, options)
-            val `in` = InputStream.nullInputStream()
-
-            //when
-            val fn = handler.decompressionFn(directive)
-            val actual = fn.apply(`in`)
-
-            //then
-            Assertions.assertThat(actual).isSameAs(`in`)
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = ["", "abc", "gz", "a"])
-        @DisplayName("Should not throw exception when 'failOnUnknownDirectives' is 'false'")
-        fun shouldNotIllegalArgumentException(directive: String?) {
-            //given
-            val options = DecompressingBodyHandler.Options(true, false)
-            val handler = DecompressingBodyHandler(mockHandler, options)
-            val `in` = InputStream.nullInputStream()
-
-            //when
-            val fn = handler.decompressionFn(directive)
-            val actual = fn.apply(`in`)
-
-            //then
-            Assertions.assertThat(actual).isSameAs(`in`)
-        }
+      //then
+      actual shouldBeSameInstanceAs s
     }
+  }
 }
