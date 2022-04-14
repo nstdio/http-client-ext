@@ -22,7 +22,6 @@ import java.io.UncheckedIOException;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
@@ -103,20 +102,14 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
 
   private List<ByteBuffer> decompress(InputStream decStream) throws IOException {
     List<ByteBuffer> dec = new ArrayList<>(1);
-    ByteBuffer buf = newBuffer();
 
     try (var stream = decStream) {
+      byte[] buf = new byte[bufferSize];
       int r;
-      while ((r = stream.read()) != -1) {
-        if (!buf.hasRemaining()) {
-          add(dec, buf);
-          buf = newBuffer();
-        }
-
-        buf.put((byte) r);
+      while ((r = stream.read(buf)) > 0) {
+        ByteBuffer bb = ByteBuffer.allocate(r).put(buf, 0, r).flip();
+        dec.add(bb);
       }
-
-      add(dec, buf);
     }
 
     return Collections.unmodifiableList(dec);
@@ -137,16 +130,6 @@ class DecompressingSubscriber<T> implements BodySubscriber<T> {
   private void pushNext(List<ByteBuffer> item) {
     if (!item.isEmpty()) {
       downstream.onNext(item);
-    }
-  }
-
-  private ByteBuffer newBuffer() {
-    return ByteBuffer.allocate(bufferSize);
-  }
-
-  private void add(Collection<ByteBuffer> decompressed, ByteBuffer buf) {
-    if (buf.position() > 0) {
-      decompressed.add(buf.flip());
     }
   }
 
