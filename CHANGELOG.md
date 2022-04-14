@@ -1,8 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.1...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.2...HEAD)
 
+## [v2.1.2](https://github.com/nstdio/http-client-ext/compare/v2.1.1...v2.1.2)
+
+### 🐞  Bug Fixes
+ -  NPE when no `Content-Encoding` header present. ([b3afc61](https://github.com/nstdio/http-client-ext/commit/b3afc610c593024c013185ba93a3a3e7988bd9ca))
+### ♻️ Improvements
+ -  **perf**  Tune decompression performance. ([1c3c581](https://github.com/nstdio/http-client-ext/commit/1c3c581f52db95cf4d88bc6dcea9e420b3015b5f))
 ## [v2.1.1](https://github.com/nstdio/http-client-ext/compare/v2.1.0...v2.1.1)
 
 ### ⭐  Features
