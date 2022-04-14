@@ -31,68 +31,67 @@ import java.net.http.HttpResponse.ResponseInfo
 import java.nio.charset.StandardCharsets
 
 internal class DecompressingSubscriberIntegrationTest {
-    private val client = HttpClient.newHttpClient()
+  private val client = HttpClient.newHttpClient()
 
-    @RegisterExtension
-    var wm = WireMockExtension.newInstance()
-        .configureStaticDsl(true)
-        .failOnUnmatchedRequests(true)
-        .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-        .build()
+  @RepeatedTest(8)
+  fun shouldDecompressLargeBodyWithStringHandler() {
+    //given
+    val data = setupLargeBodyDecompressionTest()
+    val request = data.request
+    val expectedBody = data.expectedBody
 
-    @RepeatedTest(32)
-    @Throws(Exception::class)
-    fun shouldDecompressLargeBodyWithStringHandler() {
-        //given
-        val data = setupLargeBodyDecompressionTest()
-        val request = data.request
-        val expectedBody = data.expectedBody
-
-        //when
-        val stringResponse = client.send(request) { info: ResponseInfo? ->
-            DecompressingSubscriber(
-                HttpResponse.BodyHandlers.ofString().apply(info)
-            )
-        }
-
-        //then
-        org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, stringResponse.body().length)
-        Assertions.assertThat(stringResponse).hasBody(expectedBody)
+    //when
+    val stringResponse = client.send(request) { info: ResponseInfo? ->
+      DecompressingSubscriber(
+        HttpResponse.BodyHandlers.ofString().apply(info)
+      )
     }
 
-    @RepeatedTest(1)
-    @Disabled("Having problems with InputStream")
-    @Throws(
-        Exception::class
+    //then
+    org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, stringResponse.body().length)
+    Assertions.assertThat(stringResponse).hasBody(expectedBody)
+  }
+
+  @RepeatedTest(1)
+  @Disabled("Having problems with InputStream")
+  fun shouldHandleLargeBodyWithInputStream() {
+    //given
+    val data = setupLargeBodyDecompressionTest()
+    val request = data.request
+    val expectedBody = data.expectedBody
+
+    //when
+    val response = client.send(request) { info: ResponseInfo? ->
+      DecompressingSubscriber(
+        HttpResponse.BodyHandlers.ofInputStream().apply(info)
+      )
+    }
+    val body = IOUtils.toString(response.body(), StandardCharsets.UTF_8)
+    org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, body.length)
+    org.junit.jupiter.api.Assertions.assertEquals(expectedBody, body)
+  }
+
+  private fun setupLargeBodyDecompressionTest(body: String = RandomStringUtils.randomAlphabetic(16384 * 10)): LargeBodyDataDecompression {
+    val gzippedBody = Compression.gzip(body)
+    val testUrl = "/gzip"
+    WireMock.stubFor(
+      WireMock.get(WireMock.urlEqualTo(testUrl))
+        .willReturn(WireMock.ok().withBody(gzippedBody))
     )
-    fun shouldHandleLargeBodyWithInputStream() {
-        //given
-        val data = setupLargeBodyDecompressionTest()
-        val request = data.request
-        val expectedBody = data.expectedBody
+    val uri = URI.create(wm.runtimeInfo.httpBaseUrl).resolve(testUrl)
+    val request = HttpRequest.newBuilder(uri).build()
+    return LargeBodyDataDecompression(request, body)
+  }
 
-        //when
-        val response = client.send(request) { info: ResponseInfo? ->
-            DecompressingSubscriber(
-                HttpResponse.BodyHandlers.ofInputStream().apply(info)
-            )
-        }
-        val body = IOUtils.toString(response.body(), StandardCharsets.UTF_8)
-        org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, body.length)
-        org.junit.jupiter.api.Assertions.assertEquals(expectedBody, body)
-    }
+  internal data class LargeBodyDataDecompression(val request: HttpRequest, val expectedBody: String)
 
-    private fun setupLargeBodyDecompressionTest(body: String = RandomStringUtils.randomAlphabetic(16384 * 10)): LargeBodyDataDecompression {
-        val gzippedBody = Compression.gzip(body)
-        val testUrl = "/gzip"
-        WireMock.stubFor(
-            WireMock.get(WireMock.urlEqualTo(testUrl))
-                .willReturn(WireMock.ok().withBody(gzippedBody))
-        )
-        val uri = URI.create(wm.runtimeInfo.httpBaseUrl).resolve(testUrl)
-        val request = HttpRequest.newBuilder(uri).build()
-        return LargeBodyDataDecompression(request, body)
-    }
-
-    internal class LargeBodyDataDecompression(val request: HttpRequest, val expectedBody: String)
+  companion object {
+    @RegisterExtension
+    @JvmStatic
+    var wm = WireMockExtension.newInstance()
+      .configureStaticDsl(true)
+      .failOnUnmatchedRequests(true)
+      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
+      .build()
+  }
 }
