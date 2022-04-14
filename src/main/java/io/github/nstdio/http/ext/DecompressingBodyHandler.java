@@ -33,6 +33,7 @@ import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
+import static java.net.http.HttpResponse.BodyHandlers.ofInputStream;
 import static java.util.stream.Collectors.toMap;
 
 class DecompressingBodyHandler<T> implements BodyHandler<T> {
@@ -57,7 +58,7 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
   }
 
   static DecompressingBodyHandler<InputStream> ofDirect(Options options) {
-    return new DecompressingBodyHandler<>(null, options, true);
+    return new DecompressingBodyHandler<>(ofInputStream(), options, true);
   }
 
   private UnaryOperator<InputStream> chain(UnaryOperator<InputStream> u1, UnaryOperator<InputStream> u2) {

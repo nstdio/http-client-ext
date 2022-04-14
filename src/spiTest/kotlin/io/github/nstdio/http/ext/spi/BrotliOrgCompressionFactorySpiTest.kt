@@ -15,26 +15,26 @@
  */
 package io.github.nstdio.http.ext.spi
 
-import com.jayway.jsonpath.matchers.JsonPathMatchers.isJson
-import org.apache.commons.io.IOUtils.toString
+import io.kotest.assertions.json.shouldBeValidJson
+import io.kotest.matchers.collections.shouldContainExactly
+import org.apache.commons.io.IOUtils
 import org.junit.jupiter.api.Test
-import java.io.IOException
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.charset.StandardCharsets
 
 internal class BrotliOrgCompressionFactorySpiTest {
-    @Test
-    @Throws(IOException::class)
-    fun shouldDecompress() {
-        //given
-        val inputStream = URI.create("https://httpbin.org/brotli").toURL().openStream()
-        val factory = BrotliOrgCompressionFactory()
+  @Test
+  fun shouldDecompress() {
+    //given
+    val inputStream = Brotli4JCompressionFactorySpiTest::class.java.getResource("/__files/br")?.openStream()
+    val factory = BrotliOrgCompressionFactory()
 
-        //when
-        val actual = factory.decompressing(inputStream, "br")
-        val actualAsString = toString(actual, UTF_8)
+    //when
+    val supported = factory.supported()
+    val actual = factory.decompressing(inputStream, "br")
+    val actualAsString = IOUtils.toString(actual, StandardCharsets.UTF_8)
 
-        //then
-        isJson().matches(actualAsString)
-    }
+    //then
+    actualAsString.shouldBeValidJson()
+    supported.shouldContainExactly("br")
+  }
 }

@@ -28,46 +28,46 @@ import kotlin.Suppress
 import kotlin.to
 
 plugins {
-    `java-library`
-    idea
-    id("de.jjohannes.extra-java-module-info")
+  `java-library`
+  idea
+  id("de.jjohannes.extra-java-module-info")
 }
 
 val isCI = System.getenv("CI").toBoolean()
 
 java {
-    sourceSets {
-        create("spiTest") {
-            val output = sourceSets.main.get().output
-            compileClasspath += output
-            runtimeClasspath += output
-        }
+  sourceSets {
+    create("spiTest") {
+      val output = sourceSets.main.get().output
+      compileClasspath += output
+      runtimeClasspath += output
     }
+  }
 }
 val sourceSetsSpiTest by sourceSets.named("spiTest")
 val spiTestImplementation by configurations
 
 idea.module {
-    testSourceDirs.addAll(sourceSetsSpiTest.allSource.srcDirs)
+  testSourceDirs.addAll(sourceSetsSpiTest.allSource.srcDirs)
 }
 
 
 mapOf(
-    "spiTestImplementation" to "testImplementation",
-    "spiTestRuntimeOnly" to "testRuntimeOnly",
+  "spiTestImplementation" to "testImplementation",
+  "spiTestRuntimeOnly" to "testRuntimeOnly",
 ).forEach { (t, u) ->
-    configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
+  configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
 }
 
 tasks.withType<Test> {
-    useJUnitPlatform()
-    reports {
-        html.required.set(!isCI)
-    }
-    testLogging {
-        events("skipped", "failed")
-        exceptionFormat = TestExceptionFormat.FULL
-    }
+  useJUnitPlatform()
+  reports {
+    html.required.set(!isCI)
+  }
+  testLogging {
+    events("skipped", "failed")
+    exceptionFormat = TestExceptionFormat.FULL
+  }
 }
 
 val junitVersion = "5.8.2"
@@ -82,126 +82,126 @@ val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.9.0"
 
 val jsonLibs = mapOf(
-    "jackson" to "com.fasterxml.jackson.core",
-    "gson" to "gson-$gsonVersion"
+  "jackson" to "com.fasterxml.jackson.core",
+  "gson" to "gson-$gsonVersion"
 )
 
 val spiDeps = listOf(
-    "org.brotli:dec:$brotliOrgVersion",
-    "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion",
-    "com.google.code.gson:gson:$gsonVersion",
-    "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  "org.brotli:dec:$brotliOrgVersion",
+  "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion",
+  "com.google.code.gson:gson:$gsonVersion",
+  "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 )
 
 dependencies {
-    spiDeps.forEach { compileOnly(it) }
+  spiDeps.forEach { compileOnly(it) }
 
-    /** AssertJ & Friends */
-    testImplementation("org.assertj:assertj-core:$assertJVersion")
-    testImplementation("io.kotest:kotest-assertions-core:$kotestAssertionsVersion")
-    testImplementation("io.kotest:kotest-property:$kotestAssertionsVersion")
-    testImplementation("com.jayway.jsonpath:json-path-assert:$jsonPathAssertVersion")
+  /** AssertJ & Friends */
+  testImplementation("org.assertj:assertj-core:$assertJVersion")
+  testImplementation("io.kotest:kotest-assertions-core:$kotestAssertionsVersion")
+  testImplementation("io.kotest:kotest-property:$kotestAssertionsVersion")
+  testImplementation("io.kotest:kotest-assertions-json:$kotestAssertionsVersion")
 
-    /** Jupiter */
-    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
-    testImplementation("org.mockito:mockito-core:$mockitoVersion")
-    testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
+  /** Jupiter */
+  testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+  testImplementation("org.mockito:mockito-core:$mockitoVersion")
+  testImplementation("org.mockito:mockito-junit-jupiter:$mockitoVersion")
 
-    testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
+  testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 
-    testImplementation("org.awaitility:awaitility:4.2.0")
+  testImplementation("org.awaitility:awaitility:4.2.0")
 
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
-    testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.1")
-    testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
+  testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
+  testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.1")
+  testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
 
-    spiDeps.forEach { spiTestImplementation(it) }
-    spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")
+  spiDeps.forEach { spiTestImplementation(it) }
+  spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")
 }
 
 Generator.subset(jsonLibs.keys)
-    .simple()
-    .stream()
-    .forEach { it ->
-        val postFix = it.joinToString("And") { it.capitalized() }
-        val taskName = if (postFix.isEmpty()) "spiTest" else "spiTestWithout${postFix}"
-        tasks.create<Test>(taskName) {
-            description = "Run SPI tests"
-            group = "verification"
-            testClassesDirs = sourceSetsSpiTest.output.classesDirs
-            classpath = sourceSetsSpiTest.runtimeClasspath
+  .simple()
+  .stream()
+  .forEach { it ->
+    val postFix = it.joinToString("And") { it.capitalized() }
+    val taskName = if (postFix.isEmpty()) "spiTest" else "spiTestWithout${postFix}"
+    tasks.create<Test>(taskName) {
+      description = "Run SPI tests"
+      group = "verification"
+      testClassesDirs = sourceSetsSpiTest.output.classesDirs
+      classpath = sourceSetsSpiTest.runtimeClasspath
 
-            doFirst {
-                val toExclude = classpath.filter { file ->
-                    it?.any { file.absolutePath.contains(it) } ?: false
-                }
-                if (!toExclude.isEmpty) {
-                    logger.info("Excluding jars from classpath: ")
-                    toExclude.forEach {
-                        logger.info("    - ${it.name}")
-                    }
-                }
-                classpath -= toExclude
-            }
+      doFirst {
+        val toExclude = classpath.filter { file ->
+          it?.any { file.absolutePath.contains(it) } ?: false
         }
+        if (!toExclude.isEmpty) {
+          logger.info("Excluding jars from classpath: ")
+          toExclude.forEach {
+            logger.info("    - ${it.name}")
+          }
+        }
+        classpath -= toExclude
+      }
     }
+  }
 
 tasks.create<Task>("spiMatrixTest") {
-    description = "The aggregator task for all tests"
-    group = "verification"
-    dependsOn(tasks.filter { it.name.startsWith("spiTest") })
+  description = "The aggregator task for all tests"
+  group = "verification"
+  dependsOn(tasks.filter { it.name.startsWith("spiTest") })
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
+  kotlinOptions {
+    jvmTarget = JavaVersion.VERSION_11.toString()
+  }
 }
 
 tasks.check {
-    dependsOn("spiMatrixTest")
+  dependsOn("spiMatrixTest")
 }
 
 tasks.build {
-    dependsOn("spiMatrixTest")
+  dependsOn("spiMatrixTest")
 }
 
 configurations.names
-    .filter { !setOf("compileClasspath", "runtimeClasspath").contains(it) }
-    .map { configurations.getByName(it) }
-    .forEach {
-        configure(listOf(it)) {
-            attributes {
-                @Suppress("UNCHECKED_CAST")
-                val forName = Class.forName("java.lang.Boolean") as Class<Boolean>
-                val value: Boolean = Boolean.valueOf("false") as Boolean
+  .filter { !setOf("compileClasspath", "runtimeClasspath").contains(it) }
+  .map { configurations.getByName(it) }
+  .forEach {
+    configure(listOf(it)) {
+      attributes {
+        @Suppress("UNCHECKED_CAST")
+        val forName = Class.forName("java.lang.Boolean") as Class<Boolean>
+        val value: Boolean = Boolean.valueOf("false") as Boolean
 
-                attribute(Attribute.of("javaModule", forName), value)
-            }
-        }
+        attribute(Attribute.of("javaModule", forName), value)
+      }
     }
+  }
 
 extraJavaModuleInfo {
-    module("brotli4j-${brotli4JVersion}.jar", "com.aayushatharva.brotli4j", brotli4JVersion) {
-        exports("com.aayushatharva.brotli4j")
-        exports("com.aayushatharva.brotli4j.common")
-        exports("com.aayushatharva.brotli4j.decoder")
-        exports("com.aayushatharva.brotli4j.encoder")
-    }
+  module("brotli4j-${brotli4JVersion}.jar", "com.aayushatharva.brotli4j", brotli4JVersion) {
+    exports("com.aayushatharva.brotli4j")
+    exports("com.aayushatharva.brotli4j.common")
+    exports("com.aayushatharva.brotli4j.decoder")
+    exports("com.aayushatharva.brotli4j.encoder")
+  }
 
-    module("dec-${brotliOrgVersion}.jar", "org.brotli.dec", brotliOrgVersion) {
-        exports("org.brotli.dec")
-    }
+  module("dec-${brotliOrgVersion}.jar", "org.brotli.dec", brotliOrgVersion) {
+    exports("org.brotli.dec")
+  }
 }
 
 fun getArch(): String {
-    val operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
+  val operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
 
-    if (operatingSystem.isWindows) return "windows-x86_64"
-    else if (operatingSystem.isMacOsX) return "osx-x86_64"
-    else if (operatingSystem.isLinux)
-        return if (DefaultNativePlatform.getCurrentArchitecture().isArm) "linux-aarch64"
-        else "linux-x86_64"
+  if (operatingSystem.isWindows) return "windows-x86_64"
+  else if (operatingSystem.isMacOsX) return "osx-x86_64"
+  else if (operatingSystem.isLinux)
+    return if (DefaultNativePlatform.getCurrentArchitecture().isArm) "linux-aarch64"
+    else "linux-x86_64"
 
-    return ""
+  return ""
 }

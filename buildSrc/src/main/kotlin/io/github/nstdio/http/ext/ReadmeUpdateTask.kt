@@ -21,40 +21,40 @@ import org.gradle.api.tasks.TaskAction
 import java.util.regex.Pattern
 
 abstract class ReadmeUpdateTask : DefaultTask() {
-    @TaskAction
-    fun update() {
+  @TaskAction
+  fun update() {
 
-        val v = project.version as String
+    val v = project.version as String
 
-        val file = project.file("README.md")
-        val text = StringBuilder(file.readText())
+    val file = project.file("README.md")
+    val text = StringBuilder(file.readText())
 
-        replaceMaven(text, v)
-        replaceGradle(text, v)
+    replaceMaven(text, v)
+    replaceGradle(text, v)
 
-        file.writeText(text.toString())
+    file.writeText(text.toString())
+  }
+
+  private fun replaceMaven(text: StringBuilder, version: String) {
+    val pattern =
+      "<dependency>\\s+<groupId>io\\.github\\.nstdio</groupId>\\s+<artifactId>http-client-ext</artifactId>\\s+<version>(.+)</version>\\s+</dependency>"
+    val mvnPattern = Pattern.compile(pattern, Pattern.MULTILINE)
+    replacePattern(mvnPattern, text, version)
+  }
+
+  private fun replaceGradle(text: StringBuilder, version: String) {
+    val gradlePattern = Pattern.compile("implementation 'io\\.github\\.nstdio:http-client-ext:(.+)'")
+    replacePattern(gradlePattern, text, version)
+  }
+
+  private fun replacePattern(pattern: Pattern, text: StringBuilder, version: String) {
+    val matcher = pattern.matcher(text)
+    if (matcher.find()) {
+      val start = matcher.start(1)
+      val end = matcher.end(1)
+
+      text.replace(start, end, version)
     }
-
-    private fun replaceMaven(text: StringBuilder, version: String) {
-        val pattern =
-            "<dependency>\\s+<groupId>io\\.github\\.nstdio</groupId>\\s+<artifactId>http-client-ext</artifactId>\\s+<version>(.+)</version>\\s+</dependency>"
-        val mvnPattern = Pattern.compile(pattern, Pattern.MULTILINE)
-        replacePattern(mvnPattern, text, version)
-    }
-
-    private fun replaceGradle(text: StringBuilder, version: String) {
-        val gradlePattern = Pattern.compile("implementation 'io\\.github\\.nstdio:http-client-ext:(.+)'")
-        replacePattern(gradlePattern, text, version)
-    }
-
-    private fun replacePattern(pattern: Pattern, text: StringBuilder, version: String) {
-        val matcher = pattern.matcher(text)
-        if (matcher.find()) {
-            val start = matcher.start(1)
-            val end = matcher.end(1)
-
-            text.replace(start, end, version)
-        }
-    }
+  }
 }
 

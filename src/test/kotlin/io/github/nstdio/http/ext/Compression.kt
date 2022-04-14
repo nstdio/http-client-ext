@@ -25,31 +25,27 @@ import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPOutputStream
 
 internal object Compression {
-    fun gzip(input: String): ByteArray {
-        return compress(input) { out: OutputStream ->
-            try {
-                return@compress GZIPOutputStream(out, true)
-            } catch (e: IOException) {
-                throw UncheckedIOException(e)
-            }
-        }
+  fun gzip(input: String): ByteArray {
+    return compress(input) { out: OutputStream ->
+      try {
+        return@compress GZIPOutputStream(out, true)
+      } catch (e: IOException) {
+        throw UncheckedIOException(e)
+      }
     }
+  }
 
-    fun deflate(input: String): ByteArray {
-        return compress(input) { out: OutputStream -> DeflaterOutputStream(out, true) }
-    }
+  fun deflate(input: String): ByteArray {
+    return compress(input) { DeflaterOutputStream(it, true) }
+  }
 
-    private fun compress(input: String, compressorCreator: Function<OutputStream, DeflaterOutputStream>): ByteArray {
-        try {
-            ByteArrayOutputStream().use { out ->
-                compressorCreator.apply(out).use { compressor ->
-                    compressor.write(input.toByteArray(StandardCharsets.UTF_8))
-                    compressor.finish()
-                    return out.toByteArray()
-                }
-            }
-        } catch (e: IOException) {
-            throw UncheckedIOException(e)
-        }
+  private fun compress(input: String, compressorCreator: Function<OutputStream, DeflaterOutputStream>): ByteArray {
+    ByteArrayOutputStream().use { out ->
+      compressorCreator.apply(out).use { compressor ->
+        compressor.write(input.toByteArray(StandardCharsets.UTF_8))
+        compressor.finish()
+        return out.toByteArray()
+      }
     }
+  }
 }

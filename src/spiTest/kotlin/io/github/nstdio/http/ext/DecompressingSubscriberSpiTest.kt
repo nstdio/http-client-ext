@@ -15,35 +15,60 @@
  */
 package io.github.nstdio.http.ext
 
-import com.jayway.jsonpath.matchers.JsonPathMatchers.isJson
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.ok
+import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension
+import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
+import io.kotest.assertions.json.shouldBeValidJson
+import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.io.IOException
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers.ofString
 
+@EnabledIfOnClasspath(JACKSON) // required by WireMock
 internal class DecompressingSubscriberSpiTest {
-    private val client = HttpClient.newHttpClient()
+  private val client = HttpClient.newHttpClient()
 
-    @ParameterizedTest
-    @ValueSource(strings = ["brotli", "gzip", "deflate"])
-    @Throws(
-        IOException::class, InterruptedException::class
+  @ParameterizedTest
+  @ValueSource(strings = ["br", "gzip", "deflate"])
+  fun shouldDecompress(compressionType: String) {
+    //given
+    val uri = URI.create(wm.baseUrl()).resolve("/data")
+    stubFor(
+      get("/data").willReturn(
+        ok()
+          .withHeader("Content-Encoding", compressionType)
+          .withBodyFile(compressionType)
+      )
     )
-    fun shouldDecompress(compressionType: String) {
-        //given
-        val uri = URI.create("https://httpbin.org/").resolve(compressionType)
 
-        //when
-        val response = client.send(
-            HttpRequest.newBuilder(uri).build(),
-            BodyHandlers.ofDecompressing(ofString())
-        )
-        val body = response.body()
+    //when
+    val response = client.send(
+      HttpRequest.newBuilder(uri).build(),
+      BodyHandlers.ofDecompressing(ofString())
+    )
 
-        //then
-        isJson().matches(body)
-    }
+    //then
+    response.body().shouldBeValidJson()
+  }
+
+  companion object {
+    @RegisterExtension
+    @JvmStatic
+    var wm = WireMockExtension.newInstance()
+      .configureStaticDsl(true)
+      .failOnUnmatchedRequests(true)
+      .options(
+        WireMockConfiguration.wireMockConfig()
+          .gzipDisabled(true)
+          .usingFilesUnderDirectory("src/spiTest/resources")
+          .dynamicPort()
+      )
+      .build()
+  }
 }
