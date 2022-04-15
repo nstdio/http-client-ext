@@ -16,13 +16,16 @@
 package io.github.nstdio.http.ext.spi
 
 import com.google.common.reflect.TypeToken
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.matchers.nulls.shouldNotBeNull
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
+import org.mockito.Mockito.atLeastOnce
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.verify
 import java.io.ByteArrayInputStream
 import java.io.IOException
-import java.nio.charset.StandardCharsets
+import java.io.InputStream
 
 internal interface JsonMappingContract {
   fun get(): JsonMapping
@@ -30,58 +33,57 @@ internal interface JsonMappingContract {
   @Test
   fun shouldThrowIOExceptionWhenParsingException() {
     //given
-    val bytes = "{".toByteArray(StandardCharsets.UTF_8)
+    val bytes = "{".toByteArray()
     val mapping = get()
 
     //when
-    assertThrows(IOException::class.java) { mapping.read(bytes, Any::class.java) }
+    shouldThrow<IOException> { mapping.read(bytes, Any::class.java) }
   }
 
   @Test
   fun shouldThrowIOExceptionWhenParsingExceptionWithComplexType() {
     //given
-    val bytes = ByteArrayInputStream("{".toByteArray(StandardCharsets.UTF_8))
+    val bytes = ByteArrayInputStream("{".toByteArray())
     val mapping = get()
-    val targetType = object : TypeToken<List<String?>?>() {}.type
+    val targetType = object : TypeToken<List<String>>() {}.type
 
     //when
-    assertThrows(IOException::class.java) { mapping.read<Any>(bytes, targetType) }
+    shouldThrow<IOException> { mapping.read(bytes, targetType) }
   }
 
   @Test
-    fun shouldCloseInputStream() {
+  fun shouldCloseInputStream() {
     //given
-    val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
-    val inSpy = Mockito.spy(ByteArrayInputStream(jsonBytes))
+    val jsonBytes = "{}".toByteArray()
+    val inSpy = spy(TestInputStream(ByteArrayInputStream(jsonBytes)))
     val mapping = get()
 
     //when
-    val read = mapping.read(inSpy, Any::class.java)
+    mapping.read(inSpy, Any::class.java)
 
     //then
-    assertThat(read).isNotNull
-    Mockito.verify(inSpy, Mockito.atLeastOnce()).close()
+    verify(inSpy, atLeastOnce()).close()
   }
 
   @Test
-    fun shouldReadFromByteArray() {
+  fun shouldReadFromByteArray() {
     //given
-    val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
+    val jsonBytes = "{}".toByteArray()
     val mapping = get()
 
     //when
     val read = mapping.read(jsonBytes, Any::class.java)
 
     //then
-    assertThat(read).isNotNull
+    read.shouldNotBeNull()
   }
 
   @Test
-    fun shouldReadFromByteArrayUsingComplexType() {
+  fun shouldReadFromByteArrayUsingComplexType() {
     //given
-    val jsonBytes = "{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8)
+    val jsonBytes = "{\"a\": 1, \"b\": 2}".toByteArray()
     val mapping = get()
-    val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
+    val targetType = object : TypeToken<Map<String, Int>>() {}.type
 
     //when
     val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
@@ -94,11 +96,11 @@ internal interface JsonMappingContract {
   }
 
   @Test
-    fun shouldReadFromInputStreamUsingComplexType() {
+  fun shouldReadFromInputStreamUsingComplexType() {
     //given
-    val jsonBytes = ByteArrayInputStream("{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8))
+    val jsonBytes = ByteArrayInputStream("{\"a\": 1, \"b\": 2}".toByteArray())
     val mapping = get()
-    val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
+    val targetType = object : TypeToken<Map<String, Int>>() {}.type
 
     //when
     val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
@@ -108,5 +110,10 @@ internal interface JsonMappingContract {
       .hasSize(2)
       .containsEntry("a", 1)
       .containsEntry("b", 2)
+  }
+
+  open class TestInputStream(private val inputStream: InputStream) : InputStream() {
+    override fun read(): Int = inputStream.read()
+    override fun close() = inputStream.close()
   }
 }
