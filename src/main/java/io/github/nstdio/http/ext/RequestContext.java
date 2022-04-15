@@ -43,14 +43,6 @@ final class RequestContext {
     return !cacheControl.noStore();
   }
 
-  long requestTimeLong() {
-    return requestTime.get();
-  }
-
-  long responseTimeLong() {
-    return responseTime.get();
-  }
-
   @SuppressWarnings("unchecked")
   <T> BodyHandler<T> bodyHandler() {
     return (BodyHandler<T>) bodyHandler;

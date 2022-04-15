@@ -211,7 +211,7 @@ class CachingInterceptor implements Interceptor {
     if (metadata != null) {
       switch (r.statusCode()) {
         case 304: {
-          metadata.update(r.headers(), ctx.requestTimeLong(), ctx.responseTimeLong());
+          metadata.update(r.headers(), ctx.requestTime().get(), ctx.responseTime().get());
           return createCachedResponse(ctx, entry);
         }
         case 500:
