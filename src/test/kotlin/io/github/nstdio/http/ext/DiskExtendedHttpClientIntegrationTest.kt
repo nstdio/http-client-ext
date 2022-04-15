@@ -15,42 +15,42 @@
  */
 package io.github.nstdio.http.ext
 
+import com.github.tomakehurst.wiremock.client.WireMock.get
+import com.github.tomakehurst.wiremock.client.WireMock.stubFor
+import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
+import io.github.nstdio.http.ext.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers.ofByteArray
 import java.nio.file.Files
 import java.time.Clock
+import javax.crypto.SecretKey
 
 internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
-  @RegisterExtension
-  val wm: WireMockExtension = WireMockExtension.newInstance()
-    .configureStaticDsl(true)
-    .failOnUnmatchedRequests(true)
-    .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-    .build()
 
   private val delegate = HttpClient.newHttpClient()
   private lateinit var cacheDir: File
   private lateinit var client: ExtendedHttpClient
   private lateinit var cache: Cache
 
+  private lateinit var secretKey: SecretKey
+
   @BeforeEach
-    fun setUp() {
+  fun setUp() {
     val dir = Files.createTempDirectory("diskcache").toFile()
     dir.deleteOnExit()
-
-    cache = Cache.newDiskCacheBuilder()
-      .dir(dir.toPath())
-      .encrypted()
-      .key(Crypto.pbe())
-      .cipherAlgorithm("AES")
-      .build()
     cacheDir = dir
+
+    secretKey = Crypto.pbe()
+    cache = createCache()
     client = ExtendedHttpClient(delegate, cache, Clock.systemUTC())
   }
 
@@ -59,6 +59,41 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
     cache.evictAll()
     cacheDir.listFiles()?.forEach { it.delete() }
   }
+
+  @Test
+  fun `Should restore cache`() {
+    //given
+    stubFor(
+      get(urlPathMatching("/any/[0-9]+"))
+        .willReturn(
+          ok()
+            .withHeader("Cache-Control", "max-age=86400")
+            .withBody("abc")
+        )
+    )
+
+    val intRange = 0..64
+    val requests = intRange
+      .map { "${wm.baseUrl()}/any/$it".toUri() }
+      .map { HttpRequest.newBuilder(it).build() }
+      .toList()
+
+    requests.map { client.send(it, ofByteArray()) }.forEach { it.body() }
+
+    //when
+    val newClient = ExtendedHttpClient(delegate, createCache(), Clock.systemUTC())
+    val responses = requests.map { newClient.send(it, ofByteArray()) }.toList()
+
+    //then
+    responses.forEach { assertThat(it).isCached }
+  }
+
+  private fun createCache() = Cache.newDiskCacheBuilder()
+    .dir(cacheDir.toPath())
+    .encrypted()
+    .key(secretKey)
+    .cipherAlgorithm("AES")
+    .build()
 
   override fun client(): ExtendedHttpClient {
     return client
@@ -74,5 +109,15 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
 
   override fun client(clock: Clock): ExtendedHttpClient {
     return ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+  }
+
+  companion object {
+    @RegisterExtension
+    @JvmStatic
+    val wm: WireMockExtension = WireMockExtension.newInstance()
+      .configureStaticDsl(true)
+      .failOnUnmatchedRequests(true)
+      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
+      .build()
   }
 }

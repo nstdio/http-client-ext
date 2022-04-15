@@ -13,45 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext
 
-package io.github.nstdio.http.ext;
+import io.kotest.matchers.booleans.shouldBeTrue
+import org.junit.jupiter.api.Test
+import java.io.IOException
+import java.nio.file.Path
 
-import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
-import java.nio.file.Path;
-import java.util.List;
-import java.util.concurrent.CompletionStage;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-class PathSubscriberTest {
-
+internal class PathSubscriberTest {
   @Test
-  void shouldBeCompletedWhenOnError() {
+  fun shouldBeCompletedWhenOnError() {
     //given
-    PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
-    IOException th = new IOException();
+    val subscriber = PathSubscriber(Path.of("abc"))
+    val th = IOException()
 
     //when
-    subscriber.onError(th);
+    subscriber.onError(th)
+    val body = subscriber.body.toCompletableFuture()
 
     //then
-    assertThat(subscriber.getBody())
-        .isCompletedExceptionally();
+    body.isCompletedExceptionally.shouldBeTrue()
   }
 
   @Test
-  void shouldCompleteExceptionallyWhenPathDoesNotExist() {
+  fun shouldCompleteExceptionallyWhenPathDoesNotExist() {
     //given
-    PathSubscriber subscriber = new PathSubscriber(Path.of("abc"));
+    val subscriber = PathSubscriber(Path.of("abc"))
 
     //when
-    subscriber.onSubscribe(new PlainSubscription(subscriber, List.of(), false));
-    CompletionStage<Path> body = subscriber.getBody();
+    subscriber.onSubscribe(PlainSubscription(subscriber, mutableListOf(), false))
+    val body = subscriber.body.toCompletableFuture()
 
     //then
-    assertThat(body)
-        .isCompletedExceptionally();
+    body.isCompletedExceptionally.shouldBeTrue()
   }
 }
