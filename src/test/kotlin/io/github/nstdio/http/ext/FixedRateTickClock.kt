@@ -26,32 +26,32 @@ import java.util.concurrent.atomic.AtomicReference
  * advance this clock.
  */
 internal class FixedRateTickClock(baseInstant: Instant, zone: ZoneId, tickDuration: Duration) : Clock() {
-    private val currentInstantRef: AtomicReference<Instant>
-    private val zone: ZoneId
-    private val tickDuration: Duration
+  private val currentInstantRef: AtomicReference<Instant>
+  private val zone: ZoneId
+  private val tickDuration: Duration
 
-    init {
-        currentInstantRef = AtomicReference(baseInstant)
-        this.zone = zone
-        this.tickDuration = tickDuration
-    }
+  init {
+    currentInstantRef = AtomicReference(baseInstant)
+    this.zone = zone
+    this.tickDuration = tickDuration
+  }
 
-    override fun getZone(): ZoneId {
-        return zone
-    }
+  override fun getZone(): ZoneId {
+    return zone
+  }
 
-    override fun withZone(zone: ZoneId): Clock {
-        return FixedRateTickClock(currentInstantRef.get(), zone, tickDuration)
-    }
+  override fun withZone(zone: ZoneId): Clock {
+    return FixedRateTickClock(currentInstantRef.get(), zone, tickDuration)
+  }
 
-    override fun instant(): Instant {
-        return currentInstantRef.updateAndGet { i: Instant -> i.plus(tickDuration) }
-    }
+  override fun instant(): Instant {
+    return currentInstantRef.updateAndGet { i: Instant -> i.plus(tickDuration) }
+  }
 
-    companion object {
-        @JvmStatic
-        fun of(baseClock: Clock, tickDuration: Duration): FixedRateTickClock {
-            return FixedRateTickClock(baseClock.instant(), baseClock.zone, tickDuration)
-        }
+  companion object {
+    @JvmStatic
+    fun of(baseClock: Clock, tickDuration: Duration): FixedRateTickClock {
+      return FixedRateTickClock(baseClock.instant(), baseClock.zone, tickDuration)
     }
+  }
 }

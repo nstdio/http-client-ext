@@ -56,7 +56,7 @@ class IOUtilsTest {
 
     //then
     assertThat(th)
-      .hasSuppressedException(io);
+      .hasSuppressedException(io)
   }
 
   @Test

@@ -20,7 +20,7 @@ import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
 
 @EnabledIfOnClasspath(JACKSON)
 class JacksonJsonMappingTest : JsonMappingContract {
-    override fun get(): JsonMapping {
-        return JacksonJsonMapping()
-    }
+  override fun get(): JsonMapping {
+    return JacksonJsonMapping()
+  }
 }

@@ -19,15 +19,15 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 
 internal class OptionalBrotliCompressionFactorySpiTest {
-    @Test
-    fun shouldSupportSomething() {
-        //given
-        val factory = OptionalBrotliCompressionFactory()
+  @Test
+  fun shouldSupportSomething() {
+    //given
+    val factory = OptionalBrotliCompressionFactory()
 
-        //when
-        val actual = factory.supported()
+    //when
+    val actual = factory.supported()
 
-        //then
-        Assertions.assertThat(actual).isNotEmpty
-    }
+    //then
+    Assertions.assertThat(actual).isNotEmpty
+  }
 }

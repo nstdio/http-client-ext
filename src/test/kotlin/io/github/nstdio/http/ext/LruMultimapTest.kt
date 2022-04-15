@@ -28,210 +28,210 @@ import java.util.function.Consumer
 import java.util.function.ToIntFunction
 
 class LruMultimapTest {
-    private val addFn = ToIntFunction { _: List<String?>? -> -1 }
-    private val throwingFn = ToIntFunction { _: List<String?>? ->
-        throw IllegalStateException(
-            "Should not be invoked!"
-        )
+  private val addFn = ToIntFunction { _: List<String?>? -> -1 }
+  private val throwingFn = ToIntFunction { _: List<String?>? ->
+    throw IllegalStateException(
+      "Should not be invoked!"
+    )
+  }
+
+  @Test
+  fun shouldReplaceAndNotify() {
+    //given
+    val mockEvictionListener: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String>(512, mockEvictionListener)
+
+    //when
+    @Suppress("UNUSED_VARIABLE")
+    val putResult1 = map.putSingle("a", "1") { 0 }
+    val putResult2 = map.putSingle("a", "2") { 0 }
+    val getResult = map.getSingle("a") { 0 }
+
+    //then
+    assertThat(map)
+      .hasMapSize(1)
+      .hasSize(1)
+      .hasOnlyValue("a", "2", 0)
+    assertThat(putResult2).containsOnly("2")
+    assertThat(getResult).isEqualTo("2")
+    verify(mockEvictionListener).accept("1")
+    verifyNoMoreInteractions(mockEvictionListener)
+  }
+
+  @Test
+  fun shouldMaintainLruForLists() {
+    //given
+    val map = LruMultimap<String, String?>(512, null)
+
+    //when + then
+    map.putSingle("a", "1", addFn)
+    val putResult = map.putSingle("a", "2", addFn)
+    map.getSingle("a") { 0 }
+    assertThat(putResult).containsExactly("2", "1")
+    map.getSingle("a") { 1 }
+    assertThat(putResult).containsExactly("1", "2")
+    assertThat(map).hasMapSize(1).hasSize(2)
+  }
+
+  @Test
+  fun shouldNotEvictEldestWhenEmpty() {
+    //given
+    val map = LruMultimap<String, String>(512, null)
+
+    //when + then
+    for (i in 0..31) {
+      assertFalse(map.evictEldest())
     }
+  }
 
-    @Test
-    fun shouldReplaceAndNotify() {
-        //given
-        val mockEvictionListener: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String>(512, mockEvictionListener)
+  @Test
+  fun shouldEvictEldest() {
+    //given
+    val mockEvictionListener: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(512, mockEvictionListener)
 
-        //when
-        @Suppress("UNUSED_VARIABLE")
-        val putResult1 = map.putSingle("a", "1") { 0 }
-        val putResult2 = map.putSingle("a", "2") { 0 }
-        val getResult = map.getSingle("a") { 0 }
+    //when
+    map.putSingle("a", "1", addFn)
+    map.putSingle("a", "2", addFn)
+    map.putSingle("b", "1", addFn)
+    map.putSingle("b", "2", addFn)
+    val evictionResult = map.evictEldest()
 
-        //then
-        assertThat(map)
-            .hasMapSize(1)
-            .hasSize(1)
-            .hasOnlyValue("a", "2", 0)
-        assertThat(putResult2).containsOnly("2")
-        assertThat(getResult).isEqualTo("2")
-        verify(mockEvictionListener).accept("1")
-        verifyNoMoreInteractions(mockEvictionListener)
-    }
+    //then
+    assertTrue(evictionResult)
+    assertThat(map).hasMapSize(2).hasSize(3)
+      .hasOnlyValue("a", "2", 0)
+    verify(mockEvictionListener).accept("1")
+    verifyNoMoreInteractions(mockEvictionListener)
+  }
 
-    @Test
-    fun shouldMaintainLruForLists() {
-        //given
-        val map = LruMultimap<String, String?>(512, null)
+  @Test
+  fun shouldRemoveMapEntryWhenLastRemoved() {
+    //given
+    val mockEvictionListener: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(512, null)
+    map.addEvictionListener(mockEvictionListener)
 
-        //when + then
-        map.putSingle("a", "1", addFn)
-        val putResult = map.putSingle("a", "2", addFn)
-        map.getSingle("a") { 0 }
-        assertThat(putResult).containsExactly("2", "1")
-        map.getSingle("a") { 1 }
-        assertThat(putResult).containsExactly("1", "2")
-        assertThat(map).hasMapSize(1).hasSize(2)
-    }
+    //when
+    map.putSingle("a", "1", addFn)
+    map.putSingle("b", "1", addFn)
+    map.putSingle("b", "2", addFn)
+    val evictionResult = map.evictEldest()
 
-    @Test
-    fun shouldNotEvictEldestWhenEmpty() {
-        //given
-        val map = LruMultimap<String, String>(512, null)
+    //then
+    assertTrue(evictionResult)
+    assertThat(map).hasMapSize(1).hasSize(2)
+    verify(mockEvictionListener).accept("1")
+    verifyNoMoreInteractions(mockEvictionListener)
+  }
 
-        //when + then
-        for (i in 0..31) {
-            assertFalse(map.evictEldest())
-        }
-    }
+  @Test
+  fun shouldRespectMaxSize() {
+    //given
+    val mockEvictionListener: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(2, mockEvictionListener)
 
-    @Test
-    fun shouldEvictEldest() {
-        //given
-        val mockEvictionListener: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(512, mockEvictionListener)
+    //when
+    map.putSingle("b", "2", addFn)
+    map.putSingle("b", "1", addFn)
+    map.putSingle("a", "1", addFn)
 
-        //when
-        map.putSingle("a", "1", addFn)
-        map.putSingle("a", "2", addFn)
-        map.putSingle("b", "1", addFn)
-        map.putSingle("b", "2", addFn)
-        val evictionResult = map.evictEldest()
+    //then
+    assertThat(map)
+      .hasMapSize(2)
+      .hasSize(2)
+      .hasOnlyValue("a", "1", 0)
+      .hasOnlyValue("b", "1", 0)
+    verify(mockEvictionListener).accept("2")
+    verifyNoMoreInteractions(mockEvictionListener)
+  }
 
-        //then
-        assertTrue(evictionResult)
-        assertThat(map).hasMapSize(2).hasSize(3)
-            .hasOnlyValue("a", "2", 0)
-        verify(mockEvictionListener).accept("1")
-        verifyNoMoreInteractions(mockEvictionListener)
-    }
+  @Test
+  fun shouldClearAll() {
+    //given
+    val mockEl: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(23, mockEl)
 
-    @Test
-    fun shouldRemoveMapEntryWhenLastRemoved() {
-        //given
-        val mockEvictionListener: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(512, null)
-        map.addEvictionListener(mockEvictionListener)
+    //when
+    map.putSingle("b", "1", addFn)
+    map.putSingle("b", "2", addFn)
+    map.putSingle("b", "3", addFn)
+    map.putSingle("a", "4", addFn)
+    map.clear()
 
-        //when
-        map.putSingle("a", "1", addFn)
-        map.putSingle("b", "1", addFn)
-        map.putSingle("b", "2", addFn)
-        val evictionResult = map.evictEldest()
+    //then
+    assertThat(map).hasMapSize(0).hasSize(0)
+    val inOrder = Mockito.inOrder(mockEl)
+    inOrder.verify(mockEl).accept("1")
+    inOrder.verify(mockEl).accept("2")
+    inOrder.verify(mockEl).accept("3")
+    inOrder.verify(mockEl).accept("4")
+    inOrder.verifyNoMoreInteractions()
+  }
 
-        //then
-        assertTrue(evictionResult)
-        assertThat(map).hasMapSize(1).hasSize(2)
-        verify(mockEvictionListener).accept("1")
-        verifyNoMoreInteractions(mockEvictionListener)
-    }
+  @Test
+  fun shouldClearWhenEmpty() {
+    //given
+    val mockEl: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String>(23, mockEl)
 
-    @Test
-    fun shouldRespectMaxSize() {
-        //given
-        val mockEvictionListener: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(2, mockEvictionListener)
+    //when
+    map.clear()
 
-        //when
-        map.putSingle("b", "2", addFn)
-        map.putSingle("b", "1", addFn)
-        map.putSingle("a", "1", addFn)
+    //then
+    assertThat(map).isEmpty
+    Mockito.verifyNoInteractions(mockEl)
+  }
 
-        //then
-        assertThat(map)
-            .hasMapSize(2)
-            .hasSize(2)
-            .hasOnlyValue("a", "1", 0)
-            .hasOnlyValue("b", "1", 0)
-        verify(mockEvictionListener).accept("2")
-        verifyNoMoreInteractions(mockEvictionListener)
-    }
+  @Test
+  fun shouldNotGetWhenIndexIncorrect() {
+    val map = LruMultimap<String, String?>(23, null)
 
-    @Test
-    fun shouldClearAll() {
-        //given
-        val mockEl: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(23, mockEl)
+    //when
+    map.putSingle("a", "2", addFn)
+    map.putSingle("a", "1", addFn)
 
-        //when
-        map.putSingle("b", "1", addFn)
-        map.putSingle("b", "2", addFn)
-        map.putSingle("b", "3", addFn)
-        map.putSingle("a", "4", addFn)
-        map.clear()
+    //then
+    assertThat(map.getSingle("b", throwingFn)).isNull()
+    assertThat(map.getSingle("a") { 5 }).isNull()
+    assertThat(map.getSingle("a") { -1 }).isNull()
+  }
 
-        //then
-        assertThat(map).hasMapSize(0).hasSize(0)
-        val inOrder = Mockito.inOrder(mockEl)
-        inOrder.verify(mockEl).accept("1")
-        inOrder.verify(mockEl).accept("2")
-        inOrder.verify(mockEl).accept("3")
-        inOrder.verify(mockEl).accept("4")
-        inOrder.verifyNoMoreInteractions()
-    }
+  @Test
+  fun shouldEvictAllForExistingKey() {
+    //given
+    val mockEl: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(23, mockEl)
 
-    @Test
-    fun shouldClearWhenEmpty() {
-        //given
-        val mockEl: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String>(23, mockEl)
+    //when
+    map.putSingle("a", "1", addFn)
+    map.putSingle("a", "2", addFn)
+    map.evictAll("a")
 
-        //when
-        map.clear()
+    //then
+    assertThat(map).isEmpty
+    val inOrder = Mockito.inOrder(mockEl)
+    inOrder.verify(mockEl).accept("1")
+    inOrder.verify(mockEl).accept("2")
+    inOrder.verifyNoMoreInteractions()
+  }
 
-        //then
-        assertThat(map).isEmpty
-        Mockito.verifyNoInteractions(mockEl)
-    }
+  @Suppress("UNCHECKED_CAST")
+  private fun mockConsumer() = Mockito.mock(Consumer::class.java) as Consumer<String?>
 
-    @Test
-    fun shouldNotGetWhenIndexIncorrect() {
-        val map = LruMultimap<String, String?>(23, null)
+  @Test
+  fun shouldEvictAllForNonExistingKey() {
+    //given
+    val mockEl: Consumer<String?> = mockConsumer()
+    val map = LruMultimap<String, String?>(23, mockEl)
 
-        //when
-        map.putSingle("a", "2", addFn)
-        map.putSingle("a", "1", addFn)
+    //when
+    map.putSingle("a", "1", addFn)
+    map.putSingle("a", "2", addFn)
+    map.evictAll("b")
 
-        //then
-        assertThat(map.getSingle("b", throwingFn)).isNull()
-        assertThat(map.getSingle("a") { 5 }).isNull()
-        assertThat(map.getSingle("a") { -1 }).isNull()
-    }
-
-    @Test
-    fun shouldEvictAllForExistingKey() {
-        //given
-        val mockEl: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(23, mockEl)
-
-        //when
-        map.putSingle("a", "1", addFn)
-        map.putSingle("a", "2", addFn)
-        map.evictAll("a")
-
-        //then
-        assertThat(map).isEmpty
-        val inOrder = Mockito.inOrder(mockEl)
-        inOrder.verify(mockEl).accept("1")
-        inOrder.verify(mockEl).accept("2")
-        inOrder.verifyNoMoreInteractions()
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun mockConsumer() = Mockito.mock(Consumer::class.java) as Consumer<String?>
-
-    @Test
-    fun shouldEvictAllForNonExistingKey() {
-        //given
-        val mockEl: Consumer<String?> = mockConsumer()
-        val map = LruMultimap<String, String?>(23, mockEl)
-
-        //when
-        map.putSingle("a", "1", addFn)
-        map.putSingle("a", "2", addFn)
-        map.evictAll("b")
-
-        //then
-        assertThat(map).hasMapSize(1).hasSize(2)
-        Mockito.verifyNoInteractions(mockEl)
-    }
+    //then
+    assertThat(map).hasMapSize(1).hasSize(2)
+    Mockito.verifyNoInteractions(mockEl)
+  }
 }

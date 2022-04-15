@@ -27,87 +27,87 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 internal class JsonMappingProviderSpiTest {
+  @Test
+  fun shouldGetDefaultProviderByName() {
+    assumeThat(ALL_JSON)
+      .anyMatch { Classpath.isPresent(it) }
+
+    //given
+    val providerName = CompositeJsonMappingProvider::class.java.name
+
+    //when + then
+    val provider = JsonMappingProvider.provider(providerName)
+
+    //then
+    assertThat(provider)
+      .isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+  }
+
+  @Nested
+  @EnabledIfOnClasspath(GSON)
+  @DisabledIfOnClasspath(JACKSON)
+  internal inner class GsonPresentJacksonMissingTest {
     @Test
-    fun shouldGetDefaultProviderByName() {
-        assumeThat(ALL_JSON)
-            .anyMatch { Classpath.isPresent(it) }
+    fun shouldLoadGsonIfJacksonMissing() {
+      //when
+      val provider = JsonMappingProvider.provider()
+      val jsonMapping = provider.get()
 
-        //given
-        val providerName = CompositeJsonMappingProvider::class.java.name
+      //then
+      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+      assertThat(jsonMapping).isExactlyInstanceOf(GsonJsonMapping::class.java)
+    }
+  }
 
-        //when + then
-        val provider = JsonMappingProvider.provider(providerName)
+  @Nested
+  @EnabledIfOnClasspath(JACKSON)
+  @DisabledIfOnClasspath(GSON)
+  internal inner class JacksonPresentGsonMissingTest {
+    @Test
+    fun shouldLoadDefaultJackson() {
+      //when
+      val provider = JsonMappingProvider.provider()
+      val jsonMapping = provider.get()
 
-        //then
-        assertThat(provider)
-            .isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+      //then
+      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+      assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
+    }
+  }
+
+  @Nested
+  @DisabledIfOnClasspath(JACKSON, GSON)
+  internal inner class AllMissingTest {
+    @Test
+    fun shouldThrowWhenNothingIsPresent() {
+      //when + then
+      assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
+        .isThrownBy { JsonMappingProvider.provider() }
     }
 
-    @Nested
-    @EnabledIfOnClasspath(GSON)
-    @DisabledIfOnClasspath(JACKSON)
-    internal inner class GsonPresentJacksonMissingTest {
-        @Test
-        fun shouldLoadGsonIfJacksonMissing() {
-            //when
-            val provider = JsonMappingProvider.provider()
-            val jsonMapping = provider.get()
+    @Test
+    fun shouldThrowWhenNothingIsPresentAndRequestedByName() {
+      //given
+      val providerName = CompositeJsonMappingProvider::class.java.name
 
-            //then
-            assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-            assertThat(jsonMapping).isExactlyInstanceOf(GsonJsonMapping::class.java)
-        }
+      //when + then
+      assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
+        .isThrownBy { JsonMappingProvider.provider(providerName) }
     }
+  }
 
-    @Nested
-    @EnabledIfOnClasspath(JACKSON)
-    @DisabledIfOnClasspath(GSON)
-    internal inner class JacksonPresentGsonMissingTest {
-        @Test
-        fun shouldLoadDefaultJackson() {
-            //when
-            val provider = JsonMappingProvider.provider()
-            val jsonMapping = provider.get()
+  @Nested
+  @EnabledIfOnClasspath(JACKSON, GSON)
+  internal inner class AllPresentTest {
+    @Test
+    fun shouldLoadDefaultJackson() {
+      //when
+      val provider = JsonMappingProvider.provider()
+      val jsonMapping = provider.get()
 
-            //then
-            assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-            assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
-        }
+      //then
+      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+      assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
     }
-
-    @Nested
-    @DisabledIfOnClasspath(JACKSON, GSON)
-    internal inner class AllMissingTest {
-        @Test
-        fun shouldThrowWhenNothingIsPresent() {
-            //when + then
-            assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
-                .isThrownBy { JsonMappingProvider.provider() }
-        }
-
-        @Test
-        fun shouldThrowWhenNothingIsPresentAndRequestedByName() {
-            //given
-            val providerName = CompositeJsonMappingProvider::class.java.name
-
-            //when + then
-            assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
-                .isThrownBy { JsonMappingProvider.provider(providerName) }
-        }
-    }
-
-    @Nested
-    @EnabledIfOnClasspath(JACKSON, GSON)
-    internal inner class AllPresentTest {
-        @Test
-        fun shouldLoadDefaultJackson() {
-            //when
-            val provider = JsonMappingProvider.provider()
-            val jsonMapping = provider.get()
-
-            //then
-            assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-            assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
-        }
-    }
+  }
 }

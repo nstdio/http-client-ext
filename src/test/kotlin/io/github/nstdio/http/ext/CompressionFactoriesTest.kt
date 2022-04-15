@@ -19,27 +19,27 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class CompressionFactoriesTest {
-    @Test
-    fun shouldMoveUsersUp() {
-        //given
-        val packages: MutableList<String> = ArrayList()
-        packages.add("io.github.nstdio.http.ext.spi.JdkCompressionFactory")
-        packages.add("io.github.nstdio.http.ext.spi.IdentityCompressionFactory")
-        packages.add("io.github.nstdio.http.ext.spi.OptionalBrotli")
-        packages.add("org.other.example.BrotliFactory")
-        packages.add("com.example.GzipFactory")
+  @Test
+  fun shouldMoveUsersUp() {
+    //given
+    val packages: MutableList<String> = ArrayList()
+    packages.add("io.github.nstdio.http.ext.spi.JdkCompressionFactory")
+    packages.add("io.github.nstdio.http.ext.spi.IdentityCompressionFactory")
+    packages.add("io.github.nstdio.http.ext.spi.OptionalBrotli")
+    packages.add("org.other.example.BrotliFactory")
+    packages.add("com.example.GzipFactory")
 
-        //when
-        packages.sortWith(CompressionFactories.USERS_FIRST_COMPARATOR)
+    //when
+    packages.sortWith(CompressionFactories.USERS_FIRST_COMPARATOR)
 
-        //then
-        assertThat(packages)
-            .containsExactly(
-                "org.other.example.BrotliFactory",
-                "com.example.GzipFactory",
-                "io.github.nstdio.http.ext.spi.JdkCompressionFactory",
-                "io.github.nstdio.http.ext.spi.IdentityCompressionFactory",
-                "io.github.nstdio.http.ext.spi.OptionalBrotli"
-            )
-    }
+    //then
+    assertThat(packages)
+      .containsExactly(
+        "org.other.example.BrotliFactory",
+        "com.example.GzipFactory",
+        "io.github.nstdio.http.ext.spi.JdkCompressionFactory",
+        "io.github.nstdio.http.ext.spi.IdentityCompressionFactory",
+        "io.github.nstdio.http.ext.spi.OptionalBrotli"
+      )
+  }
 }

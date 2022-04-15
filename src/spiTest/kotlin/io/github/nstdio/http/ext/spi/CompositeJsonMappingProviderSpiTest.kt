@@ -25,23 +25,23 @@ import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Test
 
 internal class CompositeJsonMappingProviderSpiTest {
-    @Test
-    @DisabledIfOnClasspath(JACKSON, GSON)
-    fun shouldThrowExceptionIfNothingFound() {
-        //give
-        val provider = CompositeJsonMappingProvider()
+  @Test
+  @DisabledIfOnClasspath(JACKSON, GSON)
+  fun shouldThrowExceptionIfNothingFound() {
+    //give
+    val provider = CompositeJsonMappingProvider()
 
-        //when + then
-        assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
-            .isThrownBy { provider.get() }
+    //when + then
+    assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
+      .isThrownBy { provider.get() }
 
-        assertThat(hasAnyImplementation())
-            .withFailMessage {
-                String.format(
-                    "CompositeJsonMappingProvider#hasAnyImplementation returned true, but none of classes on classpath: %s",
-                    ALL_JSON.contentToString()
-                )
-            }
-            .isFalse
-    }
+    assertThat(hasAnyImplementation())
+      .withFailMessage {
+        String.format(
+          "CompositeJsonMappingProvider#hasAnyImplementation returned true, but none of classes on classpath: %s",
+          ALL_JSON.contentToString()
+        )
+      }
+      .isFalse
+  }
 }

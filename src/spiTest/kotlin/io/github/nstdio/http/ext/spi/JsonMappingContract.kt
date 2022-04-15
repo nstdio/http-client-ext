@@ -25,92 +25,92 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 internal interface JsonMappingContract {
-    fun get(): JsonMapping
+  fun get(): JsonMapping
 
-    @Test
-    fun shouldThrowIOExceptionWhenParsingException() {
-        //given
-        val bytes = "{".toByteArray(StandardCharsets.UTF_8)
-        val mapping = get()
+  @Test
+  fun shouldThrowIOExceptionWhenParsingException() {
+    //given
+    val bytes = "{".toByteArray(StandardCharsets.UTF_8)
+    val mapping = get()
 
-        //when
-        assertThrows(IOException::class.java) { mapping.read(bytes, Any::class.java) }
-    }
+    //when
+    assertThrows(IOException::class.java) { mapping.read(bytes, Any::class.java) }
+  }
 
-    @Test
-    fun shouldThrowIOExceptionWhenParsingExceptionWithComplexType() {
-        //given
-        val bytes = ByteArrayInputStream("{".toByteArray(StandardCharsets.UTF_8))
-        val mapping = get()
-        val targetType = object : TypeToken<List<String?>?>() {}.type
+  @Test
+  fun shouldThrowIOExceptionWhenParsingExceptionWithComplexType() {
+    //given
+    val bytes = ByteArrayInputStream("{".toByteArray(StandardCharsets.UTF_8))
+    val mapping = get()
+    val targetType = object : TypeToken<List<String?>?>() {}.type
 
-        //when
-        assertThrows(IOException::class.java) { mapping.read<Any>(bytes, targetType) }
-    }
+    //when
+    assertThrows(IOException::class.java) { mapping.read<Any>(bytes, targetType) }
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldCloseInputStream() {
-        //given
-        val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
-        val inSpy = Mockito.spy(ByteArrayInputStream(jsonBytes))
-        val mapping = get()
+  @Test
+  @Throws(IOException::class)
+  fun shouldCloseInputStream() {
+    //given
+    val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
+    val inSpy = Mockito.spy(ByteArrayInputStream(jsonBytes))
+    val mapping = get()
 
-        //when
-        val read = mapping.read(inSpy, Any::class.java)
+    //when
+    val read = mapping.read(inSpy, Any::class.java)
 
-        //then
-        assertThat(read).isNotNull
-        Mockito.verify(inSpy, Mockito.atLeastOnce()).close()
-    }
+    //then
+    assertThat(read).isNotNull
+    Mockito.verify(inSpy, Mockito.atLeastOnce()).close()
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReadFromByteArray() {
-        //given
-        val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
-        val mapping = get()
+  @Test
+  @Throws(IOException::class)
+  fun shouldReadFromByteArray() {
+    //given
+    val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
+    val mapping = get()
 
-        //when
-        val read = mapping.read(jsonBytes, Any::class.java)
+    //when
+    val read = mapping.read(jsonBytes, Any::class.java)
 
-        //then
-        assertThat(read).isNotNull
-    }
+    //then
+    assertThat(read).isNotNull
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReadFromByteArrayUsingComplexType() {
-        //given
-        val jsonBytes = "{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8)
-        val mapping = get()
-        val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
+  @Test
+  @Throws(IOException::class)
+  fun shouldReadFromByteArrayUsingComplexType() {
+    //given
+    val jsonBytes = "{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8)
+    val mapping = get()
+    val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
 
-        //when
-        val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
+    //when
+    val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
 
-        //then
-        assertThat(read)
-            .hasSize(2)
-            .containsEntry("a", 1)
-            .containsEntry("b", 2)
-    }
+    //then
+    assertThat(read)
+      .hasSize(2)
+      .containsEntry("a", 1)
+      .containsEntry("b", 2)
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReadFromInputStreamUsingComplexType() {
-        //given
-        val jsonBytes = ByteArrayInputStream("{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8))
-        val mapping = get()
-        val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
+  @Test
+  @Throws(IOException::class)
+  fun shouldReadFromInputStreamUsingComplexType() {
+    //given
+    val jsonBytes = ByteArrayInputStream("{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8))
+    val mapping = get()
+    val targetType = object : TypeToken<Map<String?, Int?>?>() {}.type
 
-        //when
-        val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
+    //when
+    val read = mapping.read<Map<String, Int>>(jsonBytes, targetType)
 
-        //then
-        assertThat(read)
-            .hasSize(2)
-            .containsEntry("a", 1)
-            .containsEntry("b", 2)
-    }
+    //then
+    assertThat(read)
+      .hasSize(2)
+      .containsEntry("a", 1)
+      .containsEntry("b", 2)
+  }
 }

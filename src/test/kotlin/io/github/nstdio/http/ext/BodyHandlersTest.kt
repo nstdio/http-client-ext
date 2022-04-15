@@ -26,43 +26,44 @@ import java.net.http.HttpResponse
 import java.util.function.Supplier
 
 internal class BodyHandlersTest {
-    @Nested
-    internal inner class OfJsonTest {
-        private val client = HttpClient.newHttpClient()
-        @Test
-        fun shouldProperlyReadJson() {
-            //given
-            val request = HttpRequest.newBuilder(URI.create("https://httpbin.org/get")).build()
+  @Nested
+  internal inner class OfJsonTest {
+    private val client = HttpClient.newHttpClient()
 
-            //when
-            val body1 = client.sendAsync(
-                request, BodyHandlers.ofJson(
-                    Any::class.java
-                )
-            )
-                .thenApply { obj: HttpResponse<Supplier<Any>> -> obj.body() }
-                .thenApply { obj: Supplier<Any> -> obj.get() }
-                .join()
+    @Test
+    fun shouldProperlyReadJson() {
+      //given
+      val request = HttpRequest.newBuilder(URI.create("https://httpbin.org/get")).build()
 
-            //then
-            Assertions.assertThat(body1).isNotNull
-        }
+      //when
+      val body1 = client.sendAsync(
+        request, BodyHandlers.ofJson(
+          Any::class.java
+        )
+      )
+        .thenApply { obj: HttpResponse<Supplier<Any>> -> obj.body() }
+        .thenApply { obj: Supplier<Any> -> obj.get() }
+        .join()
 
-        @Test
-        fun shouldThrowUncheckedExceptionIfCannotRead() {
-            //given
-            val request = HttpRequest.newBuilder(URI.create("https://httpbin.org/html")).build()
-
-            //when
-            Assertions.assertThatExceptionOfType(UncheckedIOException::class.java)
-                .isThrownBy {
-                    client.send(
-                        request, BodyHandlers.ofJson(
-                            Any::class.java
-                        )
-                    ).body().get()
-                }
-                .havingRootCause()
-        }
+      //then
+      Assertions.assertThat(body1).isNotNull
     }
+
+    @Test
+    fun shouldThrowUncheckedExceptionIfCannotRead() {
+      //given
+      val request = HttpRequest.newBuilder(URI.create("https://httpbin.org/html")).build()
+
+      //when
+      Assertions.assertThatExceptionOfType(UncheckedIOException::class.java)
+        .isThrownBy {
+          client.send(
+            request, BodyHandlers.ofJson(
+              Any::class.java
+            )
+          ).body().get()
+        }
+        .havingRootCause()
+    }
+  }
 }

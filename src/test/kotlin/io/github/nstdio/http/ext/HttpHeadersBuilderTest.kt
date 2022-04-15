@@ -20,110 +20,110 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 internal class HttpHeadersBuilderTest {
-    private lateinit var builder: HttpHeadersBuilder
+  private lateinit var builder: HttpHeadersBuilder
 
-    @BeforeEach
-    fun setUp() {
-        builder = HttpHeadersBuilder()
-    }
+  @BeforeEach
+  fun setUp() {
+    builder = HttpHeadersBuilder()
+  }
 
-    @Test
-    fun shouldSetHeader() {
-        //when
-        builder.add("abc", "1")
-        builder.set("abc", "2")
+  @Test
+  fun shouldSetHeader() {
+    //when
+    builder.add("abc", "1")
+    builder.set("abc", "2")
 
-        //then
-        assertThat(builder.build())
-            .hasHeaderWithOnlyValue("abc", "2")
-    }
+    //then
+    assertThat(builder.build())
+      .hasHeaderWithOnlyValue("abc", "2")
+  }
 
-    @Test
-    fun `Should remove header single value`() {
-        //when
-        builder.add("abc", "1")
-        builder.add("abc", "2")
-        builder.remove("abc", "1")
+  @Test
+  fun `Should remove header single value`() {
+    //when
+    builder.add("abc", "1")
+    builder.add("abc", "2")
+    builder.remove("abc", "1")
 
-        //then
-        assertThat(builder.build())
-            .hasHeaderWithOnlyValue("abc", "2")
-    }
+    //then
+    assertThat(builder.build())
+      .hasHeaderWithOnlyValue("abc", "2")
+  }
 
-    @Test
-    fun `Should safely remove not existing header`() {
-        //when
-        builder.remove("abc", "1")
+  @Test
+  fun `Should safely remove not existing header`() {
+    //when
+    builder.remove("abc", "1")
 
-        //then
-        assertThat(builder.build())
-            .isEmpty()
-    }
+    //then
+    assertThat(builder.build())
+      .isEmpty()
+  }
 
-    @Test
-    fun `Should remove all entry if all removed single`() {
-        //when
-        builder.add("abc", "1")
-        builder.remove("abc", "1")
+  @Test
+  fun `Should remove all entry if all removed single`() {
+    //when
+    builder.add("abc", "1")
+    builder.remove("abc", "1")
 
-        //then
-        assertThat(builder.build())
-            .isEmpty()
-    }
+    //then
+    assertThat(builder.build())
+      .isEmpty()
+  }
 
-    @Test
-    fun `Should remove all entry if all removed`() {
-        //when
-        builder.add("abc", "1")
-        builder.add("abc", "2")
-        builder.add("abcd", "2")
-        builder.remove("abc")
+  @Test
+  fun `Should remove all entry if all removed`() {
+    //when
+    builder.add("abc", "1")
+    builder.add("abc", "2")
+    builder.add("abcd", "2")
+    builder.remove("abc")
 
-        //then
-        assertThat(builder.build())
-            .hasNoHeader("abc")
-            .hasHeaderWithOnlyValue("abcd", "2")
-    }
+    //then
+    assertThat(builder.build())
+      .hasNoHeader("abc")
+      .hasHeaderWithOnlyValue("abcd", "2")
+  }
 
-    @Test
-    fun `Should add bulk`() {
-        //when
-        builder.add("abc", listOf("1", "2"))
+  @Test
+  fun `Should add bulk`() {
+    //when
+    builder.add("abc", listOf("1", "2"))
 
-        //then
-        assertThat(builder.build())
-            .hasHeaderWithValues("abc", "1", "2")
-    }
+    //then
+    assertThat(builder.build())
+      .hasHeaderWithValues("abc", "1", "2")
+  }
 
-    @Test
-    fun `Should not add empty list`() {
-        //when
-        builder.add("abc", listOf())
+  @Test
+  fun `Should not add empty list`() {
+    //when
+    builder.add("abc", listOf())
 
-        //then
-        assertThat(builder.build())
-            .isEmpty()
-    }
+    //then
+    assertThat(builder.build())
+      .isEmpty()
+  }
 
-    @Test
-    fun `Should set bulk list`() {
-        //when
-        builder.add("abc", "1")
-        builder.set("abc", listOf("2", "3"))
+  @Test
+  fun `Should set bulk list`() {
+    //when
+    builder.add("abc", "1")
+    builder.set("abc", listOf("2", "3"))
 
-        //then
-        assertThat(builder.build())
-            .hasHeaderWithValues("abc", "2", "3")
-    }
+    //then
+    assertThat(builder.build())
+      .hasHeaderWithValues("abc", "2", "3")
+  }
 
-    @Test
-    fun `Should not set bulk list empty`() {
-        //when
-        builder.add("abc", "1")
-        builder.set("abc", listOf())
+  @Test
+  fun `Should not set bulk list empty`() {
+    //when
+    builder.add("abc", "1")
+    builder.set("abc", listOf())
 
-        //then
-        assertThat(builder.build())
-            .isEmpty()
-    }
+    //then
+    assertThat(builder.build())
+      .isEmpty()
+  }
 }

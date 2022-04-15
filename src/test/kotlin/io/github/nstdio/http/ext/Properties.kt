@@ -19,23 +19,24 @@ import java.time.Duration
 import java.util.*
 
 internal object Properties {
-    private const val NAMESPACE = "io.github.nstdio.http.ext"
-    @JvmStatic
-    fun duration(propertyName: String): Optional<Duration> {
-        return property(propertyName).map { text: String? -> Duration.parse(text) }
-    }
+  private const val NAMESPACE = "io.github.nstdio.http.ext"
 
-    private fun property(propertyName: String): Optional<String> {
-        val prop = withNamespace(propertyName)
-        return Optional.ofNullable(System.getProperty(prop))
-            .or { Optional.ofNullable(System.getenv(propertyToEnv(prop))) }
-    }
+  @JvmStatic
+  fun duration(propertyName: String): Optional<Duration> {
+    return property(propertyName).map { text: String? -> Duration.parse(text) }
+  }
 
-    private fun withNamespace(propertyName: String): String {
-        return if (propertyName.startsWith(NAMESPACE)) propertyName else "$NAMESPACE.$propertyName"
-    }
+  private fun property(propertyName: String): Optional<String> {
+    val prop = withNamespace(propertyName)
+    return Optional.ofNullable(System.getProperty(prop))
+      .or { Optional.ofNullable(System.getenv(propertyToEnv(prop))) }
+  }
 
-    private fun propertyToEnv(prop: String): String {
-        return prop.replace('.', '_').uppercase(Locale.getDefault())
-    }
+  private fun withNamespace(propertyName: String): String {
+    return if (propertyName.startsWith(NAMESPACE)) propertyName else "$NAMESPACE.$propertyName"
+  }
+
+  private fun propertyToEnv(prop: String): String {
+    return prop.replace('.', '_').uppercase(Locale.getDefault())
+  }
 }

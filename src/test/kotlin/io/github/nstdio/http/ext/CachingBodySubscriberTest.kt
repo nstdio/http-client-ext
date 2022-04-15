@@ -28,73 +28,73 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 
 internal class CachingBodySubscriberTest {
-    @Test
-    @Throws(IOException::class)
-    fun shouldWriteAndReadFromEmptyFile(@TempDir dir: Path) {
-        //given
-        val p1 = dir.resolve("p1")
-        val p2 = dir.resolve("p2")
-        Files.createFile(p2)
-        Assertions.assertThat(p2).isEmptyFile
-        assertShouldReadAndWriteResponse(p1, p2)
-    }
+  @Test
+  @Throws(IOException::class)
+  fun shouldWriteAndReadFromEmptyFile(@TempDir dir: Path) {
+    //given
+    val p1 = dir.resolve("p1")
+    val p2 = dir.resolve("p2")
+    Files.createFile(p2)
+    Assertions.assertThat(p2).isEmptyFile
+    assertShouldReadAndWriteResponse(p1, p2)
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldWriteAndReadFromNotEmptyFile(@TempDir dir: Path) {
-        //given
-        val p1 = dir.resolve("p1")
-        val p2 = dir.resolve("p2")
-        Files.write(p2, "random-stuff".repeat(300).toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-        Assertions.assertThat(p2).isNotEmptyFile
-        assertShouldReadAndWriteResponse(p1, p2)
-    }
+  @Test
+  @Throws(IOException::class)
+  fun shouldWriteAndReadFromNotEmptyFile(@TempDir dir: Path) {
+    //given
+    val p1 = dir.resolve("p1")
+    val p2 = dir.resolve("p2")
+    Files.write(p2, "random-stuff".repeat(300).toByteArray(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+    Assertions.assertThat(p2).isNotEmptyFile
+    assertShouldReadAndWriteResponse(p1, p2)
+  }
 
-    private fun assertShouldReadAndWriteResponse(p1: Path, p2: Path) {
-        //given
-        val body = Helpers.randomString(32, 128)
-        val original = HttpResponse.BodySubscribers.ofFile(p1)
-        val other = PathSubscriber(p2)
-        val subscriber = CachingBodySubscriber(original, other) { }
+  private fun assertShouldReadAndWriteResponse(p1: Path, p2: Path) {
+    //given
+    val body = Helpers.randomString(32, 128)
+    val original = HttpResponse.BodySubscribers.ofFile(p1)
+    val other = PathSubscriber(p2)
+    val subscriber = CachingBodySubscriber(original, other) { }
 
-        //when
-        val buffers = Helpers.toBuffers(body)
-        val subscription = PlainSubscription(subscriber, buffers, false)
-        subscriber.onSubscribe(subscription)
-        val actual1 = subscriber.body.toCompletableFuture().join()
-        val actual2 = other.body.toCompletableFuture().join()
+    //when
+    val buffers = Helpers.toBuffers(body)
+    val subscription = PlainSubscription(subscriber, buffers, false)
+    subscriber.onSubscribe(subscription)
+    val actual1 = subscriber.body.toCompletableFuture().join()
+    val actual2 = other.body.toCompletableFuture().join()
 
-        //then
-        Assertions.assertThat(actual1).isEqualTo(p1)
-        Assertions.assertThat(actual2).isEqualTo(p2)
-        Assertions.assertThat(actual1).hasContent(body)
-        Assertions.assertThat(actual2).hasContent(body)
-    }
+    //then
+    Assertions.assertThat(actual1).isEqualTo(p1)
+    Assertions.assertThat(actual2).isEqualTo(p2)
+    Assertions.assertThat(actual1).hasContent(body)
+    Assertions.assertThat(actual2).hasContent(body)
+  }
 
-    @Test
-    fun shouldInvokeDelegatesInOrder() {
-        @Suppress("UNCHECKED_CAST")
-        val original: BodySubscriber<String> = Mockito.mock(BodySubscriber::class.java) as BodySubscriber<String>
+  @Test
+  fun shouldInvokeDelegatesInOrder() {
+    @Suppress("UNCHECKED_CAST")
+    val original: BodySubscriber<String> = Mockito.mock(BodySubscriber::class.java) as BodySubscriber<String>
 
-        @Suppress("UNCHECKED_CAST")
-        val other: BodySubscriber<String> = Mockito.mock(BodySubscriber::class.java) as BodySubscriber<String>
-        val subscriber = CachingBodySubscriber(original, other) { }
+    @Suppress("UNCHECKED_CAST")
+    val other: BodySubscriber<String> = Mockito.mock(BodySubscriber::class.java) as BodySubscriber<String>
+    val subscriber = CachingBodySubscriber(original, other) { }
 
-        //when
-        subscriber.onSubscribe(null)
-        subscriber.onNext(listOf())
-        subscriber.onError(null)
-        subscriber.onComplete()
+    //when
+    subscriber.onSubscribe(null)
+    subscriber.onNext(listOf())
+    subscriber.onError(null)
+    subscriber.onComplete()
 
-        //then
-        val inOrder = Mockito.inOrder(original, other)
-        inOrder.verify(other).onSubscribe(ArgumentMatchers.any())
-        inOrder.verify(original).onSubscribe(ArgumentMatchers.any())
-        inOrder.verify(other).onNext(ArgumentMatchers.any())
-        inOrder.verify(original).onNext(ArgumentMatchers.any())
-        inOrder.verify(other).onError(ArgumentMatchers.any())
-        inOrder.verify(original).onError(ArgumentMatchers.any())
-        inOrder.verify(other).onComplete()
-        inOrder.verify(original).onComplete()
-    }
+    //then
+    val inOrder = Mockito.inOrder(original, other)
+    inOrder.verify(other).onSubscribe(ArgumentMatchers.any())
+    inOrder.verify(original).onSubscribe(ArgumentMatchers.any())
+    inOrder.verify(other).onNext(ArgumentMatchers.any())
+    inOrder.verify(original).onNext(ArgumentMatchers.any())
+    inOrder.verify(other).onError(ArgumentMatchers.any())
+    inOrder.verify(original).onError(ArgumentMatchers.any())
+    inOrder.verify(other).onComplete()
+    inOrder.verify(original).onComplete()
+  }
 }

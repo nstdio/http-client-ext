@@ -32,73 +32,73 @@ import java.util.stream.IntStream
 import kotlin.streams.toList
 
 internal class FixedRateTickClockTest {
+  @RepeatedTest(512)
+  fun shouldTickAtFixedRate() {
+    //given
+    val baseInstant = Instant.ofEpochSecond(0)
+    val tick = Duration.ofSeconds(5)
+    val clock = FixedRateTickClock(baseInstant, ZoneOffset.UTC, tick)
+
+    //when
+    val actual = IntStream.range(0, 32)
+      .mapToObj { clock.instant() }
+      .toList()
+      .toTypedArray()
+
+    //then
+    assertEvenlyDistributed(actual, tick)
+  }
+
+  private fun assertEvenlyDistributed(actual: Array<Instant>, tick: Duration) {
+    var i = 0
+    val n = actual.size
+    while (i < n) {
+      for (j in 0 until n) {
+        val expectedTick = tick.multipliedBy((j - i).toLong())
+        val actualDuration = Duration.between(actual[i], actual[j])
+        Assertions.assertThat(actualDuration).isEqualTo(expectedTick)
+      }
+      i++
+    }
+  }
+
+  @Nested
+  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  internal inner class ThreadSafetyTest {
+    private val baseInstant = Instant.ofEpochSecond(0)
+    private val tick = Duration.ofSeconds(1)
+    private val clock = FixedRateTickClock(baseInstant, ZoneOffset.UTC, tick)
+    private val nTasks = 64
+    private val nThreads = 12
+    private val executor = Executors.newFixedThreadPool(nThreads)
+
+    @AfterAll
+    fun tearDown() {
+      executor.shutdown()
+    }
+
     @RepeatedTest(512)
-    fun shouldTickAtFixedRate() {
-        //given
-        val baseInstant = Instant.ofEpochSecond(0)
-        val tick = Duration.ofSeconds(5)
-        val clock = FixedRateTickClock(baseInstant, ZoneOffset.UTC, tick)
-
-        //when
-        val actual = IntStream.range(0, 32)
-            .mapToObj { clock.instant() }
-            .toList()
-            .toTypedArray()
-
-        //then
-        assertEvenlyDistributed(actual, tick)
-    }
-
-    private fun assertEvenlyDistributed(actual: Array<Instant>, tick: Duration) {
-        var i = 0
-        val n = actual.size
-        while (i < n) {
-            for (j in 0 until n) {
-                val expectedTick = tick.multipliedBy((j - i).toLong())
-                val actualDuration = Duration.between(actual[i], actual[j])
-                Assertions.assertThat(actualDuration).isEqualTo(expectedTick)
-            }
-            i++
+    fun shouldBeSafe() {
+      //when
+      val futures = IntStream.range(0, nTasks)
+        .mapToObj { executor.submit<Instant> { clock.instant() } }
+        .collect(toList())
+      val actual = futures.stream()
+        .map { f: Future<Instant> ->
+          try {
+            return@map f[1, TimeUnit.SECONDS]
+          } catch (e: Exception) {
+            throw RuntimeException(e)
+          }
         }
+        .sorted()
+        .collect(toCollection { LinkedHashSet() })
+
+      //then
+
+      // Implicitly checking clock to not return same instant more than once
+      Assertions.assertThat(actual).hasSize(nTasks)
+      assertEvenlyDistributed(actual.toTypedArray(), tick)
     }
-
-    @Nested
-    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-    internal inner class ThreadSafetyTest {
-        private val baseInstant = Instant.ofEpochSecond(0)
-        private val tick = Duration.ofSeconds(1)
-        private val clock = FixedRateTickClock(baseInstant, ZoneOffset.UTC, tick)
-        private val nTasks = 64
-        private val nThreads = 12
-        private val executor = Executors.newFixedThreadPool(nThreads)
-
-        @AfterAll
-        fun tearDown() {
-            executor.shutdown()
-        }
-
-        @RepeatedTest(512)
-        fun shouldBeSafe() {
-            //when
-            val futures = IntStream.range(0, nTasks)
-                .mapToObj { executor.submit<Instant> { clock.instant() } }
-                .collect(toList())
-            val actual = futures.stream()
-                .map { f: Future<Instant> ->
-                    try {
-                        return@map f[1, TimeUnit.SECONDS]
-                    } catch (e: Exception) {
-                        throw RuntimeException(e)
-                    }
-                }
-                .sorted()
-                .collect(toCollection { LinkedHashSet() })
-
-            //then
-
-            // Implicitly checking clock to not return same instant more than once
-            Assertions.assertThat(actual).hasSize(nTasks)
-            assertEvenlyDistributed(actual.toTypedArray(), tick)
-        }
-    }
+  }
 }

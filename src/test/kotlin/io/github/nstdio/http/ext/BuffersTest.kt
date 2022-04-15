@@ -25,48 +25,48 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.util.stream.Stream
 
 internal class BuffersTest {
-    @ParameterizedTest
-    @MethodSource("listBuffersData")
-    fun shouldDuplicatedBufferList(buffers: List<ByteBuffer?>) {
-        //when
-        val actual = Buffers.duplicate(buffers)
+  @ParameterizedTest
+  @MethodSource("listBuffersData")
+  fun shouldDuplicatedBufferList(buffers: List<ByteBuffer?>) {
+    //when
+    val actual = Buffers.duplicate(buffers)
 
-        //then
-        assertThat(actual)
-            .isNotSameAs(buffers)
-            .hasSameSizeAs(buffers)
-            .allMatch({ obj: ByteBuffer -> obj.isReadOnly }, "Expecting duplicated buffet to be read-only")
-            .containsExactlyElementsOf(buffers)
-    }
+    //then
+    assertThat(actual)
+      .isNotSameAs(buffers)
+      .hasSameSizeAs(buffers)
+      .allMatch({ obj: ByteBuffer -> obj.isReadOnly }, "Expecting duplicated buffet to be read-only")
+      .containsExactlyElementsOf(buffers)
+  }
 
-    @Test
-    fun shouldDuplicatedSingleBuffer() {
-        //given
-        val buffer = ByteBuffer.wrap(RandomUtils.nextBytes(16))
+  @Test
+  fun shouldDuplicatedSingleBuffer() {
+    //given
+    val buffer = ByteBuffer.wrap(RandomUtils.nextBytes(16))
 
-        //when
-        val actual = Buffers.duplicate(buffer)
-        buffer.get()
+    //when
+    val actual = Buffers.duplicate(buffer)
+    buffer.get()
 
-        //then
-        assertThat(actual.position()).isZero
-    }
+    //then
+    assertThat(actual.position()).isZero
+  }
 
-    companion object {
-        @JvmStatic
-        fun listBuffersData(): Stream<List<ByteBuffer>> {
-            return Stream.of(
-                listOf(),
-                listOf(ByteBuffer.wrap("abcde".repeat(16).toByteArray(UTF_8))),
-                listOf(
-                    ByteBuffer.wrap("ab".repeat(16).toByteArray(UTF_8)), ByteBuffer.wrap(
-                        "cd".repeat(16).toByteArray(
-                            UTF_8
-                        )
-                    )
-                ),
-                Helpers.toBuffers(RandomUtils.nextBytes(96), true)
+  companion object {
+    @JvmStatic
+    fun listBuffersData(): Stream<List<ByteBuffer>> {
+      return Stream.of(
+        listOf(),
+        listOf(ByteBuffer.wrap("abcde".repeat(16).toByteArray(UTF_8))),
+        listOf(
+          ByteBuffer.wrap("ab".repeat(16).toByteArray(UTF_8)), ByteBuffer.wrap(
+            "cd".repeat(16).toByteArray(
+              UTF_8
             )
-        }
+          )
+        ),
+        Helpers.toBuffers(RandomUtils.nextBytes(96), true)
+      )
     }
+  }
 }

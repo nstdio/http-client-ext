@@ -22,25 +22,25 @@ import java.net.http.HttpResponse
 import java.util.function.UnaryOperator
 
 internal class FutureHandlerTest {
-    @Test
-    fun shouldThrowIfThrowableNotNull() {
-        //given
-        val op = UnaryOperator.identity<HttpResponse<Any?>>()
-        val handler = FutureHandler.of(op)
+  @Test
+  fun shouldThrowIfThrowableNotNull() {
+    //given
+    val op = UnaryOperator.identity<HttpResponse<Any?>>()
+    val handler = FutureHandler.of(op)
 
-        //when + then
-        assertThatIOException()
-            .isThrownBy { handler.apply(null, IOException()) }
-    }
+    //when + then
+    assertThatIOException()
+      .isThrownBy { handler.apply(null, IOException()) }
+  }
 
-    @Test
-    fun shouldProperlyChain() {
-        //given
-        val handler = FutureHandler { r: HttpResponse<HttpResponse<Any?>?>?, _: Throwable? -> r }
-        val other = FutureHandler.of(UnaryOperator.identity<HttpResponse<HttpResponse<Any?>?>>())
+  @Test
+  fun shouldProperlyChain() {
+    //given
+    val handler = FutureHandler { r: HttpResponse<HttpResponse<Any?>?>?, _: Throwable? -> r }
+    val other = FutureHandler.of(UnaryOperator.identity<HttpResponse<HttpResponse<Any?>?>>())
 
-        //when + then
-        assertThatIOException()
-            .isThrownBy { handler.andThen(other).apply(null, IOException()) }
-    }
+    //when + then
+    assertThatIOException()
+      .isThrownBy { handler.andThen(other).apply(null, IOException()) }
+  }
 }

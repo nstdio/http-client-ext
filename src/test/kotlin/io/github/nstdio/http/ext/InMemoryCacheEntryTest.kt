@@ -15,6 +15,4 @@
  */
 package io.github.nstdio.http.ext
 
-internal class InMemoryCacheEntryTest {
-
-}
+internal class InMemoryCacheEntryTest

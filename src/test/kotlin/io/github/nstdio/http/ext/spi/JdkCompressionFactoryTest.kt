@@ -20,14 +20,14 @@ import org.junit.jupiter.api.Test
 import java.io.InputStream
 
 internal class JdkCompressionFactoryTest {
-    @Test
-    fun `Should throw exception when compression type not supported`() {
-        //given
-        val factory = JdkCompressionFactory()
-        val stream = InputStream.nullInputStream()
+  @Test
+  fun `Should throw exception when compression type not supported`() {
+    //given
+    val factory = JdkCompressionFactory()
+    val stream = InputStream.nullInputStream()
 
-        //when
-        assertThatExceptionOfType(IllegalArgumentException::class.java)
-            .isThrownBy { factory.decompressing(stream, "abc") }
-    }
+    //when
+    assertThatExceptionOfType(IllegalArgumentException::class.java)
+      .isThrownBy { factory.decompressing(stream, "abc") }
+  }
 }

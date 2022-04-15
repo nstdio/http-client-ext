@@ -20,16 +20,16 @@ import org.hamcrest.Description
 import java.net.http.HttpResponse
 
 object Matchers {
-    @JvmStatic
-    fun <T> isCached(): BaseMatcher<HttpResponse<T>?> {
-        return object : BaseMatcher<HttpResponse<T>?>() {
-            override fun matches(actual: Any): Boolean {
-                return actual is CachedHttpResponse<*>
-            }
+  @JvmStatic
+  fun <T> isCached(): BaseMatcher<HttpResponse<T>?> {
+    return object : BaseMatcher<HttpResponse<T>?>() {
+      override fun matches(actual: Any): Boolean {
+        return actual is CachedHttpResponse<*>
+      }
 
-            override fun describeTo(description: Description) {
-                description.appendText("a cached response")
-            }
-        }
+      override fun describeTo(description: Description) {
+        description.appendText("a cached response")
+      }
     }
+  }
 }

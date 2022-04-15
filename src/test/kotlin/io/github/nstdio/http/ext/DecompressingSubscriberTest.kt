@@ -33,95 +33,95 @@ import java.util.stream.IntStream
 import java.util.stream.Stream
 
 internal class DecompressingSubscriberTest {
-    @ParameterizedTest
-    @MethodSource("randomLargeStrings")
-    fun shouldDecompressLargeBodies(bodyString: String) {
-        //given
-        val body = bodyString.toByteArray(UTF_8)
-        val gzip = Compression.gzip(bodyString)
-        val subscriber = DecompressingSubscriber(ofByteArray())
-        val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, true))
+  @ParameterizedTest
+  @MethodSource("randomLargeStrings")
+  fun shouldDecompressLargeBodies(bodyString: String) {
+    //given
+    val body = bodyString.toByteArray(UTF_8)
+    val gzip = Compression.gzip(bodyString)
+    val subscriber = DecompressingSubscriber(ofByteArray())
+    val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, true))
 
-        //when
-        subscriber.onSubscribe(sub)
-        sub.cancel()
-        val actual = subscriber.body.toCompletableFuture().join()
+    //when
+    subscriber.onSubscribe(sub)
+    sub.cancel()
+    val actual = subscriber.body.toCompletableFuture().join()
 
-        //then
-        assertArrayEquals(body, actual)
+    //then
+    assertArrayEquals(body, actual)
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
+  fun shouldDecompressWithVerySmallChunks(len: Int) {
+    //given
+    val body = RandomStringUtils.randomAlphabetic(len)
+    val gzip = Compression.gzip(body)
+    val subscriber = DecompressingSubscriber(ofString(UTF_8))
+    val buffers = ArrayList<ByteBuffer>()
+    for (b in gzip) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
+    val sub = PlainSubscription(subscriber, buffers)
+
+    //when
+    subscriber.onSubscribe(sub)
+    sub.cancel()
+    val actual = subscriber.body.toCompletableFuture().join()
+
+    //then
+    Assertions.assertEquals(body, actual)
+  }
+
+  @ParameterizedTest
+  @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
+  fun shouldNotDamageBodyIfNotCompressed(len: Int) {
+    //given
+    val body = RandomStringUtils.randomAlphabetic(len)
+    val subscriber = DecompressingSubscriber(ofString(UTF_8))
+    val buffers = ArrayList<ByteBuffer>()
+    for (b in body.toByteArray(UTF_8)) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
+    val sub = PlainSubscription(subscriber, buffers)
+
+    //when
+    subscriber.onSubscribe(sub)
+    sub.cancel()
+    val actual = subscriber.body.toCompletableFuture().join()
+
+    //then
+    Assertions.assertEquals(body, actual)
+  }
+
+  @Test
+  fun shouldReportErrorToDownStreamWhenErrorOccures() {
+    //given
+    val body = RandomStringUtils.randomAlphabetic(32)
+    val gzip = Compression.gzip(body)
+    val len = gzip.size
+    val mid = len / 2
+    var i = mid
+    while (i < (mid + 20).coerceAtMost(len)) {
+      gzip[i] = RandomUtils.nextInt().toByte()
+      i++
     }
+    val subscriber = DecompressingSubscriber(ofString(UTF_8))
+    val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, false))
 
-    @ParameterizedTest
-    @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
-    fun shouldDecompressWithVerySmallChunks(len: Int) {
-        //given
-        val body = RandomStringUtils.randomAlphabetic(len)
-        val gzip = Compression.gzip(body)
-        val subscriber = DecompressingSubscriber(ofString(UTF_8))
-        val buffers = ArrayList<ByteBuffer>()
-        for (b in gzip) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
-        val sub = PlainSubscription(subscriber, buffers)
+    //when
+    subscriber.onSubscribe(sub)
+    sub.cancel()
+    val actual = subscriber.body.toCompletableFuture()
 
-        //when
-        subscriber.onSubscribe(sub)
-        sub.cancel()
-        val actual = subscriber.body.toCompletableFuture().join()
+    //then
+    assertThat(actual).isCompletedExceptionally
+  }
 
-        //then
-        Assertions.assertEquals(body, actual)
-    }
-
-    @ParameterizedTest
-    @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
-    fun shouldNotDamageBodyIfNotCompressed(len: Int) {
-        //given
-        val body = RandomStringUtils.randomAlphabetic(len)
-        val subscriber = DecompressingSubscriber(ofString(UTF_8))
-        val buffers = ArrayList<ByteBuffer>()
-        for (b in body.toByteArray(UTF_8)) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
-        val sub = PlainSubscription(subscriber, buffers)
-
-        //when
-        subscriber.onSubscribe(sub)
-        sub.cancel()
-        val actual = subscriber.body.toCompletableFuture().join()
-
-        //then
-        Assertions.assertEquals(body, actual)
-    }
-
-    @Test
-    fun shouldReportErrorToDownStreamWhenErrorOccures() {
-        //given
-        val body = RandomStringUtils.randomAlphabetic(32)
-        val gzip = Compression.gzip(body)
-        val len = gzip.size
-        val mid = len / 2
-        var i = mid
-        while (i < (mid + 20).coerceAtMost(len)) {
-            gzip[i] = RandomUtils.nextInt().toByte()
-            i++
+  companion object {
+    @JvmStatic
+    fun randomLargeStrings(): Stream<Named<String>> {
+      return IntStream.rangeClosed(0, 100)
+        .mapToObj {
+          val s = Helpers.randomString(8192, 40960)
+          Named.of("Length: " + s.length, s)
         }
-        val subscriber = DecompressingSubscriber(ofString(UTF_8))
-        val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, false))
-
-        //when
-        subscriber.onSubscribe(sub)
-        sub.cancel()
-        val actual = subscriber.body.toCompletableFuture()
-
-        //then
-        assertThat(actual).isCompletedExceptionally
     }
-
-    companion object {
-        @JvmStatic
-        fun randomLargeStrings(): Stream<Named<String>> {
-            return IntStream.rangeClosed(0, 100)
-                .mapToObj {
-                    val s = Helpers.randomString(8192, 40960)
-                    Named.of("Length: " + s.length, s)
-                }
-        }
-    }
+  }
 }

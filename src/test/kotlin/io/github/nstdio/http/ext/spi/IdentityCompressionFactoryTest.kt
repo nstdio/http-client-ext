@@ -22,34 +22,34 @@ import java.io.IOException
 import java.io.InputStream
 
 internal class IdentityCompressionFactoryTest {
-    private val factory = IdentityCompressionFactory()
+  private val factory = IdentityCompressionFactory()
 
-    @Test
-    fun shouldSupportIdentityDirective() {
-        //when
-        val actual = factory.supported()
+  @Test
+  fun shouldSupportIdentityDirective() {
+    //when
+    val actual = factory.supported()
 
-        //then
-        assertThat(actual).containsOnly("identity")
-    }
+    //then
+    assertThat(actual).containsOnly("identity")
+  }
 
-    @Test
-    @Throws(IOException::class)
-    fun shouldReturnSameInputStream() {
-        //given
-        val inputStream = InputStream.nullInputStream()
+  @Test
+  @Throws(IOException::class)
+  fun shouldReturnSameInputStream() {
+    //given
+    val inputStream = InputStream.nullInputStream()
 
-        //when
-        val actual = factory.decompressing(inputStream, "identity")
+    //when
+    val actual = factory.decompressing(inputStream, "identity")
 
-        //then
-        assertThat(actual).isSameAs(inputStream)
-    }
+    //then
+    assertThat(actual).isSameAs(inputStream)
+  }
 
-    @Test
-    fun shouldThrowWhenTypeIsNotSupported() {
-        //when + then
-        assertThatIllegalArgumentException()
-            .isThrownBy { factory.decompressing(InputStream.nullInputStream(), "abc") }
-    }
+  @Test
+  fun shouldThrowWhenTypeIsNotSupported() {
+    //when + then
+    assertThatIllegalArgumentException()
+      .isThrownBy { factory.decompressing(InputStream.nullInputStream(), "abc") }
+  }
 }

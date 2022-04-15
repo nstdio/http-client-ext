@@ -19,63 +19,66 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.jupiter.MockitoExtension
 import java.net.http.HttpResponse.BodySubscriber
 import java.nio.charset.StandardCharsets
 
 @ExtendWith(MockitoExtension::class)
 internal class ByteArraySubscriptionTest {
-    @Mock
-    lateinit var mockSubscriber: BodySubscriber<ByteArray>
+  @Mock
+  lateinit var mockSubscriber: BodySubscriber<ByteArray>
 
-    @Test
-    fun shouldInvokeOnCompleteAfterFirstRequest() {
-        //given
-        val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
-        val subscription = ByteArraySubscription(mockSubscriber, bytes)
+  @Test
+  fun shouldInvokeOnCompleteAfterFirstRequest() {
+    //given
+    val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
+    val subscription = ByteArraySubscription(mockSubscriber, bytes)
 
-        //when
-        for (i in 0..63) {
-            subscription.request(1)
-        }
-
-        //then
-        verify(mockSubscriber).onNext(ArgumentMatchers.anyList())
-        verify(mockSubscriber).onComplete()
-        verifyNoMoreInteractions(mockSubscriber)
+    //when
+    for (i in 0..63) {
+      subscription.request(1)
     }
 
-    @Test
-    fun shouldReportErrorWhenRequestedIsNegative() {
-        //given
-        val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
-        val subscription = ByteArraySubscription(mockSubscriber, bytes)
+    //then
+    verify(mockSubscriber).onNext(ArgumentMatchers.anyList())
+    verify(mockSubscriber).onComplete()
+    verifyNoMoreInteractions(mockSubscriber)
+  }
 
-        //when
-        subscription.request(0)
-        subscription.request(-1)
+  @Test
+  fun shouldReportErrorWhenRequestedIsNegative() {
+    //given
+    val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
+    val subscription = ByteArraySubscription(mockSubscriber, bytes)
 
-        //then
-        verify(mockSubscriber, times(2)).onError(
-            ArgumentMatchers.any(
-                IllegalArgumentException::class.java
-            )
-        )
+    //when
+    subscription.request(0)
+    subscription.request(-1)
+
+    //then
+    verify(mockSubscriber, times(2)).onError(
+      ArgumentMatchers.any(
+        IllegalArgumentException::class.java
+      )
+    )
+  }
+
+  @Test
+  fun shouldNotInvokeSubscriberWhenCanceled() {
+    //given
+    val subscription = ByteArraySubscription(mockSubscriber, ByteArray(0))
+
+    //when
+    subscription.cancel()
+    for (i in 0..63) {
+      subscription.request(1)
     }
 
-    @Test
-    fun shouldNotInvokeSubscriberWhenCanceled() {
-        //given
-        val subscription = ByteArraySubscription(mockSubscriber, ByteArray(0))
-
-        //when
-        subscription.cancel()
-        for (i in 0..63) {
-            subscription.request(1)
-        }
-
-        //then
-        verifyNoInteractions(mockSubscriber)
-    }
+    //then
+    verifyNoInteractions(mockSubscriber)
+  }
 }

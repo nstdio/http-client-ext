@@ -22,16 +22,16 @@ import java.net.URI
 import java.net.http.HttpRequest
 
 class PredicatesTest {
-    @Test
-    fun shouldMatchGivenUri() {
-        //given
-        val uri = URI.create("http://example.com")
-        val r1 = HttpRequest.newBuilder(uri).build()
-        val r2 = HttpRequest.newBuilder(uri.resolve("/path")).build()
+  @Test
+  fun shouldMatchGivenUri() {
+    //given
+    val uri = URI.create("http://example.com")
+    val r1 = HttpRequest.newBuilder(uri).build()
+    val r2 = HttpRequest.newBuilder(uri.resolve("/path")).build()
 
-        //when + then
-        assertThat(Predicates.uri(uri))
-            .accepts(r1)
-            .rejects(r2)
-    }
+    //when + then
+    assertThat(Predicates.uri(uri))
+      .accepts(r1)
+      .rejects(r2)
+  }
 }

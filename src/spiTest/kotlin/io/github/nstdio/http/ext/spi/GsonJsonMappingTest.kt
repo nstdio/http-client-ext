@@ -20,7 +20,7 @@ import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
 
 @EnabledIfOnClasspath(GSON)
 class GsonJsonMappingTest : JsonMappingContract {
-    override fun get(): JsonMapping {
-        return GsonJsonMapping()
-    }
+  override fun get(): JsonMapping {
+    return GsonJsonMapping()
+  }
 }
