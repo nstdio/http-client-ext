@@ -38,11 +38,7 @@ class CachingBodySubscriber<T, C> implements BodySubscriber<T> {
   public CompletionStage<T> getBody() {
     return originalSub.getBody()
         .thenApplyAsync(t -> {
-          cachingSub.getBody()
-              .thenApplyAsync(body -> {
-                finisher.accept(body);
-                return body;
-              });
+          cachingSub.getBody().thenAccept(finisher);
           return t;
         });
   }
