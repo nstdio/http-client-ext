@@ -20,27 +20,25 @@ import io.github.nstdio.http.ext.GSON
 import io.github.nstdio.http.ext.JACKSON
 import io.github.nstdio.http.ext.jupiter.DisabledIfOnClasspath
 import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
-import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatExceptionOfType
-import org.assertj.core.api.Assumptions.assumeThat
+import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.types.shouldBeTypeOf
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 internal class JsonMappingProviderSpiTest {
   @Test
   fun shouldGetDefaultProviderByName() {
-    assumeThat(ALL_JSON)
-      .anyMatch { Classpath.isPresent(it) }
+    assumeTrue { ALL_JSON.any { Classpath.isPresent(it) } }
 
     //given
     val providerName = CompositeJsonMappingProvider::class.java.name
 
-    //when + then
+    //when
     val provider = JsonMappingProvider.provider(providerName)
 
     //then
-    assertThat(provider)
-      .isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
+    provider.shouldBeTypeOf<CompositeJsonMappingProvider>()
   }
 
   @Nested
@@ -54,8 +52,8 @@ internal class JsonMappingProviderSpiTest {
       val jsonMapping = provider.get()
 
       //then
-      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-      assertThat(jsonMapping).isExactlyInstanceOf(GsonJsonMapping::class.java)
+      provider.shouldBeTypeOf<CompositeJsonMappingProvider>()
+      jsonMapping.shouldBeTypeOf<GsonJsonMapping>()
     }
   }
 
@@ -70,8 +68,8 @@ internal class JsonMappingProviderSpiTest {
       val jsonMapping = provider.get()
 
       //then
-      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-      assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
+      provider.shouldBeTypeOf<CompositeJsonMappingProvider>()
+      jsonMapping.shouldBeTypeOf<JacksonJsonMapping>()
     }
   }
 
@@ -81,8 +79,7 @@ internal class JsonMappingProviderSpiTest {
     @Test
     fun shouldThrowWhenNothingIsPresent() {
       //when + then
-      assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
-        .isThrownBy { JsonMappingProvider.provider() }
+      shouldThrowExactly<JsonMappingProviderNotFoundException> { JsonMappingProvider.provider() }
     }
 
     @Test
@@ -91,8 +88,7 @@ internal class JsonMappingProviderSpiTest {
       val providerName = CompositeJsonMappingProvider::class.java.name
 
       //when + then
-      assertThatExceptionOfType(JsonMappingProviderNotFoundException::class.java)
-        .isThrownBy { JsonMappingProvider.provider(providerName) }
+      shouldThrowExactly<JsonMappingProviderNotFoundException> { JsonMappingProvider.provider(providerName) }
     }
   }
 
@@ -106,8 +102,8 @@ internal class JsonMappingProviderSpiTest {
       val jsonMapping = provider.get()
 
       //then
-      assertThat(provider).isExactlyInstanceOf(CompositeJsonMappingProvider::class.java)
-      assertThat(jsonMapping).isExactlyInstanceOf(JacksonJsonMapping::class.java)
+      provider.shouldBeTypeOf<CompositeJsonMappingProvider>()
+      jsonMapping.shouldBeTypeOf<JacksonJsonMapping>()
     }
   }
 }

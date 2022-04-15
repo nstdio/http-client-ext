@@ -15,11 +15,13 @@
  */
 package io.github.nstdio.http.ext
 
-import org.assertj.core.api.Assertions
+import io.kotest.matchers.collections.shouldHaveSize
+import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.TestInstance
+import org.junit.jupiter.api.TestInstance.Lifecycle.PER_CLASS
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
@@ -32,7 +34,7 @@ import java.util.stream.IntStream
 import kotlin.streams.toList
 
 internal class FixedRateTickClockTest {
-  @RepeatedTest(512)
+  @RepeatedTest(16)
   fun shouldTickAtFixedRate() {
     //given
     val baseInstant = Instant.ofEpochSecond(0)
@@ -56,14 +58,14 @@ internal class FixedRateTickClockTest {
       for (j in 0 until n) {
         val expectedTick = tick.multipliedBy((j - i).toLong())
         val actualDuration = Duration.between(actual[i], actual[j])
-        Assertions.assertThat(actualDuration).isEqualTo(expectedTick)
+        actualDuration shouldBe expectedTick
       }
       i++
     }
   }
 
   @Nested
-  @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+  @TestInstance(PER_CLASS)
   internal inner class ThreadSafetyTest {
     private val baseInstant = Instant.ofEpochSecond(0)
     private val tick = Duration.ofSeconds(1)
@@ -77,7 +79,7 @@ internal class FixedRateTickClockTest {
       executor.shutdown()
     }
 
-    @RepeatedTest(512)
+    @RepeatedTest(16)
     fun shouldBeSafe() {
       //when
       val futures = IntStream.range(0, nTasks)
@@ -97,7 +99,7 @@ internal class FixedRateTickClockTest {
       //then
 
       // Implicitly checking clock to not return same instant more than once
-      Assertions.assertThat(actual).hasSize(nTasks)
+      actual shouldHaveSize nTasks
       assertEvenlyDistributed(actual.toTypedArray(), tick)
     }
   }
