@@ -15,6 +15,9 @@
  */
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.booleans.shouldBeFalse
+import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.longs.shouldBeNegative
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -58,8 +61,7 @@ internal class CacheEntryMetadataTest {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldGenerateHeuristicExpirationWarning() {
+    fun shouldGenerateHeuristicExpirationWarning() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val baseInstant = Instant.ofEpochSecond(0)
@@ -88,8 +90,8 @@ internal class CacheEntryMetadataTest {
     executor.awaitTermination(3, TimeUnit.SECONDS)
 
     //then
-    org.junit.jupiter.api.Assertions.assertTrue(metadata2.maxAge() < 0)
-    assertFalse(metadata2.isApplicable)
+    metadata2.maxAge().shouldBeNegative()
+    metadata2.isApplicable.shouldBeFalse()
     Assertions.assertThat(metadata1.response().headers())
       .hasHeaderWithOnlyValue("Warning", "113 - \"Heuristic Expiration\"")
   }
@@ -149,7 +151,7 @@ internal class CacheEntryMetadataTest {
       val request = HttpRequest.newBuilder().uri(uri).build()
       val e = CacheEntryMetadata(requestTimeMs, responseTimeMs, info, request, clock)
       //when + then
-      org.junit.jupiter.api.Assertions.assertTrue(e.isFresh(CacheControl.builder().build()))
+      e.isFresh(CacheControl.builder().build()).shouldBeTrue()
     }
   }
 }

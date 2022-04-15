@@ -20,7 +20,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
-import java.io.IOException
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.BodySubscriber
 import java.nio.file.Files
@@ -29,8 +28,7 @@ import java.nio.file.StandardOpenOption
 
 internal class CachingBodySubscriberTest {
   @Test
-  @Throws(IOException::class)
-  fun shouldWriteAndReadFromEmptyFile(@TempDir dir: Path) {
+    fun shouldWriteAndReadFromEmptyFile(@TempDir dir: Path) {
     //given
     val p1 = dir.resolve("p1")
     val p2 = dir.resolve("p2")
@@ -40,8 +38,7 @@ internal class CachingBodySubscriberTest {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldWriteAndReadFromNotEmptyFile(@TempDir dir: Path) {
+    fun shouldWriteAndReadFromNotEmptyFile(@TempDir dir: Path) {
     //given
     val p1 = dir.resolve("p1")
     val p2 = dir.resolve("p2")

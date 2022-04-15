@@ -22,7 +22,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
-import java.io.IOException
 import java.net.http.HttpClient
 import java.nio.file.Files
 import java.time.Clock
@@ -41,8 +40,7 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
   private lateinit var cache: Cache
 
   @BeforeEach
-  @Throws(IOException::class)
-  fun setUp() {
+    fun setUp() {
     val dir = Files.createTempDirectory("diskcache").toFile()
     dir.deleteOnExit()
 

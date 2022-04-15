@@ -49,8 +49,7 @@ internal interface JsonMappingContract {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldCloseInputStream() {
+    fun shouldCloseInputStream() {
     //given
     val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
     val inSpy = Mockito.spy(ByteArrayInputStream(jsonBytes))
@@ -65,8 +64,7 @@ internal interface JsonMappingContract {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReadFromByteArray() {
+    fun shouldReadFromByteArray() {
     //given
     val jsonBytes = "{}".toByteArray(StandardCharsets.UTF_8)
     val mapping = get()
@@ -79,8 +77,7 @@ internal interface JsonMappingContract {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReadFromByteArrayUsingComplexType() {
+    fun shouldReadFromByteArrayUsingComplexType() {
     //given
     val jsonBytes = "{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8)
     val mapping = get()
@@ -97,8 +94,7 @@ internal interface JsonMappingContract {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReadFromInputStreamUsingComplexType() {
+    fun shouldReadFromInputStreamUsingComplexType() {
     //given
     val jsonBytes = ByteArrayInputStream("{\"a\": 1, \"b\": 2}".toByteArray(StandardCharsets.UTF_8))
     val mapping = get()

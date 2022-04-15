@@ -72,8 +72,7 @@ class IOUtilsTest {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReturnTrueIfFileExists(@TempDir temp: Path) {
+    fun shouldReturnTrueIfFileExists(@TempDir temp: Path) {
     //given
     val path = temp.resolve("abc")
     Files.createFile(path)

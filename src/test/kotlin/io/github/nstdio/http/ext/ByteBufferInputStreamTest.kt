@@ -43,7 +43,6 @@ import java.util.stream.Stream
 internal class ByteBufferInputStreamTest {
   @ParameterizedTest
   @MethodSource("fullReadingData")
-  @Throws(IOException::class)
   fun fullReading(bytes: ByteArray) {
     //given
     val `is` = ByteBufferInputStream()
@@ -58,7 +57,6 @@ internal class ByteBufferInputStreamTest {
 
   @ParameterizedTest
   @MethodSource("fullReadingData")
-  @Throws(IOException::class)
   fun shouldReadAllBytes(bytes: ByteArray?) {
     //given
     val `is` = ByteBufferInputStream()
@@ -72,7 +70,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(IOException::class)
   fun shouldReturnNegativeWhenInputIsEmpty() {
     //given
     val `is` = ByteBufferInputStream()
@@ -87,7 +84,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @RepeatedTest(4)
-  @Throws(IOException::class)
   fun shouldReadSingleProperly() {
     //given
     val `is` = ByteBufferInputStream()
@@ -107,7 +103,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(IOException::class)
   fun shouldFlipBuffer() {
     //given
     val bytes = RandomUtils.nextBytes(32)
@@ -142,7 +137,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(Exception::class)
   fun shouldReportAvailable() {
     //given
     val bytes = RandomUtils.nextBytes(32)
@@ -157,7 +151,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(Exception::class)
   fun shouldReadAllBytes() {
     //given
     val bytes = RandomUtils.nextBytes(32)
@@ -181,8 +174,7 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReadUpToNBytes() {
+    fun shouldReadUpToNBytes() {
     //given
     val count = 16
     val bytes = RandomUtils.nextBytes(count)
@@ -203,7 +195,6 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-  @Throws(IOException::class)
   fun shouldDumpBuffersToList() {
     //given
     val s = ByteBufferInputStream()

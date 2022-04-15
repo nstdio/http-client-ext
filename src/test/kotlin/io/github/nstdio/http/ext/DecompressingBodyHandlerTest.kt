@@ -134,8 +134,7 @@ internal class DecompressingBodyHandlerTest {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReturnDeflateInputStream() {
+    fun shouldReturnDeflateInputStream() {
     val deflateContent = ByteArrayInputStream(Compression.deflate("abc"))
 
     //when

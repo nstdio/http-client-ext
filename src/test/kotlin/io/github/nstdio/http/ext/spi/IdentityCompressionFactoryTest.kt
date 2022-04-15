@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext.spi
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.Test
-import java.io.IOException
 import java.io.InputStream
 
 internal class IdentityCompressionFactoryTest {
@@ -34,8 +33,7 @@ internal class IdentityCompressionFactoryTest {
   }
 
   @Test
-  @Throws(IOException::class)
-  fun shouldReturnSameInputStream() {
+    fun shouldReturnSameInputStream() {
     //given
     val inputStream = InputStream.nullInputStream()
 

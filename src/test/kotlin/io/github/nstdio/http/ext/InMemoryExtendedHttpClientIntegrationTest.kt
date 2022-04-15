@@ -40,7 +40,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.io.IOException
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.time.Clock
@@ -90,8 +89,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-  @Throws(IOException::class, InterruptedException::class)
-  fun shouldRespondWithCachedWhenNotModified() {
+    fun shouldRespondWithCachedWhenNotModified() {
     //given
     val urlPattern = urlEqualTo(path)
     val clock = of(defaultClock, Duration.ofSeconds(2))
@@ -133,8 +131,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldRespectMaxStaleRequests() {
+    fun shouldRespectMaxStaleRequests() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
@@ -164,8 +161,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldUseResponseTimeWhenDateHeaderMissing() {
+    fun shouldUseResponseTimeWhenDateHeaderMissing() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
@@ -192,9 +188,6 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
 
   @Test
   @DisplayName("Should respond with 504 when server requires validation, but validation request fails.")
-  @Throws(
-    Exception::class
-  )
   fun shouldReturn504WhenMustRevalidate() {
     //given
     val tickDuration = Duration.ofSeconds(1)
@@ -228,8 +221,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldNotCacheWhenFiltered() {
+    fun shouldNotCacheWhenFiltered() {
     //given
     val cacheableUri = resolve(path())
     val notCacheableUri = cacheableUri.resolve("/no-cache")

@@ -73,8 +73,7 @@ interface ExtendedHttpClientContract {
 
   fun wiremockRuntimeInfo(): WireMockRuntimeInfo
 
-  @Throws(IOException::class, InterruptedException::class)
-  fun send(request: HttpRequest): HttpResponse<String> {
+    fun send(request: HttpRequest): HttpResponse<String> {
     return client().send(request, ofString())
   }
 
@@ -94,8 +93,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldSupportETagForCaching() {
+    fun shouldSupportETagForCaching() {
     //given
     val cache = cache()
     val etag = "v1"
@@ -127,8 +125,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldApplyHeuristicFreshness() {
+    fun shouldApplyHeuristicFreshness() {
     //given
     val cache = cache()
     stubFor(
@@ -149,8 +146,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldWorkWithOnlyIfCached() {
+    fun shouldWorkWithOnlyIfCached() {
     //given
     stubFor(
       get(urlEqualTo(path()))
@@ -207,8 +203,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldFailWhenOnlyIfCachedWithEmptyCache() {
+    fun shouldFailWhenOnlyIfCachedWithEmptyCache() {
     //given
     val request = requestBuilder()
       .header(Headers.HEADER_CACHE_CONTROL, CacheControl.builder().onlyIfCached().build().toString())
@@ -222,8 +217,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldRespectMinFreshRequests() {
+    fun shouldRespectMinFreshRequests() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)
@@ -359,8 +353,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(IOException::class, InterruptedException::class)
-  fun shouldCacheWhenHeadersDifferWithoutVary() {
+    fun shouldCacheWhenHeadersDifferWithoutVary() {
     //given
     val cacheControlValue = "public,max-age=20"
     val urlPattern = urlEqualTo(path())
@@ -390,8 +383,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldNotCacheWithVaryAsterisk() {
+    fun shouldNotCacheWithVaryAsterisk() {
     //given
     val cacheControlValue = "public,max-age=20"
     val count = 9
@@ -425,8 +417,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldCacheWithVary() {
+    fun shouldCacheWithVary() {
     //given
     val cacheControlValue = "public,max-age=20"
     val count = 9
@@ -487,8 +478,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldUpdateExistingCacheWithNoCacheProvided() {
+    fun shouldUpdateExistingCacheWithNoCacheProvided() {
     //given
     val urlPattern = urlEqualTo(path())
     stubFor(
@@ -521,8 +511,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldRespectMaxAgeRequests() {
+    fun shouldRespectMaxAgeRequests() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)
@@ -606,8 +595,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-  @Throws(Exception::class)
-  fun shouldWorkWithPathSubscriber(@TempDir tempDir: Path) {
+    fun shouldWorkWithPathSubscriber(@TempDir tempDir: Path) {
     //given
     val file = tempDir.resolve("download")
     val body = RandomStringUtils.randomAlphabetic(32)
@@ -637,8 +625,7 @@ interface ExtendedHttpClientContract {
    * https://datatracker.ietf.org/doc/html/rfc5861#section-4
    */
   @Test
-  @Throws(Exception::class)
-  fun shouldRespectStaleIfError() {
+    fun shouldRespectStaleIfError() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)

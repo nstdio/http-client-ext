@@ -47,8 +47,7 @@ internal class ExtendedHttpClientIntegrationTest {
   @Nested
   internal inner class TransparentDecompressionTest {
     @Test
-    @Throws(Exception::class)
-    fun shouldTransparentlyDecompressAndCache() {
+        fun shouldTransparentlyDecompressAndCache() {
       //given
       val cache = Cache.newInMemoryCacheBuilder().build()
       val client: HttpClient = ExtendedHttpClient.newBuilder()
@@ -87,8 +86,7 @@ internal class ExtendedHttpClientIntegrationTest {
     }
 
     @Test
-    @Throws(Exception::class)
-    fun shouldTransparentlyDecompress() {
+        fun shouldTransparentlyDecompress() {
       //given
       val client: HttpClient = ExtendedHttpClient.newBuilder()
         .cache(Cache.noop())
