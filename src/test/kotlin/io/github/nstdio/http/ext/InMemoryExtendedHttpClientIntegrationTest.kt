@@ -46,12 +46,6 @@ import java.time.Clock
 import java.time.Duration
 
 internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
-  @RegisterExtension
-  val wm: WireMockExtension = WireMockExtension.newInstance()
-    .configureStaticDsl(true)
-    .failOnUnmatchedRequests(true)
-    .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-    .build()
 
   private val defaultClock = Clock.systemUTC()
   private lateinit var client: ExtendedHttpClient
@@ -89,7 +83,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-    fun shouldRespondWithCachedWhenNotModified() {
+  fun shouldRespondWithCachedWhenNotModified() {
     //given
     val urlPattern = urlEqualTo(path)
     val clock = of(defaultClock, Duration.ofSeconds(2))
@@ -131,7 +125,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-    fun shouldRespectMaxStaleRequests() {
+  fun shouldRespectMaxStaleRequests() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
@@ -161,7 +155,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-    fun shouldUseResponseTimeWhenDateHeaderMissing() {
+  fun shouldUseResponseTimeWhenDateHeaderMissing() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
@@ -221,7 +215,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   }
 
   @Test
-    fun shouldNotCacheWhenFiltered() {
+  fun shouldNotCacheWhenFiltered() {
     //given
     val cacheableUri = resolve(path())
     val notCacheableUri = cacheableUri.resolve("/no-cache")
@@ -247,5 +241,15 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     assertThat(r1).isNetwork
     assertThat(r2).isNetwork
     assertNull(cache.get(request))
+  }
+
+  companion object {
+    @RegisterExtension
+    @JvmStatic
+    val wm: WireMockExtension = WireMockExtension.newInstance()
+      .configureStaticDsl(true)
+      .failOnUnmatchedRequests(true)
+      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
+      .build()
   }
 }
