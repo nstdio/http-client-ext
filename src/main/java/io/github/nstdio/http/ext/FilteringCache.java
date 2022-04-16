@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.ResponseInfo;
 import java.util.function.Predicate;
@@ -80,5 +81,10 @@ class FilteringCache implements Cache {
     }
 
     return blackhole();
+  }
+
+  @Override
+  public void close() throws IOException {
+    delegate.close();
   }
 }

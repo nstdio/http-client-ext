@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.2...HEAD)
 
+### ♻️ Improvements
+ -  Improve cache write. ([b7f1289](https://github.com/nstdio/http-client-ext/commit/b7f128900372ee033aaef79b11ab09ed65f5c0ce))
 ## [v2.1.2](https://github.com/nstdio/http-client-ext/compare/v2.1.1...v2.1.2)
 
 ### 🐞  Bug Fixes

@@ -25,10 +25,11 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -40,7 +41,7 @@ import static io.github.nstdio.http.ext.IOUtils.size;
 class DiskCache extends SizeConstrainedCache {
   private final MetadataSerializer metadataSerializer;
   private final StreamFactory streamFactory;
-  private final Executor executor;
+  private final ExecutorService executor;
   private final Path dir;
 
   DiskCache(long maxBytes, int maxItems, MetadataSerializer metadataSerializer, StreamFactory streamFactory, Path dir) {
@@ -86,8 +87,21 @@ class DiskCache extends SizeConstrainedCache {
     writeMetadata((DiskCacheEntry) entry);
   }
 
+  @Override
+  public void close() {
+    super.close();
+    executor.shutdown();
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      executor.awaitTermination(1, TimeUnit.SECONDS);
+    } catch (InterruptedException ignored) {
+    }
+  }
+
   private void writeMetadata(DiskCacheEntry diskEntry) {
-    executor.execute(() -> metadataSerializer.write(diskEntry.metadata(), diskEntry.path().metadata()));
+    CacheEntryMetadata metadata = diskEntry.metadata();
+    Path metadataPath = diskEntry.path().metadata();
+    executor.execute(() -> metadataSerializer.write(metadata, metadataPath));
   }
 
   private void deleteQuietly(CacheEntry entry) {

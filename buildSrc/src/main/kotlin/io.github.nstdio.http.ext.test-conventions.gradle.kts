@@ -109,7 +109,7 @@ dependencies {
 
   testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 
-  testImplementation("org.awaitility:awaitility:4.2.0")
+  testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
 
   testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
   testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.1")

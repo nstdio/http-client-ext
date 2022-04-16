@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
 import io.github.nstdio.http.ext.Assertions.assertThat
+import org.awaitility.kotlin.await
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -29,9 +30,11 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
+import java.net.http.HttpResponse.BodyHandlers.discarding
 import java.net.http.HttpResponse.BodyHandlers.ofByteArray
 import java.nio.file.Files
 import java.time.Clock
+import java.util.concurrent.TimeUnit.SECONDS
 import javax.crypto.SecretKey
 
 internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
@@ -63,30 +66,48 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
   @Test
   fun `Should restore cache`() {
     //given
+    stubNumericCached()
+
+    val requests = httpRequests(0..64).toList()
+    requests.map { client.send(it, ofByteArray()) }.forEach { it.body() }
+
+    //when
+    val newClient = ExtendedHttpClient(delegate, createCache(), Clock.systemUTC())
+    val responses = requests.map { newClient.send(it, ofByteArray()) }
+
+    //then
+    responses.forEach { assertThat(it).isCached }
+  }
+
+  @Test
+  fun `Should close cache`() {
+    //given
+    stubNumericCached()
+
+    //when
+    cache.use {
+      httpRequests()
+        .forEach { client.send(it, discarding()).body() }
+    }
+
+    //then
+    await.atMost(1, SECONDS).until { cacheDir.listFiles()?.isEmpty() }
+  }
+
+  private fun stubNumericCached() {
     stubFor(
-      get(urlPathMatching("/any/[0-9]+"))
+      get(urlPathMatching("/[0-9]+"))
         .willReturn(
           ok()
             .withHeader("Cache-Control", "max-age=86400")
             .withBody("abc")
         )
     )
-
-    val intRange = 0..64
-    val requests = intRange
-      .map { "${wm.baseUrl()}/any/$it".toUri() }
-      .map { HttpRequest.newBuilder(it).build() }
-      .toList()
-
-    requests.map { client.send(it, ofByteArray()) }.forEach { it.body() }
-
-    //when
-    val newClient = ExtendedHttpClient(delegate, createCache(), Clock.systemUTC())
-    val responses = requests.map { newClient.send(it, ofByteArray()) }.toList()
-
-    //then
-    responses.forEach { assertThat(it).isCached }
   }
+
+  private fun httpRequests(range: IntRange = 0..8) = range
+    .map { "${wm.baseUrl()}/$it".toUri() }
+    .map { HttpRequest.newBuilder(it).build() }
 
   private fun createCache() = Cache.newDiskCacheBuilder()
     .dir(cacheDir.toPath())

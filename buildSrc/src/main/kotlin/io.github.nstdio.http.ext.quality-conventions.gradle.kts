@@ -44,6 +44,12 @@ tasks.withType<JacocoReport> {
     html.required.set(!isCI)
   }
 
+  afterEvaluate {
+    classDirectories.setFrom(files(classDirectories.files.map {
+      fileTree(it).apply { exclude("io/**/NullCache.class") }
+    }))
+  }
+
   executionData(tasks.withType<Test>())
 }
 
