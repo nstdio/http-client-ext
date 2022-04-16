@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.function.Consumer;
@@ -75,5 +76,10 @@ class SynchronizedCache implements Cache {
         };
       }
     };
+  }
+
+  @Override
+  public synchronized void close() throws IOException {
+    delegate.close();
   }
 }

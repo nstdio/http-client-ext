@@ -74,6 +74,11 @@ abstract class SizeConstrainedCache implements Cache {
     return stats;
   }
 
+  @Override
+  public void close() {
+    cache.clear();
+  }
+
   private void putInternal(HttpRequest k, CacheEntry e) {
     size += e.bodySize();
     cache.putSingle(k.uri(), e, idxFn(k));

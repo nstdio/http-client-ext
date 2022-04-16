@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodySubscribers;
@@ -79,5 +80,10 @@ class NullCache implements Cache {
   @Override
   public <T> Writer<T> writer(CacheEntryMetadata metadata) {
     return blackhole();
+  }
+
+  @Override
+  public void close() throws IOException {
+    // intentional noop
   }
 }

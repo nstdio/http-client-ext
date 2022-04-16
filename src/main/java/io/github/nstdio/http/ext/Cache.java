@@ -19,6 +19,7 @@ package io.github.nstdio.http.ext;
 import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
+import java.io.Closeable;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse.BodySubscriber;
 import java.nio.ByteBuffer;
@@ -36,7 +37,7 @@ import static io.github.nstdio.http.ext.Preconditions.checkState;
 import static java.util.Objects.requireNonNull;
 
 @SuppressWarnings("WeakerAccess")
-public interface Cache {
+public interface Cache extends Closeable {
   /**
    * Creates a new {@code InMemoryCacheBuilder} instance.
    *
@@ -146,7 +147,15 @@ public interface Cache {
     }
   }
 
+  /**
+   * The strategy for creating cache instances.
+   */
   interface CacheBuilder {
+    /**
+     * Creates a {@code Cache} instance.
+     *
+     * @return a cache.
+     */
     Cache build();
   }
 
