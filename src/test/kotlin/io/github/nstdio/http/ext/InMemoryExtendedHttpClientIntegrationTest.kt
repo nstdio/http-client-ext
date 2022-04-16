@@ -27,7 +27,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.verify
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.http.Fault
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
 import io.github.nstdio.http.ext.Assertions.assertThat
 import io.github.nstdio.http.ext.Assertions.await
 import io.github.nstdio.http.ext.Assertions.awaitFor
@@ -48,8 +47,11 @@ import java.time.Duration
 internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
 
   private val defaultClock = Clock.systemUTC()
+  private val delegate = HttpClient.newHttpClient()
+
   private lateinit var client: ExtendedHttpClient
   private lateinit var path: String
+
   private lateinit var cache: Cache
 
   @BeforeEach
@@ -58,7 +60,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
       .requestFilter { true }
       .responseFilter { true }
       .build()
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, defaultClock)
+    client = client(defaultClock)
     path = "/resource"
   }
 
@@ -66,28 +68,20 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     return path
   }
 
-  override fun client(): ExtendedHttpClient {
-    return client
-  }
+  override fun client() = client
 
-  override fun cache(): Cache {
-    return cache
-  }
+  override fun cache() = cache
 
-  override fun wiremockRuntimeInfo(): WireMockRuntimeInfo {
-    return wm.runtimeInfo
-  }
+  override fun baseUri() = wm.baseUrl().toUri()
 
-  override fun client(clock: Clock): ExtendedHttpClient {
-    return ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
-  }
+  override fun client(clock: Clock) = ExtendedHttpClient(delegate, cache, clock)
 
   @Test
   fun shouldRespondWithCachedWhenNotModified() {
     //given
     val urlPattern = urlEqualTo(path)
     val clock = of(defaultClock, Duration.ofSeconds(2))
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+    client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusSeconds(2))
     stubFor(
       get(urlPattern)
@@ -129,7 +123,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+    client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()))
     stubFor(
       get(urlEqualTo(path()))
@@ -159,7 +153,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+    client = client(clock)
     val expires = Headers.toRFC1123(defaultClock.instant().plusSeconds(6))
     stubFor(
       get(urlEqualTo(path()))
@@ -186,7 +180,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     //given
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
+    client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()))
     val urlPattern = urlEqualTo(path())
     stubFor(
@@ -222,7 +216,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     val cache = Cache.newInMemoryCacheBuilder()
       .requestFilter { r: HttpRequest -> r.uri() == cacheableUri }
       .build()
-    client = ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock())
+    client = ExtendedHttpClient(delegate, cache, defaultClock)
     stubFor(
       get(urlEqualTo(notCacheableUri.path))
         .willReturn(

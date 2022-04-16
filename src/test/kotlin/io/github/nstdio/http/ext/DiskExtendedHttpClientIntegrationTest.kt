@@ -20,7 +20,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
 import io.github.nstdio.http.ext.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.junit.jupiter.api.AfterEach
@@ -116,21 +115,13 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
     .cipherAlgorithm("AES")
     .build()
 
-  override fun client(): ExtendedHttpClient {
-    return client
-  }
+  override fun client() = client
 
-  override fun cache(): Cache {
-    return cache
-  }
+  override fun cache() = cache
 
-  override fun wiremockRuntimeInfo(): WireMockRuntimeInfo {
-    return wm.runtimeInfo
-  }
+  override fun baseUri() = wm.baseUrl().toUri()
 
-  override fun client(clock: Clock): ExtendedHttpClient {
-    return ExtendedHttpClient(HttpClient.newHttpClient(), cache, clock)
-  }
+  override fun client(clock: Clock) = ExtendedHttpClient(delegate, cache, clock)
 
   companion object {
     @RegisterExtension

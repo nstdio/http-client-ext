@@ -29,7 +29,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.status
 import com.github.tomakehurst.wiremock.client.WireMock.stubFor
 import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
 import com.github.tomakehurst.wiremock.client.WireMock.verify
-import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo
 import io.github.nstdio.http.ext.Assertions.assertThat
 import io.github.nstdio.http.ext.Assertions.await
 import io.github.nstdio.http.ext.Assertions.awaitFor
@@ -71,29 +70,21 @@ interface ExtendedHttpClientContract {
    */
   fun client(clock: Clock): ExtendedHttpClient
 
-  fun wiremockRuntimeInfo(): WireMockRuntimeInfo
+  fun baseUri(): URI
 
-    fun send(request: HttpRequest): HttpResponse<String> {
-    return client().send(request, ofString())
-  }
+  fun send(request: HttpRequest): HttpResponse<String> = client().send(request, ofString())
 
   /**
    * The clock to use when performing freshness calculations.
    */
-  fun clock(): Clock {
-    return Clock.systemUTC()
-  }
+  fun clock(): Clock = Clock.systemUTC()
 
-  fun path(): String {
-    return "/resource"
-  }
+  fun path(): String = "/resource"
 
-  fun requestBuilder(): HttpRequest.Builder {
-    return HttpRequest.newBuilder(resolve(path()))
-  }
+  fun requestBuilder(): HttpRequest.Builder = HttpRequest.newBuilder(resolve(path()))
 
   @Test
-    fun shouldSupportETagForCaching() {
+  fun shouldSupportETagForCaching() {
     //given
     val cache = cache()
     val etag = "v1"
@@ -125,7 +116,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldApplyHeuristicFreshness() {
+  fun shouldApplyHeuristicFreshness() {
     //given
     val cache = cache()
     stubFor(
@@ -146,7 +137,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldWorkWithOnlyIfCached() {
+  fun shouldWorkWithOnlyIfCached() {
     //given
     stubFor(
       get(urlEqualTo(path()))
@@ -203,7 +194,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldFailWhenOnlyIfCachedWithEmptyCache() {
+  fun shouldFailWhenOnlyIfCachedWithEmptyCache() {
     //given
     val request = requestBuilder()
       .header(Headers.HEADER_CACHE_CONTROL, CacheControl.builder().onlyIfCached().build().toString())
@@ -217,7 +208,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldRespectMinFreshRequests() {
+  fun shouldRespectMinFreshRequests() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)
@@ -353,7 +344,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldCacheWhenHeadersDifferWithoutVary() {
+  fun shouldCacheWhenHeadersDifferWithoutVary() {
     //given
     val cacheControlValue = "public,max-age=20"
     val urlPattern = urlEqualTo(path())
@@ -383,7 +374,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldNotCacheWithVaryAsterisk() {
+  fun shouldNotCacheWithVaryAsterisk() {
     //given
     val cacheControlValue = "public,max-age=20"
     val count = 9
@@ -417,7 +408,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldCacheWithVary() {
+  fun shouldCacheWithVary() {
     //given
     val cacheControlValue = "public,max-age=20"
     val count = 9
@@ -478,7 +469,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldUpdateExistingCacheWithNoCacheProvided() {
+  fun shouldUpdateExistingCacheWithNoCacheProvided() {
     //given
     val urlPattern = urlEqualTo(path())
     stubFor(
@@ -511,7 +502,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldRespectMaxAgeRequests() {
+  fun shouldRespectMaxAgeRequests() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)
@@ -595,7 +586,7 @@ interface ExtendedHttpClientContract {
   }
 
   @Test
-    fun shouldWorkWithPathSubscriber(@TempDir tempDir: Path) {
+  fun shouldWorkWithPathSubscriber(@TempDir tempDir: Path) {
     //given
     val file = tempDir.resolve("download")
     val body = RandomStringUtils.randomAlphabetic(32)
@@ -625,7 +616,7 @@ interface ExtendedHttpClientContract {
    * https://datatracker.ietf.org/doc/html/rfc5861#section-4
    */
   @Test
-    fun shouldRespectStaleIfError() {
+  fun shouldRespectStaleIfError() {
     //given
     val clock = of(clock(), Duration.ofSeconds(1))
     val client = client(clock)
@@ -677,7 +668,5 @@ interface ExtendedHttpClientContract {
     return WireMock.ok().withHeader(Headers.HEADER_DATE, rfc1123Date())
   }
 
-  fun resolve(path: String): URI {
-    return URI.create(wiremockRuntimeInfo().httpBaseUrl).resolve(path)
-  }
+  fun resolve(path: String): URI = baseUri().resolve(path)
 }
