@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.2...HEAD)
 
+### ⭐  Features
+ -  Cache interface now extends Closeable ([2e9076a](https://github.com/nstdio/http-client-ext/commit/2e9076a7ae337c55c5817d15ddab9c8e9e3e5bb5))
 ### ♻️ Improvements
  -  Improve cache write. ([b7f1289](https://github.com/nstdio/http-client-ext/commit/b7f128900372ee033aaef79b11ab09ed65f5c0ce))
 ## [v2.1.2](https://github.com/nstdio/http-client-ext/compare/v2.1.1...v2.1.2)
