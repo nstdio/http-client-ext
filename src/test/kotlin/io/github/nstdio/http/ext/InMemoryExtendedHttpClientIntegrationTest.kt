@@ -50,8 +50,6 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   private val delegate = HttpClient.newHttpClient()
 
   private lateinit var client: ExtendedHttpClient
-  private lateinit var path: String
-
   private lateinit var cache: Cache
 
   @BeforeEach
@@ -61,11 +59,6 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
       .responseFilter { true }
       .build()
     client = client(defaultClock)
-    path = "/resource"
-  }
-
-  override fun path(): String {
-    return path
   }
 
   override fun client() = client
@@ -79,7 +72,7 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
   @Test
   fun shouldRespondWithCachedWhenNotModified() {
     //given
-    val urlPattern = urlEqualTo(path)
+    val urlPattern = urlEqualTo(path())
     val clock = of(defaultClock, Duration.ofSeconds(2))
     client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusSeconds(2))
