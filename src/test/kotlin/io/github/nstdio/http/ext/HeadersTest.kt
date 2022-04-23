@@ -79,7 +79,7 @@ internal class HeadersTest {
 
   @ParameterizedTest
   @MethodSource("varyHeadersData")
-  fun varyHeaders(request: HttpHeaders?, response: HttpHeaders?, expected: HttpHeaders?) {
+  fun varyHeaders(request: HttpHeaders, response: HttpHeaders, expected: HttpHeaders) {
     //when
     val actual = Headers.varyHeaders(request, response)
 
@@ -141,12 +141,16 @@ internal class HeadersTest {
     }
 
     @JvmStatic
-    fun splitCommaData(): Array<Array<Any?>> {
+    fun splitCommaData(): Array<Array<Any>> {
       return arrayOf(
         arrayOf("  a, b, c   ", listOf("a", "b", "c")),
         arrayOf("a,b,c", listOf("a", "b", "c")),
         arrayOf(",,,,,,", listOf<String>()),
         arrayOf("abc", listOf("abc")),
+        arrayOf("a,", listOf("a")),
+        arrayOf(",a,", listOf("a")),
+        arrayOf(",a", listOf("a")),
+        arrayOf(" , a", listOf("a")),
       )
     }
 
@@ -235,18 +239,18 @@ internal class HeadersTest {
         ),
         Arguments.arguments(
           "/path",
-          URI.create("http://example.com/index.html"),
-          URI.create("http://example.com/path")
+          URI.create("https://example.com/index.html"),
+          URI.create("https://example.com/path")
         ),
         Arguments.arguments(
           "/path",
-          URI.create("http://example.com/index?query=1"),
-          URI.create("http://example.com/path")
+          URI.create("https://example.com/index?query=1"),
+          URI.create("https://example.com/path")
         ),
         Arguments.arguments(
           "/path",
-          URI.create("http://example.com:8080/index?query=1"),
-          URI.create("http://example.com:8080/path")
+          URI.create("https://example.com:8080/index?query=1"),
+          URI.create("https://example.com:8080/path")
         ),
         Arguments.arguments(
           "/path",
@@ -254,14 +258,14 @@ internal class HeadersTest {
           URI.create("http://127.0.0.1:8090/path")
         ),
         Arguments.arguments(
-          "http://example.com/path",
+          "https://example.com/path",
           URI.create("https://example.com/index?query=1"),
-          URI.create("http://example.com/path")
+          URI.create("https://example.com/path")
         ),
         Arguments.arguments(
-          "http://other-domain.com/path",
+          "https://other-domain.com/path",
           URI.create("https://example.com/index?query=1"),
-          URI.create("http://other-domain.com/path")
+          URI.create("https://other-domain.com/path")
         ),
         Arguments.arguments("adsbhj", URI.create("https://example.com"), null),
         Arguments.arguments("", URI.create("https://example.com"), null),
