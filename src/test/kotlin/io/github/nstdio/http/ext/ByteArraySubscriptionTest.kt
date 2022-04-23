@@ -15,6 +15,9 @@
  */
 package io.github.nstdio.http.ext
 
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers
@@ -35,7 +38,7 @@ internal class ByteArraySubscriptionTest {
   @Test
   fun shouldInvokeOnCompleteAfterFirstRequest() {
     //given
-    val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
+    val bytes = Arb.string(10, 20).next().toByteArray(StandardCharsets.UTF_8)
     val subscription = ByteArraySubscription(mockSubscriber, bytes)
 
     //when
@@ -52,7 +55,7 @@ internal class ByteArraySubscriptionTest {
   @Test
   fun shouldReportErrorWhenRequestedIsNegative() {
     //given
-    val bytes = Helpers.randomString(10, 20).toByteArray(StandardCharsets.UTF_8)
+    val bytes = Arb.string(10, 20).next().toByteArray(StandardCharsets.UTF_8)
     val subscription = ByteArraySubscription(mockSubscriber, bytes)
 
     //when

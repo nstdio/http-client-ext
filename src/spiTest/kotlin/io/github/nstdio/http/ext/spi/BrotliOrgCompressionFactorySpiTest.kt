@@ -17,7 +17,6 @@ package io.github.nstdio.http.ext.spi
 
 import io.kotest.assertions.json.shouldBeValidJson
 import io.kotest.matchers.collections.shouldContainExactly
-import org.apache.commons.io.IOUtils
 import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 
@@ -31,7 +30,7 @@ internal class BrotliOrgCompressionFactorySpiTest {
     //when
     val supported = factory.supported()
     val actual = factory.decompressing(inputStream, "br")
-    val actualAsString = IOUtils.toString(actual, StandardCharsets.UTF_8)
+    val actualAsString = actual.readAllBytes().toString(StandardCharsets.UTF_8)
 
     //then
     actualAsString.shouldBeValidJson()

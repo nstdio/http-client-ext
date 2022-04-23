@@ -15,36 +15,26 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.client.WireMock.aResponse
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor
-import com.github.tomakehurst.wiremock.client.WireMock.status
-import com.github.tomakehurst.wiremock.client.WireMock.stubFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import com.github.tomakehurst.wiremock.client.WireMock.verify
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.http.Fault
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import io.github.nstdio.http.ext.Assertions.assertThat
 import io.github.nstdio.http.ext.Assertions.await
-import io.github.nstdio.http.ext.Assertions.awaitFor
 import io.github.nstdio.http.ext.FixedRateTickClock.Companion.of
 import io.github.nstdio.http.ext.Matchers.isCached
-import org.awaitility.core.ThrowingRunnable
+import io.kotest.matchers.nulls.shouldBeNull
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.SocketPolicy
 import org.hamcrest.CoreMatchers.not
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.time.Clock
 import java.time.Duration
 
-internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
+@MockWebServerTest
+internal class InMemoryExtendedHttpClientIntegrationTest(private val mockWebServer: MockWebServer) :
+  ExtendedHttpClientContract {
 
   private val defaultClock = Clock.systemUTC()
   private val delegate = HttpClient.newHttpClient()
@@ -65,37 +55,35 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
 
   override fun cache() = cache
 
-  override fun baseUri() = wm.baseUrl().toUri()
-
   override fun client(clock: Clock) = ExtendedHttpClient(delegate, cache, clock)
+
+  override fun mockWebServer() = mockWebServer
 
   @Test
   fun shouldRespondWithCachedWhenNotModified() {
     //given
-    val urlPattern = urlEqualTo(path())
     val clock = of(defaultClock, Duration.ofSeconds(2))
     client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusSeconds(2))
-    stubFor(
-      get(urlPattern)
-        .willReturn(
-          WireMock.ok()
-            .withHeader(Headers.HEADER_DATE, date)
-            .withHeader(Headers.HEADER_CACHE_CONTROL, "public,max-age=1")
-            .withBody("Hello world!")
-        )
+
+    mockWebServer.enqueue(
+      MockResponse()
+        .ok()
+        .addHeader(Headers.HEADER_DATE, date)
+        .addHeader(Headers.HEADER_CACHE_CONTROL, "public,max-age=1")
+        .setBody("Hello world!")
     )
-    stubFor(
-      get(urlPattern)
-        .withHeader(Headers.HEADER_IF_MODIFIED_SINCE, equalTo(date))
-        .willReturn(status(304).withHeader(Headers.HEADER_CACHE_CONTROL, "private, max-age=1"))
+    mockWebServer.enqueue(
+      MockResponse()
+        .notModified()
+        .addHeader(Headers.HEADER_CACHE_CONTROL, "private, max-age=1")
     )
+
     val request = requestBuilder().build()
 
     //when
     val r1 = send(request)
     val r2 = await().until({ send(request) }, isCached())
-    val r3 = await().until({ send(request) }, isCached())
 
     //then
     assertThat(r1)
@@ -103,12 +91,6 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
       .isNetwork
     assertThat(r2)
       .hasHeader(Headers.HEADER_CACHE_CONTROL, "private, max-age=1")
-      .isSemanticallyEqualTo(r3)
-    verify(1, getRequestedFor(urlPattern).withoutHeader(Headers.HEADER_IF_MODIFIED_SINCE))
-    verify(
-      2,
-      getRequestedFor(urlPattern).withHeader(Headers.HEADER_IF_MODIFIED_SINCE, equalTo(date))
-    )
   }
 
   @Test
@@ -118,15 +100,12 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     val clock = of(defaultClock, tickDuration)
     client = client(clock)
     val date = Headers.toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()))
-    stubFor(
-      get(urlEqualTo(path()))
-        .willReturn(
-          WireMock.ok()
-            .withHeader(Headers.HEADER_DATE, date)
-            .withHeader(Headers.HEADER_CACHE_CONTROL, "max-age=1")
-            .withBody("abc")
-        )
-    )
+    val response = MockResponse().ok()
+      .addHeader(Headers.HEADER_DATE, date)
+      .addHeader(Headers.HEADER_CACHE_CONTROL, "max-age=1")
+      .setBody("abc")
+
+    mockWebServer.enqueue(response, 2)
 
     //when
     val r1 = send(requestBuilder().build())
@@ -148,14 +127,13 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     val clock = of(defaultClock, tickDuration)
     client = client(clock)
     val expires = Headers.toRFC1123(defaultClock.instant().plusSeconds(6))
-    stubFor(
-      get(urlEqualTo(path()))
-        .willReturn(
-          WireMock.ok()
-            .withHeader(Headers.HEADER_EXPIRES, expires)
-            .withBody("abc")
-        )
-    )
+    val response = MockResponse()
+      .ok()
+      .addHeader(Headers.HEADER_EXPIRES, expires)
+      .setBody("abc")
+
+    mockWebServer.enqueue(response, 10)
+
     val request = requestBuilder().build()
 
     //when
@@ -174,50 +152,44 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     val tickDuration = Duration.ofSeconds(1)
     val clock = of(defaultClock, tickDuration)
     client = client(clock)
-    val date = Headers.toRFC1123(clock.instant().minusMillis(tickDuration.toMillis()))
-    val urlPattern = urlEqualTo(path())
-    stubFor(
-      get(urlPattern)
-        .willReturn(
-          WireMock.ok()
-            .withHeader(Headers.HEADER_DATE, date)
-            .withHeader(Headers.HEADER_CACHE_CONTROL, "max-age=1,must-revalidate")
-            .withBody("abc")
-        )
+    val date = clock.instant().minusMillis(tickDuration.toMillis())
+
+    mockWebServer.enqueue(
+      MockResponse().ok()
+        .addHeaderDate(date)
+        .addHeader(Headers.HEADER_CACHE_CONTROL, "max-age=1,must-revalidate")
+        .setBody("abc")
     )
-    stubFor(
-      get(urlPattern)
-        .withHeader(Headers.HEADER_IF_MODIFIED_SINCE, equalTo(date))
-        .willReturn(aResponse().withFault(Fault.EMPTY_RESPONSE))
+
+    mockWebServer.enqueue(
+      MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
     )
-    val request = requestBuilder().build()
 
     //when + then
-    val r1 = send(request)
+    val r1 = send(requestBuilder().build())
     assertThat(r1).isNetwork.hasStatusCode(200).hasBody("abc")
-    awaitFor(ThrowingRunnable {
-      val r2 = send(request)
-      assertThat(r2).isNotNetwork.isNotCached.hasStatusCode(504)
-    })
+
+    val r2 = send(requestBuilder().timeout(Duration.ofMillis(100)).build())
+    assertThat(r2).isNotNetwork.isNotCached.hasStatusCode(504)
   }
 
   @Test
   fun shouldNotCacheWhenFiltered() {
     //given
-    val cacheableUri = resolve(path())
+    val cacheableUri = mockWebServer().url(path()).toUri()
     val notCacheableUri = cacheableUri.resolve("/no-cache")
     val cache = Cache.newInMemoryCacheBuilder()
-      .requestFilter { r: HttpRequest -> r.uri() == cacheableUri }
+      .requestFilter { it.uri() == cacheableUri }
       .build()
     client = ExtendedHttpClient(delegate, cache, defaultClock)
-    stubFor(
-      get(urlEqualTo(notCacheableUri.path))
-        .willReturn(
-          WireMock.ok()
-            .withHeader(Headers.HEADER_CACHE_CONTROL, "max-age=512")
-            .withBody("abc")
-        )
+
+    mockWebServer.enqueue(
+      MockResponse()
+        .ok()
+        .addHeader(Headers.HEADER_CACHE_CONTROL, "max-age=512")
+        .setBody("abc"), 2
     )
+
     val request = HttpRequest.newBuilder().uri(notCacheableUri).build()
 
     //when
@@ -227,16 +199,6 @@ internal class InMemoryExtendedHttpClientIntegrationTest : ExtendedHttpClientCon
     //then
     assertThat(r1).isNetwork
     assertThat(r2).isNetwork
-    assertNull(cache.get(request))
-  }
-
-  companion object {
-    @RegisterExtension
-    @JvmStatic
-    val wm: WireMockExtension = WireMockExtension.newInstance()
-      .configureStaticDsl(true)
-      .failOnUnmatchedRequests(true)
-      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-      .build()
+    cache.get(request).shouldBeNull()
   }
 }

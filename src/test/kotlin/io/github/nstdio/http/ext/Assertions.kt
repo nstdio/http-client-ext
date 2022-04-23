@@ -27,6 +27,7 @@ import org.awaitility.core.ConditionFactory
 import org.awaitility.core.ThrowingRunnable
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import java.net.URI
 import java.net.http.HttpHeaders
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
@@ -195,6 +196,11 @@ object Assertions {
       assertThat(actual!!.body()).isEqualTo(body)
       return this
     }
+    
+    fun hasURI(uri: URI): HttpResponseAssertion<T> {
+      assertThat(actual!!.uri()).isEqualTo(uri)
+      return this
+    }
 
     fun isSemanticallyEqualTo(other: HttpResponse<T>): HttpResponseAssertion<T> {
       SoftAssertions.assertSoftly { softly: SoftAssertions ->
@@ -226,6 +232,12 @@ object Assertions {
     fun hasNoHeader(headers: String?): HttpResponseAssertion<T> {
       assertThat(actual!!.headers())
         .hasNoHeader(headers)
+      return this
+    }
+
+    fun hasRequest(request: HttpRequest): HttpResponseAssertion<T> {
+      assertThat(actual!!.request())
+        .isEqualTo(request)
       return this
     }
   }

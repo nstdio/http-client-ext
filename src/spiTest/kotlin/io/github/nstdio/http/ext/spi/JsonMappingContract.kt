@@ -15,7 +15,7 @@
  */
 package io.github.nstdio.http.ext.spi
 
-import com.google.common.reflect.TypeToken
+import com.tngtech.archunit.thirdparty.com.google.common.reflect.TypeToken
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import org.assertj.core.api.Assertions.assertThat

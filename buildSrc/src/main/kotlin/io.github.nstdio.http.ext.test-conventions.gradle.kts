@@ -110,9 +110,9 @@ dependencies {
   testImplementation("org.slf4j:slf4j-simple:$slf4jVersion")
 
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
+  testImplementation("com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.6")
 
   testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
-  testImplementation("com.github.tomakehurst:wiremock-jre8:2.33.1")
   testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
 
   spiDeps.forEach { spiTestImplementation(it) }

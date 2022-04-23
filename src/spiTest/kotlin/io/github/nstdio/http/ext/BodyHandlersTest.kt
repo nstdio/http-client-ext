@@ -15,36 +15,41 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.ok
-import com.github.tomakehurst.wiremock.client.WireMock.stubFor
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
+import io.github.nstdio.http.ext.spi.Classpath
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.throwable.shouldHaveCause
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.extension.ExtendWith
 import java.io.UncheckedIOException
-import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 
-internal class BodyHandlersTest {
+@ExtendWith(MockWebServerExtension::class)
+internal class BodyHandlersTest(private val mockWebServer: MockWebServer) {
   @Nested
   internal inner class OfJsonTest {
     private val client = HttpClient.newHttpClient()
 
+    @BeforeEach
+    fun setUp() {
+      assumeTrue { ALL_JSON.any { Classpath.isPresent(it) } }
+    }
+
     @Test
     fun shouldProperlyReadJson() {
       //given
-      val request = HttpRequest.newBuilder(URI.create("${wm.baseUrl()}/get")).build()
+      val request = HttpRequest.newBuilder(mockWebServer.url("/get").toUri()).build()
 
-      stubFor(
-        get("/get").willReturn(
-          ok().withBody(
-            """
+      mockWebServer.enqueue(
+        MockResponse().setResponseCode(200).setBody(
+          """
         {
           "args": {},
           "headers": {
@@ -63,13 +68,10 @@ internal class BodyHandlersTest {
           "url": "https://httpbin.org/get"
         }
       """.trimIndent()
-          )
         )
       )
       //when
-      val body1 = client.sendAsync(request, BodyHandlers.ofJson(Any::class.java))
-        .thenApply { it.body().get() }
-        .join()
+      val body1 = client.sendAsync(request, BodyHandlers.ofJson(Any::class.java)).thenApply { it.body().get() }.join()
 
       //then
       body1.shouldNotBeNull()
@@ -78,26 +80,16 @@ internal class BodyHandlersTest {
     @Test
     fun shouldThrowUncheckedExceptionIfCannotRead() {
       //given
-      val request = HttpRequest.newBuilder(URI.create("${wm.baseUrl()}/get")).build()
+      val request = HttpRequest.newBuilder(mockWebServer.url("/get").toUri()).build()
 
-      stubFor(get("/get").willReturn(ok().withBody("<html></html>")))
+      mockWebServer.enqueue(
+        MockResponse().setResponseCode(200).setBody("<html></html>")
+      )
 
       //when
       shouldThrowExactly<UncheckedIOException> {
         client.send(request, BodyHandlers.ofJson(Any::class.java)).body().get()
       }.shouldHaveCause()
     }
-  }
-
-  companion object {
-    @RegisterExtension
-    @JvmStatic
-    var wm = WireMockExtension.newInstance()
-      .configureStaticDsl(true)
-      .failOnUnmatchedRequests(true)
-      .options(
-        WireMockConfiguration.wireMockConfig().dynamicPort()
-      )
-      .build()
   }
 }

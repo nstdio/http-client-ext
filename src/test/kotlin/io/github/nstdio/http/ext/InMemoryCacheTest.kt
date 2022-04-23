@@ -182,14 +182,14 @@ internal class InMemoryCacheTest {
 
   companion object {
     private val SYSTEM_CLOCK = Clock.systemDefaultZone()
-    fun cacheEntry(headers: Map<String, String>?, r: HttpRequest?): InMemoryCacheEntry {
+    fun cacheEntry(headers: Map<String, String>, r: HttpRequest): InMemoryCacheEntry {
       return cacheEntry(0, headers, r)
     }
 
     private fun cacheEntry(
       responseTimeMs: Long,
-      headers: Map<String, String>?,
-      r: HttpRequest?
+      headers: Map<String, String>,
+      r: HttpRequest
     ): InMemoryCacheEntry {
       return InMemoryCacheEntry(
         ByteArray(0),

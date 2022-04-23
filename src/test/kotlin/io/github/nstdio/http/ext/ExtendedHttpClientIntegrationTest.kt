@@ -15,91 +15,92 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock.equalTo
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.ok
-import com.github.tomakehurst.wiremock.client.WireMock.stubFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import io.github.nstdio.http.ext.Assertions.assertThat
-import org.apache.commons.lang3.RandomStringUtils
+import io.github.nstdio.http.ext.Assertions.awaitFor
+import io.github.nstdio.http.ext.Compression.deflate
+import io.github.nstdio.http.ext.Compression.gzip
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
-import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-internal class ExtendedHttpClientIntegrationTest {
-  @RegisterExtension
-  var wm: WireMockExtension = WireMockExtension.newInstance()
-    .configureStaticDsl(true)
-    .failOnUnmatchedRequests(true)
-    .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-    .build()
-
-  private fun resolve(path: String): URI {
-    return URI.create(wm.runtimeInfo.httpBaseUrl).resolve(path)
-  }
+@MockWebServerTest
+internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: MockWebServer) {
 
   @Nested
   internal inner class TransparentDecompressionTest {
     @Test
-        fun shouldTransparentlyDecompressAndCache() {
+    fun shouldTransparentlyDecompressAndCache() {
       //given
       val cache = Cache.newInMemoryCacheBuilder().build()
       val client: HttpClient = ExtendedHttpClient.newBuilder()
         .cache(cache)
         .transparentEncoding(true)
         .build()
-      val expectedBody = RandomStringUtils.randomAlphabetic(16)
-      val testUrl = "/gzip"
-      stubFor(
-        get(urlEqualTo(testUrl))
-          .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
-          .willReturn(
-            ok()
-              .withHeader("Cache-Control", "max-age=86000")
-              .withBody(expectedBody)
-          )
-      )
-      val request1 = HttpRequest.newBuilder(resolve(testUrl))
+      val expectedBody = Arb.string(16).next()
+      val testUri = mockWebServer.url("/gzip").toUri()
+
+      (0..1).forEach { _ ->
+        mockWebServer.enqueue(
+          MockResponse()
+            .setResponseCode(200)
+            .addHeader("Cache-Control", "max-age=86000")
+            .addHeader("Content-Encoding", "gzip")
+            .setBody(gzip(expectedBody))
+        )
+      }
+
+      val request1 = HttpRequest.newBuilder(testUri)
         .build()
-      val request2 = HttpRequest.newBuilder(resolve(testUrl))
+      val request2 = HttpRequest.newBuilder(testUri)
         .build()
 
       //when + then
       val r1 = client.send(request1, HttpResponse.BodyHandlers.ofString())
       assertThat(r1)
         .isNetwork
+        .hasStatusCode(200)
+        .hasURI(request1.uri())
         .hasBody(expectedBody)
         .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
-      Assertions.awaitFor {
+      awaitFor {
         val r2 = client.send(request2, HttpResponse.BodyHandlers.ofString())
         assertThat(r2)
           .isCached
+          .hasStatusCode(200)
           .hasBody(expectedBody)
+          .hasURI(request2.uri())
           .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
       }
     }
 
     @Test
-        fun shouldTransparentlyDecompress() {
+    fun shouldTransparentlyDecompress() {
       //given
       val client: HttpClient = ExtendedHttpClient.newBuilder()
         .cache(Cache.noop())
         .transparentEncoding(true)
         .build()
-      val expectedBody = RandomStringUtils.randomAlphabetic(16)
-      val testUrl = "/gzip"
-      stubFor(
-        get(urlEqualTo(testUrl))
-          .withHeader("Accept-Encoding", equalTo("gzip,deflate"))
-          .willReturn(ok().withBody(expectedBody))
-      )
-      val request = HttpRequest.newBuilder(resolve(testUrl)).build()
+
+      val expectedBody = Arb.string(16).next()
+      val testUri = mockWebServer.url("/gzip").toUri()
+
+      (0..1).forEach { _ ->
+        mockWebServer.enqueue(
+          MockResponse()
+            .setResponseCode(200)
+            .setHeader("Content-Encoding", "gzip,deflate")
+            .setBody(gzip(deflate(expectedBody)))
+        )
+      }
+
+      val request = HttpRequest.newBuilder(testUri).build()
 
       //when
       val r1 = client.send(request, HttpResponse.BodyHandlers.ofString())
@@ -108,10 +109,12 @@ internal class ExtendedHttpClientIntegrationTest {
       //then
       assertThat(r1)
         .isNetwork
+        .hasStatusCode(200)
         .hasBody(expectedBody)
         .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
       assertThat(r2)
         .isNetwork
+        .hasStatusCode(200)
         .hasBody(expectedBody)
         .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
     }

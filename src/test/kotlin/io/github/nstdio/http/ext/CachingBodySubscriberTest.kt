@@ -15,6 +15,9 @@
  */
 package io.github.nstdio.http.ext
 
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -49,7 +52,7 @@ internal class CachingBodySubscriberTest {
 
   private fun assertShouldReadAndWriteResponse(p1: Path, p2: Path) {
     //given
-    val body = Helpers.randomString(32, 128)
+    val body = Arb.string(32, 128).next()
     val original = HttpResponse.BodySubscribers.ofFile(p1)
     val other = PathSubscriber(p2)
     val subscriber = CachingBodySubscriber(original, other) { }

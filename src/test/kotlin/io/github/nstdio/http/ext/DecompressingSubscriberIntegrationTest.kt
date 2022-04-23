@@ -15,22 +15,22 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
-import org.apache.commons.io.IOUtils
-import org.apache.commons.lang3.RandomStringUtils
-import org.junit.jupiter.api.Disabled
+import io.github.nstdio.http.ext.Assertions.assertThat
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
 import org.junit.jupiter.api.RepeatedTest
-import org.junit.jupiter.api.extension.RegisterExtension
-import java.net.URI
+import org.junit.jupiter.api.extension.ExtendWith
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.HttpResponse.ResponseInfo
-import java.nio.charset.StandardCharsets
 
-internal class DecompressingSubscriberIntegrationTest {
+@ExtendWith(MockWebServerExtension::class)
+internal class DecompressingSubscriberIntegrationTest(private val mockWebServer: MockWebServer) {
   private val client = HttpClient.newHttpClient()
 
   @RepeatedTest(8)
@@ -48,50 +48,22 @@ internal class DecompressingSubscriberIntegrationTest {
     }
 
     //then
-    org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, stringResponse.body().length)
-    Assertions.assertThat(stringResponse).hasBody(expectedBody)
+    assertThat(stringResponse).hasBody(expectedBody)
   }
 
-  @RepeatedTest(1)
-  @Disabled("Having problems with InputStream")
-  fun shouldHandleLargeBodyWithInputStream() {
-    //given
-    val data = setupLargeBodyDecompressionTest()
-    val request = data.request
-    val expectedBody = data.expectedBody
-
-    //when
-    val response = client.send(request) { info: ResponseInfo? ->
-      DecompressingSubscriber(
-        HttpResponse.BodyHandlers.ofInputStream().apply(info)
-      )
-    }
-    val body = IOUtils.toString(response.body(), StandardCharsets.UTF_8)
-    org.junit.jupiter.api.Assertions.assertEquals(expectedBody.length, body.length)
-    org.junit.jupiter.api.Assertions.assertEquals(expectedBody, body)
-  }
-
-  private fun setupLargeBodyDecompressionTest(body: String = RandomStringUtils.randomAlphabetic(16384 * 10)): LargeBodyDataDecompression {
+  private fun setupLargeBodyDecompressionTest(body: String = Arb.string(16384 * 10).next()): LargeBodyDataDecompression {
     val gzippedBody = Compression.gzip(body)
     val testUrl = "/gzip"
-    WireMock.stubFor(
-      WireMock.get(WireMock.urlEqualTo(testUrl))
-        .willReturn(WireMock.ok().withBody(gzippedBody))
+    mockWebServer.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .setBody(gzippedBody)
     )
-    val uri = URI.create(wm.runtimeInfo.httpBaseUrl).resolve(testUrl)
+
+    val uri = mockWebServer.url(testUrl).toUri()
     val request = HttpRequest.newBuilder(uri).build()
     return LargeBodyDataDecompression(request, body)
   }
 
   internal data class LargeBodyDataDecompression(val request: HttpRequest, val expectedBody: String)
-
-  companion object {
-    @RegisterExtension
-    @JvmStatic
-    var wm = WireMockExtension.newInstance()
-      .configureStaticDsl(true)
-      .failOnUnmatchedRequests(true)
-      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-      .build()
-  }
 }
