@@ -16,7 +16,9 @@
 
 package io.github.nstdio.http.ext
 
-import org.apache.commons.lang3.RandomStringUtils
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.SecureRandom
@@ -27,7 +29,7 @@ import javax.crypto.spec.SecretKeySpec
 
 object Crypto {
 
-  fun pbe(password: String = RandomStringUtils.random(16), algo: String = "AES", keyLen: Int = 128): SecretKey {
+  fun pbe(password: String = Arb.string(16).next(), algo: String = "AES", keyLen: Int = 128): SecretKey {
     val salt = ByteArray(16)
     SecureRandom.getInstanceStrong()
       .nextBytes(salt)

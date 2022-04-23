@@ -19,13 +19,17 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.io.UncheckedIOException
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.function.Function
 import java.util.zip.DeflaterOutputStream
 import java.util.zip.GZIPOutputStream
 
 internal object Compression {
   fun gzip(input: String): ByteArray {
+    return gzip(input.toByteArray(UTF_8))
+  }
+
+  fun gzip(input: ByteArray): ByteArray {
     return compress(input) { out: OutputStream ->
       try {
         return@compress GZIPOutputStream(out, true)
@@ -36,13 +40,17 @@ internal object Compression {
   }
 
   fun deflate(input: String): ByteArray {
+    return deflate(input.toByteArray(UTF_8))
+  }
+
+  fun deflate(input: ByteArray): ByteArray {
     return compress(input) { DeflaterOutputStream(it, true) }
   }
 
-  private fun compress(input: String, compressorCreator: Function<OutputStream, DeflaterOutputStream>): ByteArray {
+  private fun compress(input: ByteArray, compressorCreator: Function<OutputStream, DeflaterOutputStream>): ByteArray {
     ByteArrayOutputStream().use { out ->
       compressorCreator.apply(out).use { compressor ->
-        compressor.write(input.toByteArray(StandardCharsets.UTF_8))
+        compressor.write(input)
         compressor.finish()
         return out.toByteArray()
       }

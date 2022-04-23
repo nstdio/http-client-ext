@@ -20,9 +20,9 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import org.apache.commons.io.IOUtils
-import org.apache.commons.lang3.RandomStringUtils
-import org.apache.commons.lang3.RandomUtils
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIOException
 import org.junit.jupiter.api.Assertions
@@ -45,39 +45,42 @@ internal class ByteBufferInputStreamTest {
   @MethodSource("fullReadingData")
   fun fullReading(bytes: ByteArray) {
     //given
-    val `is` = ByteBufferInputStream()
-    Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer -> `is`.add(b) })
+    val stream = ByteBufferInputStream()
+    Helpers.toBuffers(bytes, true).forEach { stream.add(it) }
 
     //when
-    val actual = IOUtils.toByteArray(`is`)
+    val available = stream.available()
+    val actual = stream.readAllBytes()
 
     //then
-    Assertions.assertArrayEquals(bytes, actual)
+    available shouldBe bytes.size
+    actual.shouldBe(bytes)
   }
 
   @ParameterizedTest
   @MethodSource("fullReadingData")
-  fun shouldReadAllBytes(bytes: ByteArray?) {
+  fun shouldReadAllBytes(bytes: ByteArray) {
     //given
-    val `is` = ByteBufferInputStream()
-    Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer? -> `is`.add(b) })
+    val stream = ByteBufferInputStream()
+    Helpers.toBuffers(bytes, true).forEach { stream.add(it) }
 
     //when
-    val actual = `is`.readAllBytes()
+    val actual = stream.readAllBytes()
 
     //then
-    Assertions.assertArrayEquals(bytes, actual)
+    actual.size.shouldBe(bytes.size)
+    actual.shouldBe(bytes)
   }
 
   @Test
   fun shouldReturnNegativeWhenInputIsEmpty() {
     //given
-    val `is` = ByteBufferInputStream()
-    val bytes = RandomUtils.nextBytes(8)
-    `is`.add(ByteBuffer.wrap(bytes))
+    val stream = ByteBufferInputStream()
+    val bytes = Arb.byteArray(8).next()
+    stream.add(ByteBuffer.wrap(bytes))
 
     //when
-    val actual = `is`.read(ByteArray(0))
+    val actual = stream.read(ByteArray(0))
 
     //then
     assertEquals(0, actual)
@@ -87,8 +90,8 @@ internal class ByteBufferInputStreamTest {
   fun shouldReadSingleProperly() {
     //given
     val `is` = ByteBufferInputStream()
-    val randomString = RandomStringUtils.randomAlphabetic(64)
-    Helpers.toBuffers(randomString.toByteArray(), false).forEach(Consumer { b: ByteBuffer? -> `is`.add(b) })
+    val randomString = Arb.string(64).next()
+    Helpers.toBuffers(randomString.toByteArray()).forEach { `is`.add(it) }
     val out = ByteArrayOutputStream()
 
     //when
@@ -105,16 +108,16 @@ internal class ByteBufferInputStreamTest {
   @Test
   fun shouldFlipBuffer() {
     //given
-    val bytes = RandomUtils.nextBytes(32)
-    val `is` = ByteBufferInputStream()
-    Helpers.toBuffers(bytes, false)
-      .stream()
-      .map { buffer: ByteBuffer -> buffer.position(buffer.limit()) }
-      .forEach { b: ByteBuffer? -> `is`.add(b) }
-    `is`.add(ByteBuffer.wrap(ByteArray(0)))
+    val bytes = Arb.byteArray(32).next()
+    val stream = ByteBufferInputStream()
+    Helpers.toBuffers(bytes)
+      .map { it.position(it.limit()) }
+      .forEach { stream.add(it) }
+
+    stream.add(ByteBuffer.wrap(ByteArray(0)))
 
     //when
-    val actual = `is`.readAllBytes()
+    val actual = stream.readAllBytes()
 
     //then
     Assertions.assertArrayEquals(bytes, actual)
@@ -139,9 +142,9 @@ internal class ByteBufferInputStreamTest {
   @Test
   fun shouldReportAvailable() {
     //given
-    val bytes = RandomUtils.nextBytes(32)
+    val bytes = Arb.byteArray(32).next()
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer? -> s.add(b) })
+    Helpers.toBuffers(bytes).forEach(Consumer { b: ByteBuffer? -> s.add(b) })
 
     //when
     val actual = s.available()
@@ -153,15 +156,15 @@ internal class ByteBufferInputStreamTest {
   @Test
   fun shouldReadAllBytes() {
     //given
-    val bytes = RandomUtils.nextBytes(32)
+    val bytes = Arb.byteArray(32).next()
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer? -> s.add(b) })
+    Helpers.toBuffers(bytes).forEach(Consumer { b: ByteBuffer? -> s.add(b) })
 
     //when
     val actual = s.readAllBytes()
 
     //then
-    Assertions.assertArrayEquals(bytes, actual)
+    actual.shouldBe(bytes)
   }
 
   @Test
@@ -174,10 +177,10 @@ internal class ByteBufferInputStreamTest {
   }
 
   @Test
-    fun shouldReadUpToNBytes() {
+  fun shouldReadUpToNBytes() {
     //given
     val count = 16
-    val bytes = RandomUtils.nextBytes(count)
+    val bytes = Arb.byteArray(count).next()
     val s = ByteBufferInputStream()
     Helpers.toBuffers(bytes, false).forEach(Consumer { b: ByteBuffer? -> s.add(b) })
 
@@ -198,7 +201,7 @@ internal class ByteBufferInputStreamTest {
   fun shouldDumpBuffersToList() {
     //given
     val s = ByteBufferInputStream()
-    val buffers = Helpers.toBuffers(RandomUtils.nextBytes(96), false)
+    val buffers = Helpers.toBuffers(Arb.byteArray(96).next(), false)
     buffers.forEach(Consumer { b: ByteBuffer? -> s.add(b) })
 
     //when
@@ -217,7 +220,7 @@ internal class ByteBufferInputStreamTest {
     val s = ByteBufferInputStream().also { it.close() }
 
     //when
-    s.add(ByteBuffer.wrap(RandomUtils.nextBytes(96)))
+    s.add(ByteBuffer.wrap(Arb.byteArray(16).next()))
 
     //then
     s.drainToList().shouldBeEmpty()
@@ -282,11 +285,11 @@ internal class ByteBufferInputStreamTest {
 
   companion object {
     @JvmStatic
-    fun fullReadingData(): Stream<Named<ByteArray?>> {
-      return IntStream.of(100, 8192, 16384, 65536, 131072)
+    fun fullReadingData(): Stream<Named<ByteArray>> {
+      return IntStream.of(8192, 16384, 65536, 131072)
         .mapToObj { n: Int ->
           Named.named(
-            "Size: $n", RandomUtils.nextBytes(n)
+            "Size: $n", Arb.byteArray(n).next()
           )
         }
     }

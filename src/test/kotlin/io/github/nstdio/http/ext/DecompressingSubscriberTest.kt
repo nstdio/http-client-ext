@@ -15,8 +15,10 @@
  */
 package io.github.nstdio.http.ext
 
-import org.apache.commons.lang3.RandomStringUtils
-import org.apache.commons.lang3.RandomUtils
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.byte
+import io.kotest.property.arbitrary.next
+import io.kotest.property.arbitrary.string
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertArrayEquals
@@ -55,7 +57,7 @@ internal class DecompressingSubscriberTest {
   @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
   fun shouldDecompressWithVerySmallChunks(len: Int) {
     //given
-    val body = RandomStringUtils.randomAlphabetic(len)
+    val body = Arb.string(len).next()
     val gzip = Compression.gzip(body)
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
     val buffers = ArrayList<ByteBuffer>()
@@ -75,7 +77,7 @@ internal class DecompressingSubscriberTest {
   @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 32, 64, 128])
   fun shouldNotDamageBodyIfNotCompressed(len: Int) {
     //given
-    val body = RandomStringUtils.randomAlphabetic(len)
+    val body = Arb.string(len).next()
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
     val buffers = ArrayList<ByteBuffer>()
     for (b in body.toByteArray(UTF_8)) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
@@ -93,13 +95,14 @@ internal class DecompressingSubscriberTest {
   @Test
   fun shouldReportErrorToDownStreamWhenErrorOccures() {
     //given
-    val body = RandomStringUtils.randomAlphabetic(32)
+    val body = Arb.string(32).next()
     val gzip = Compression.gzip(body)
     val len = gzip.size
     val mid = len / 2
     var i = mid
+    val byte = Arb.byte()
     while (i < (mid + 20).coerceAtMost(len)) {
-      gzip[i] = RandomUtils.nextInt().toByte()
+      gzip[i] = byte.next()
       i++
     }
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
@@ -119,7 +122,7 @@ internal class DecompressingSubscriberTest {
     fun randomLargeStrings(): Stream<Named<String>> {
       return IntStream.rangeClosed(0, 100)
         .mapToObj {
-          val s = Helpers.randomString(8192, 40960)
+          val s = Arb.string(8192, 40960).next()
           Named.of("Length: " + s.length, s)
         }
     }

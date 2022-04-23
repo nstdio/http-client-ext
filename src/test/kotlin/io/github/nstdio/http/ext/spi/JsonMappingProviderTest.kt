@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext.spi
 import io.kotest.assertions.throwables.shouldThrowExactly
 import io.kotest.matchers.throwable.shouldHaveMessage
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import io.kotest.matchers.types.shouldNotBeSameInstanceAs
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -64,9 +63,11 @@ internal class JsonMappingProviderTest {
     JsonMappingProvider.removeProvider(providerName)
 
     //then
-    JsonMappingProvider.provider().shouldNotBeSameInstanceAs(mockProvider)
     shouldThrowExactly<JsonMappingProviderNotFoundException> {
-      JsonMappingProvider.provider(providerName).shouldNotBeSameInstanceAs(mockProvider)
+      JsonMappingProvider.provider()
+    }
+    shouldThrowExactly<JsonMappingProviderNotFoundException> {
+      JsonMappingProvider.provider(providerName)
     }
   }
 }

@@ -15,7 +15,9 @@
  */
 package io.github.nstdio.http.ext
 
-import org.apache.commons.lang3.RandomUtils
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.next
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -42,7 +44,7 @@ internal class BuffersTest {
   @Test
   fun shouldDuplicatedSingleBuffer() {
     //given
-    val buffer = ByteBuffer.wrap(RandomUtils.nextBytes(16))
+    val buffer = ByteBuffer.wrap(Arb.byteArray(16).next())
 
     //when
     val actual = Buffers.duplicate(buffer)
@@ -65,7 +67,7 @@ internal class BuffersTest {
             )
           )
         ),
-        Helpers.toBuffers(RandomUtils.nextBytes(96), true)
+        Helpers.toBuffers(Arb.byteArray(Arb.int(96, 96)).next(), true)
       )
     }
   }

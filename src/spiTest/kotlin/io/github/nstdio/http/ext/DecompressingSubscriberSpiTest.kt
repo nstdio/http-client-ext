@@ -15,60 +15,46 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.ok
-import com.github.tomakehurst.wiremock.client.WireMock.stubFor
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
-import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
 import io.kotest.assertions.json.shouldBeValidJson
-import org.junit.jupiter.api.extension.RegisterExtension
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import okio.Buffer
+import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
-import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse.BodyHandlers.ofString
 
-@EnabledIfOnClasspath(JACKSON) // required by WireMock
-internal class DecompressingSubscriberSpiTest {
+@ExtendWith(MockWebServerExtension::class)
+internal class DecompressingSubscriberSpiTest(private val mockWebServer: MockWebServer) {
   private val client = HttpClient.newHttpClient()
 
   @ParameterizedTest
   @ValueSource(strings = ["br", "gzip", "deflate"])
   fun shouldDecompress(compressionType: String) {
     //given
-    val uri = URI.create(wm.baseUrl()).resolve("/data")
-    stubFor(
-      get("/data").willReturn(
-        ok()
-          .withHeader("Content-Encoding", compressionType)
-          .withBodyFile(compressionType)
-      )
+    mockWebServer.enqueue(
+      MockResponse()
+        .setResponseCode(200)
+        .addHeader("Content-Encoding", compressionType)
+        .setBodyResource("/__files/$compressionType")
     )
+    val uri = mockWebServer.url("/data").toUri()
 
     //when
     val response = client.send(
-      HttpRequest.newBuilder(uri).build(),
-      BodyHandlers.ofDecompressing(ofString())
+      HttpRequest.newBuilder(uri).build(), BodyHandlers.ofDecompressing(ofString())
     )
 
     //then
     response.body().shouldBeValidJson()
   }
 
-  companion object {
-    @RegisterExtension
-    @JvmStatic
-    var wm = WireMockExtension.newInstance()
-      .configureStaticDsl(true)
-      .failOnUnmatchedRequests(true)
-      .options(
-        WireMockConfiguration.wireMockConfig()
-          .gzipDisabled(true)
-          .usingFilesUnderDirectory("src/spiTest/resources")
-          .dynamicPort()
-      )
-      .build()
+  private fun MockResponse.setBodyResource(resName: String): MockResponse {
+    val stream = DecompressingSubscriberSpiTest::class.java.getResourceAsStream(resName)
+    stream?.let { it -> it.use { setBody(Buffer().readFrom(it)) } }
+    return this
   }
 }

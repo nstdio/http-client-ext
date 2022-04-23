@@ -17,9 +17,9 @@
 
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
-import org.apache.commons.io.IOUtils
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
 import org.junit.jupiter.api.AfterEach
@@ -42,7 +42,7 @@ import java.io.InputStream
 import java.net.http.HttpHeaders
 import java.net.http.HttpResponse.BodyHandler
 import java.net.http.HttpResponse.BodySubscriber
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 import java.util.Map
 import java.util.zip.GZIPInputStream
 import java.util.zip.InflaterInputStream
@@ -79,7 +79,7 @@ internal class DecompressingBodyHandlerTest {
     val actual = handler.apply(responseInfo)
 
     //then
-    Assertions.assertThat(actual).isSameAs(mockSubscriber)
+    assertThat(actual).isSameAs(mockSubscriber)
     verify(mockHandler).apply(responseInfo)
     verifyNoMoreInteractions(mockHandler)
   }
@@ -96,7 +96,7 @@ internal class DecompressingBodyHandlerTest {
     val actual = handler.apply(responseInfo)
 
     //then
-    Assertions.assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber::class.java)
+    assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber::class.java)
   }
 
   @Test
@@ -111,7 +111,7 @@ internal class DecompressingBodyHandlerTest {
     val actual = handler.apply(responseInfo)
 
     //then
-    Assertions.assertThat(actual).isSameAs(mockSubscriber)
+    assertThat(actual).isSameAs(mockSubscriber)
     verify(mockHandler).apply(responseInfo)
     verifyNoMoreInteractions(mockHandler)
   }
@@ -129,8 +129,8 @@ internal class DecompressingBodyHandlerTest {
     val `in` = fn.apply(gzipContent)
 
     //then
-    Assertions.assertThat(`in`).isInstanceOf(GZIPInputStream::class.java)
-    Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+    assertThat(`in`).isInstanceOf(GZIPInputStream::class.java)
+    `in`.readAllBytes().toString(UTF_8).shouldBe("abc")
   }
 
   @Test
@@ -142,8 +142,8 @@ internal class DecompressingBodyHandlerTest {
     val `in` = fn.apply(deflateContent)
 
     //then
-    Assertions.assertThat(`in`).isInstanceOf(InflaterInputStream::class.java)
-    Assertions.assertThat(IOUtils.toString(`in`, StandardCharsets.UTF_8)).isEqualTo("abc")
+    assertThat(`in`).isInstanceOf(InflaterInputStream::class.java)
+    `in`.readAllBytes().toString(UTF_8).shouldBe("abc")
   }
 
   @Nested

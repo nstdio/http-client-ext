@@ -30,15 +30,14 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
-import java.util.Map
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class CacheEntryMetadataTest {
   @Test
   fun varyHeaders() {
-    val headers = Map.of(
-      "Vary", "Accept, Accept-Encoding, User-Agent"
+    val headers = mutableMapOf(
+      "Vary" to "Accept, Accept-Encoding, User-Agent"
     )
     val r = HttpRequest.newBuilder(URI.create("https://example.com"))
       .headers(
@@ -61,7 +60,7 @@ internal class CacheEntryMetadataTest {
   }
 
   @Test
-    fun shouldGenerateHeuristicExpirationWarning() {
+  fun shouldGenerateHeuristicExpirationWarning() {
     //given
     val tickDuration = Duration.ofSeconds(1)
     val baseInstant = Instant.ofEpochSecond(0)
@@ -70,9 +69,9 @@ internal class CacheEntryMetadataTest {
     val lastModified = baseInstant.minus(241, ChronoUnit.HOURS)
     val expectedExpirationTime = baseInstant.plus(2, ChronoUnit.DAYS)
     val info = Helpers.responseInfo(
-      Map.of(
-        "Last-Modified", Headers.toRFC1123(lastModified),
-        "Date", Headers.toRFC1123(Instant.ofEpochSecond(0))
+      mutableMapOf(
+        "Last-Modified" to Headers.toRFC1123(lastModified),
+        "Date" to Headers.toRFC1123(Instant.ofEpochSecond(0))
       )
     )
     val request1 = HttpRequest.newBuilder().uri(URI.create("https://www.example.com")).build()
@@ -112,9 +111,9 @@ internal class CacheEntryMetadataTest {
     val dateHeader = baseClock.instant()
     val clock = FixedRateTickClock.of(baseClock, Duration.ofSeconds(1))
     val info = Helpers.responseInfo(
-      Map.of(
-        "Cache-Control", "max-age=1,must-revalidate",
-        "Date", Headers.toRFC1123(dateHeader)
+      mutableMapOf(
+        "Cache-Control" to "max-age=1,must-revalidate",
+        "Date" to Headers.toRFC1123(dateHeader)
       )
     )
     val request = HttpRequest.newBuilder().uri(URI.create("https://www.example.com")).build()
@@ -143,9 +142,9 @@ internal class CacheEntryMetadataTest {
       val serverDate = responseTimeMs - 50
       val clock = Clock.fixed(Instant.ofEpochMilli(responseTimeMs + 5), ZoneId.systemDefault())
       val info = Helpers.responseInfo(
-        Map.of(
-          "Cache-Control", "max-age=1",
-          "Date", Headers.toRFC1123(Instant.ofEpochMilli(serverDate))
+        mutableMapOf(
+          "Cache-Control" to "max-age=1",
+          "Date" to Headers.toRFC1123(Instant.ofEpochMilli(serverDate))
         )
       )
       val request = HttpRequest.newBuilder().uri(uri).build()

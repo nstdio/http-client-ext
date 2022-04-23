@@ -15,17 +15,13 @@
  */
 package io.github.nstdio.http.ext
 
-import com.github.tomakehurst.wiremock.client.WireMock.get
-import com.github.tomakehurst.wiremock.client.WireMock.stubFor
-import com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration
-import com.github.tomakehurst.wiremock.junit5.WireMockExtension
 import io.github.nstdio.http.ext.Assertions.assertThat
+import mockwebserver3.MockResponse
+import mockwebserver3.MockWebServer
 import org.awaitility.kotlin.await
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.io.File
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -36,7 +32,9 @@ import java.time.Clock
 import java.util.concurrent.TimeUnit.SECONDS
 import javax.crypto.SecretKey
 
-internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContract {
+@MockWebServerTest
+internal class DiskExtendedHttpClientIntegrationTest(private val mockWebServer: MockWebServer) :
+  ExtendedHttpClientContract {
 
   private val delegate = HttpClient.newHttpClient()
   private lateinit var cacheDir: File
@@ -65,9 +63,10 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
   @Test
   fun `Should restore cache`() {
     //given
-    stubNumericCached()
+    val range = 0..64
+    stubNumericCached(range)
 
-    val requests = httpRequests(0..64).toList()
+    val requests = httpRequests(range).toList()
     requests.map { client.send(it, ofByteArray()) }.forEach { it.body() }
 
     //when
@@ -81,7 +80,7 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
   @Test
   fun `Should close cache`() {
     //given
-    stubNumericCached()
+    stubNumericCached(0..8)
 
     //when
     cache.use {
@@ -93,19 +92,19 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
     await.atMost(1, SECONDS).until { cacheDir.listFiles()?.isEmpty() }
   }
 
-  private fun stubNumericCached() {
-    stubFor(
-      get(urlPathMatching("/[0-9]+"))
-        .willReturn(
-          ok()
-            .withHeader("Cache-Control", "max-age=86400")
-            .withBody("abc")
-        )
-    )
+  private fun stubNumericCached(range: IntRange) {
+    range.forEach { _ ->
+      mockWebServer.enqueue(
+        MockResponse()
+          .setResponseCode(200)
+          .addHeader("Cache-Control", "max-age=86400")
+          .setBody("abc")
+      )
+    }
   }
 
   private fun httpRequests(range: IntRange = 0..8) = range
-    .map { "${wm.baseUrl()}/$it".toUri() }
+    .map { mockWebServer.url(it.toString()).toUri() }
     .map { HttpRequest.newBuilder(it).build() }
 
   private fun createCache() = Cache.newDiskCacheBuilder()
@@ -117,19 +116,9 @@ internal class DiskExtendedHttpClientIntegrationTest : ExtendedHttpClientContrac
 
   override fun client() = client
 
+  override fun mockWebServer() = mockWebServer
+
   override fun cache() = cache
 
-  override fun baseUri() = wm.baseUrl().toUri()
-
   override fun client(clock: Clock) = ExtendedHttpClient(delegate, cache, clock)
-
-  companion object {
-    @RegisterExtension
-    @JvmStatic
-    val wm: WireMockExtension = WireMockExtension.newInstance()
-      .configureStaticDsl(true)
-      .failOnUnmatchedRequests(true)
-      .options(WireMockConfiguration.wireMockConfig().dynamicPort())
-      .build()
-  }
 }
