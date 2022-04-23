@@ -21,7 +21,15 @@ import io.kotest.property.Gen
 import io.kotest.property.arbitrary.byte
 import io.kotest.property.arbitrary.byteArray
 import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.map
+import java.nio.ByteBuffer
 
 fun Arb.Companion.byteArray(length: Gen<Int>): Arb<ByteArray> = Arb.byteArray(length, Arb.byte())
 
 fun Arb.Companion.byteArray(length: Int): Arb<ByteArray> = Arb.byteArray(Arb.int(length, length))
+
+fun Arb.Companion.byteBuffer(length: Gen<Int>): Arb<ByteBuffer> =
+  Arb.byteArray(length).map { ByteBuffer.wrap(it) }
+
+fun Arb.Companion.byteBuffer(length: Int): Arb<ByteBuffer> =
+  Arb.byteArray(Arb.int(length, length)).map { ByteBuffer.wrap(it) }

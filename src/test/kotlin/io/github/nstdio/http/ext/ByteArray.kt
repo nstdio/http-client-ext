@@ -18,4 +18,6 @@ package io.github.nstdio.http.ext
 
 import java.nio.ByteBuffer
 
+fun ByteArray.toBuffer(): ByteBuffer = ByteBuffer.wrap(this)
+
 fun ByteArray.toBuffer(fromIndex: Int, toIndex: Int): ByteBuffer = ByteBuffer.wrap(copyOfRange(fromIndex, toIndex))
