@@ -326,6 +326,7 @@ public class ExtendedHttpClient extends HttpClient {
      * Sets the cache.
      *
      * @param cache The cache. Use {@link Cache#noop()} instead of {@code null}.
+     *
      * @return builder itself.
      */
     public Builder cache(Cache cache) {
@@ -335,11 +336,12 @@ public class ExtendedHttpClient extends HttpClient {
     }
 
     /**
-     * Sets the flag whether automatically decompress response or not. If set to {@code true} requests made by
-     * created client will be enhanced with {@code Accept-Encoding} header and will decompress response body if
-     * appropriate response headers found.
+     * Sets the flag whether automatically decompress response or not. If set to {@code true} requests made by created
+     * client will be enhanced with {@code Accept-Encoding} header and will decompress response body if appropriate
+     * response headers found.
      *
      * @param transparentEncoding Apply transparent encoding or not.
+     *
      * @return builder itself.
      */
     public Builder transparentEncoding(boolean transparentEncoding) {

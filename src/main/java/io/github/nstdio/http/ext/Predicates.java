@@ -22,8 +22,9 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * The request/response predicates to use with {@link io.github.nstdio.http.ext.Cache.InMemoryCacheBuilder#requestFilter(Predicate)}
- * and {@link io.github.nstdio.http.ext.Cache.InMemoryCacheBuilder#responseFilter(Predicate)}.
+ * The request/response predicates to use with
+ * {@link io.github.nstdio.http.ext.Cache.InMemoryCacheBuilder#requestFilter(Predicate)} and
+ * {@link io.github.nstdio.http.ext.Cache.InMemoryCacheBuilder#responseFilter(Predicate)}.
  */
 public final class Predicates {
   private Predicates() {

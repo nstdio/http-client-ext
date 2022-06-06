@@ -26,7 +26,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import static io.github.nstdio.http.ext.Headers.*;
+import static io.github.nstdio.http.ext.Headers.HEADER_DATE;
+import static io.github.nstdio.http.ext.Headers.HEADER_ETAG;
+import static io.github.nstdio.http.ext.Headers.HEADER_EXPIRES;
+import static io.github.nstdio.http.ext.Headers.HEADER_LAST_MODIFIED;
+import static io.github.nstdio.http.ext.Headers.HEADER_WARNING;
+import static io.github.nstdio.http.ext.Headers.parseInstant;
+import static io.github.nstdio.http.ext.Headers.toRFC1123;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.stream.Collectors.toUnmodifiableList;
 

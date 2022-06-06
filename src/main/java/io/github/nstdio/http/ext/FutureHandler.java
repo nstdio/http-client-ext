@@ -23,9 +23,9 @@ import java.util.function.UnaryOperator;
 import static io.github.nstdio.http.ext.Throwables.sneakyThrow;
 
 /**
- * The function to pass to {@link java.util.concurrent.CompletableFuture#handleAsync(BiFunction)} or {@link
- * java.util.concurrent.CompletableFuture#handle(BiFunction)}. The type alias and handy chaining for other {@code
- * FutureHandler}s.
+ * The function to pass to {@link java.util.concurrent.CompletableFuture#handleAsync(BiFunction)} or
+ * {@link java.util.concurrent.CompletableFuture#handle(BiFunction)}. The type alias and handy chaining for other
+ * {@code FutureHandler}s.
  *
  * @param <T> The response body type.
  */

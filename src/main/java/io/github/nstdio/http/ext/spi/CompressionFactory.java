@@ -41,7 +41,9 @@ public interface CompressionFactory {
    *
    * @param in   The input stream.
    * @param type One of {@link #supported()} types.
+   *
    * @return Wrapped input stream.
+   *
    * @throws IOException              When {@code in} does not represent a supported compression type or I/O error
    *                                  occures.
    * @throws IllegalArgumentException When type {@link #supported()} does not contain {@code type}.
