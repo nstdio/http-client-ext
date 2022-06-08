@@ -50,12 +50,12 @@ import javax.net.ssl.SSLParameters
 
 internal class ExtendedHttpClientTest {
   private lateinit var client: ExtendedHttpClient
-  private lateinit var mockHttpClient: HttpClient
+  private lateinit var mockDelegate: HttpClient
 
   @BeforeEach
   fun setUp() {
-    mockHttpClient = mock(HttpClient::class.java)
-    client = ExtendedHttpClient(mockHttpClient, NullCache.INSTANCE, Clock.systemUTC())
+    mockDelegate = mock(HttpClient::class.java)
+    client = ExtendedHttpClient(mockDelegate, NullCache.INSTANCE, Clock.systemUTC())
   }
 
   @ParameterizedTest
@@ -63,7 +63,7 @@ internal class ExtendedHttpClientTest {
   fun shouldPropagateExceptions(th: Class<Throwable>) {
     //given
     val request = HttpRequest.newBuilder().uri(URI.create("https://example.com")).build()
-    given(mockHttpClient.send(any(), any<BodyHandler<Any>>())).willThrow(th)
+    given(mockDelegate.send(any(), any<BodyHandler<Any>>())).willThrow(th)
 
     //when + then
     assertThatExceptionOfType(th)
@@ -75,7 +75,7 @@ internal class ExtendedHttpClientTest {
   fun `Should throw CompletionException with cause`(th: Throwable) {
     //given
     val request = HttpRequest.newBuilder().uri(URI.create("https://example.com")).build()
-    given(mockHttpClient.send(any(), any<BodyHandler<Any>>())).willThrow(th)
+    given(mockDelegate.send(any(), any<BodyHandler<Any>>())).willThrow(th)
 
 
     //when + then
@@ -98,17 +98,35 @@ internal class ExtendedHttpClientTest {
     client.newWebSocketBuilder()
 
     //then
-    val inOrder = inOrder(mockHttpClient)
-    inOrder.verify(mockHttpClient).cookieHandler()
-    inOrder.verify(mockHttpClient).connectTimeout()
-    inOrder.verify(mockHttpClient).followRedirects()
-    inOrder.verify(mockHttpClient).proxy()
-    inOrder.verify(mockHttpClient).sslContext()
-    inOrder.verify(mockHttpClient).sslParameters()
-    inOrder.verify(mockHttpClient).authenticator()
-    inOrder.verify(mockHttpClient).version()
-    inOrder.verify(mockHttpClient).executor()
-    inOrder.verify(mockHttpClient).newWebSocketBuilder()
+    val inOrder = inOrder(mockDelegate)
+    inOrder.verify(mockDelegate).cookieHandler()
+    inOrder.verify(mockDelegate).connectTimeout()
+    inOrder.verify(mockDelegate).followRedirects()
+    inOrder.verify(mockDelegate).proxy()
+    inOrder.verify(mockDelegate).sslContext()
+    inOrder.verify(mockDelegate).sslParameters()
+    inOrder.verify(mockDelegate).authenticator()
+    inOrder.verify(mockDelegate).version()
+    inOrder.verify(mockDelegate).executor()
+    inOrder.verify(mockDelegate).newWebSocketBuilder()
+  }
+
+  @Test
+  fun `Should not allow insecure requests`() {
+    //given
+    val mockBuilderDelegate = mock(HttpClient.Builder::class.java)
+    given(mockBuilderDelegate.build()).willReturn(mockDelegate)
+
+    client = Builder(mockBuilderDelegate)
+      .allowInsecure(false)
+      .build()
+
+    val request = HttpRequest.newBuilder("HTTP://abc.local".toUri()).build()
+
+    //when + then
+    shouldThrowExactly<IllegalArgumentException> {
+      client.send(request, ofString())
+    }
   }
 
   @Nested

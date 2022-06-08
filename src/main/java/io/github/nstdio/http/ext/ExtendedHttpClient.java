@@ -45,15 +45,17 @@ public class ExtendedHttpClient extends HttpClient {
   private final CachingInterceptor cachingInterceptor;
 
   private final HttpClient delegate;
+  private final boolean allowInsecure;
 
   ExtendedHttpClient(HttpClient delegate, Cache cache, Clock clock) {
-    this(delegate, cache, false, clock);
+    this(delegate, cache, false, true, clock);
   }
 
-  ExtendedHttpClient(HttpClient delegate, Cache cache, boolean transparentEncoding, Clock clock) {
+  ExtendedHttpClient(HttpClient delegate, Cache cache, boolean transparentEncoding, boolean allowInsecure, Clock clock) {
     this.delegate = delegate;
     this.cachingInterceptor = cache instanceof NullCache ? null : new CachingInterceptor(cache, clock);
     this.compressionInterceptor = transparentEncoding ? new CompressionInterceptor() : null;
+    this.allowInsecure = allowInsecure;
   }
 
   /**
@@ -160,6 +162,10 @@ public class ExtendedHttpClient extends HttpClient {
   }
 
   private <T> CompletableFuture<HttpResponse<T>> send0(HttpRequest request, BodyHandler<T> bodyHandler, Sender<T> sender) {
+    if (!allowInsecure && "http".equalsIgnoreCase(request.uri().getScheme())) {
+      throw new IllegalArgumentException("Client does not allow insecure HTTP requests.");
+    }
+
     Chain<T> chain = buildAndExecute(RequestContext.of(request, bodyHandler));
     FutureHandler<T> handler = chain.futureHandler();
 
@@ -223,6 +229,7 @@ public class ExtendedHttpClient extends HttpClient {
   public static class Builder implements HttpClient.Builder {
     private final HttpClient.Builder delegate;
     private boolean transparentEncoding;
+    private boolean allowInsecure = true;
     private Cache cache = Cache.noop();
 
     Builder(HttpClient.Builder delegate) {
@@ -349,11 +356,23 @@ public class ExtendedHttpClient extends HttpClient {
       return this;
     }
 
+    /**
+     * Sets the flag whether client accept requests with {@code http} scheme. Default is {@code true}.
+     *
+     * @param allowInsecure Whether accept insecure {@code http} scheme or not.
+     *
+     * @return builder itself.
+     */
+    public Builder allowInsecure(boolean allowInsecure) {
+      this.allowInsecure = allowInsecure;
+      return this;
+    }
+
     @Override
     public ExtendedHttpClient build() {
       HttpClient client = delegate.build();
 
-      return new ExtendedHttpClient(client, cache, transparentEncoding, Clock.systemUTC());
+      return new ExtendedHttpClient(client, cache, transparentEncoding, allowInsecure, Clock.systemUTC());
     }
   }
 }

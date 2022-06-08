@@ -1,18 +1,36 @@
 # Changelog
+
 All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.3...HEAD)
 
+### ⭐ Features
+
+- Flag to disable insecure HTTP requests via
+  ExtendedHttpClient. ([bfbdcac](https://github.com/nstdio/http-client-ext/commit/bfbdcacb07e49ab460cd27cef66b329cd19222a6))
+
+### ♻️ Improvements
+
+- Reformat code. ([e9ac5c9](https://github.com/nstdio/http-client-ext/commit/e9ac5c939c0c28d946af9b188c83578f190e5dac))
+
 ## [v2.1.3](https://github.com/nstdio/http-client-ext/compare/v2.1.2...v2.1.3)
 
-### ⭐  Features
- -  Cache interface now extends Closeable ([2e9076a](https://github.com/nstdio/http-client-ext/commit/2e9076a7ae337c55c5817d15ddab9c8e9e3e5bb5))
+### ⭐ Features
+
+- Cache interface now extends
+  Closeable ([2e9076a](https://github.com/nstdio/http-client-ext/commit/2e9076a7ae337c55c5817d15ddab9c8e9e3e5bb5))
+
 ### ♻️ Improvements
- -  Improve cache write. ([b7f1289](https://github.com/nstdio/http-client-ext/commit/b7f128900372ee033aaef79b11ab09ed65f5c0ce))
+
+- Improve cache
+  write. ([b7f1289](https://github.com/nstdio/http-client-ext/commit/b7f128900372ee033aaef79b11ab09ed65f5c0ce))
+
 ## [v2.1.2](https://github.com/nstdio/http-client-ext/compare/v2.1.1...v2.1.2)
 
-### 🐞  Bug Fixes
- -  NPE when no `Content-Encoding` header present. ([b3afc61](https://github.com/nstdio/http-client-ext/commit/b3afc610c593024c013185ba93a3a3e7988bd9ca))
+### 🐞 Bug Fixes
+
+- NPE when no `Content-Encoding` header
+  present. ([b3afc61](https://github.com/nstdio/http-client-ext/commit/b3afc610c593024c013185ba93a3a3e7988bd9ca))
 ### ♻️ Improvements
  -  **perf**  Tune decompression performance. ([1c3c581](https://github.com/nstdio/http-client-ext/commit/1c3c581f52db95cf4d88bc6dcea9e420b3015b5f))
 ## [v2.1.1](https://github.com/nstdio/http-client-ext/compare/v2.1.0...v2.1.1)
