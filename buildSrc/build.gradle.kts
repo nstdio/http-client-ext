@@ -27,7 +27,7 @@ dependencies {
     implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
     implementation("net.researchgate:gradle-release:2.8.1")
     implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.0")
     implementation("me.champeau.jmh:jmh-gradle-plugin:0.6.6")
     implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.71.9") {
         isTransitive = false
