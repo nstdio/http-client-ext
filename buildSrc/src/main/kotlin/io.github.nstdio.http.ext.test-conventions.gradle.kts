@@ -113,7 +113,7 @@ dependencies {
   testImplementation("com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.10")
 
   testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
-  testImplementation("com.tngtech.archunit:archunit-junit5:0.23.1")
+  testImplementation("com.tngtech.archunit:archunit-junit5:1.0.0-rc1")
 
   spiDeps.forEach { spiTestImplementation(it) }
   spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")
