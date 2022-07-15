@@ -72,7 +72,7 @@ tasks.withType<Test> {
 
 val junitVersion = "5.8.2"
 val assertJVersion = "3.22.0"
-val kotestAssertionsVersion = "5.2.3"
+val kotestAssertionsVersion = "5.3.2"
 val mockitoVersion = "4.4.0"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "1.7.36"
