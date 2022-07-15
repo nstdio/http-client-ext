@@ -70,7 +70,7 @@ tasks.withType<Test> {
   }
 }
 
-val junitVersion = "5.8.2"
+val junitVersion = "5.9.0-RC1"
 val assertJVersion = "3.22.0"
 val kotestAssertionsVersion = "5.3.2"
 val mockitoVersion = "4.4.0"
