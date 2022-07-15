@@ -22,6 +22,9 @@ import java.util.List;
 public class IdentityCompressionFactory extends CompressionFactoryBase {
   private final List<String> supported = List.of("identity");
 
+  public IdentityCompressionFactory() {
+  }
+
   @Override
   public List<String> supported() {
     return supported;

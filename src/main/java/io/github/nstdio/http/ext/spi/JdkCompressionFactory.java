@@ -25,6 +25,9 @@ import java.util.zip.InflaterInputStream;
 public class JdkCompressionFactory implements CompressionFactory {
   private final List<String> supportedTypes = List.of("gzip", "x-gzip", "deflate");
 
+  public JdkCompressionFactory() {
+  }
+
   @Override
   public List<String> supported() {
     return supportedTypes;

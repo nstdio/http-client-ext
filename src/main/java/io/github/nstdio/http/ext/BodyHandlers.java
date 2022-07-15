@@ -73,6 +73,13 @@ public final class BodyHandlers {
     private boolean failOnUnknownDirectives = true;
 
     /**
+     * Creates the {@code DecompressingBodyHandlerBuilder} instance with {@link #failOnUnsupportedDirectives} and
+     * {@link #failOnUnknownDirectives} enabled.
+     */
+    public DecompressingBodyHandlerBuilder() {
+    }
+
+    /**
      * Sets whether throw exception when compression directive not supported or not.
      *
      * @param failOnUnsupportedDirectives Whether throw exception when compression directive not supported or not
