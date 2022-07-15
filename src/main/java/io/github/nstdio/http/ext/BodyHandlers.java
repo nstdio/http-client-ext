@@ -103,6 +103,13 @@ public final class BodyHandlers {
       return this;
     }
 
+    /**
+     * Toggles both {@link #failOnUnsupportedDirectives} and {@link #failOnUnknownDirectives}.
+     *
+     * @param lenient The lenient mode.
+     *
+     * @return this for fluent chaining.
+     */
     public DecompressingBodyHandlerBuilder lenient(boolean lenient) {
       return failOnUnsupportedDirectives(!lenient)
           .failOnUnsupportedDirectives(!lenient);
