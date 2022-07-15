@@ -19,10 +19,10 @@ plugins {
 }
 
 val jmhVersion = "1.35"
+val jmhArtifactIds = listOf("jmh-core", "jmh-generator-annprocess", "jmh-generator-bytecode")
 
 dependencies {
-  jmh ("org.openjdk.jmh:jmh-core:$jmhVersion")
-  jmh ("org.openjdk.jmh:jmh-generator-annprocess:$jmhVersion")
+  jmhArtifactIds.forEach { jmh("org.openjdk.jmh:$it:$jmhVersion") }
 }
 
 jmh {
