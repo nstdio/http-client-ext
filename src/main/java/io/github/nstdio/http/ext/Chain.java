@@ -16,6 +16,7 @@
 
 package io.github.nstdio.http.ext;
 
+import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Optional;
 
@@ -52,6 +53,10 @@ class Chain<T> {
     return of(ctx, futureHandler, Optional.of(response));
   }
 
+  Chain<T> withRequest(HttpRequest request) {
+    return of(ctx.withRequest(request), futureHandler, response);
+  }
+
   RequestContext ctx() {
     return this.ctx;
   }
@@ -62,5 +67,9 @@ class Chain<T> {
 
   Optional<HttpResponse<T>> response() {
     return this.response;
+  }
+
+  HttpRequest request() {
+    return ctx.request();
   }
 }

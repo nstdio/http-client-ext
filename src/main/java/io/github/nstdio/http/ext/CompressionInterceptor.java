@@ -22,9 +22,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-import static io.github.nstdio.http.ext.ExtendedHttpClient.toBuilder;
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_ENCODING;
 import static io.github.nstdio.http.ext.Headers.HEADER_CONTENT_LENGTH;
+import static io.github.nstdio.http.ext.HttpRequests.toBuilder;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
 
@@ -64,10 +64,9 @@ class CompressionInterceptor implements Interceptor {
       return request;
     }
 
-    HttpRequest.Builder builder = toBuilder(request);
-    builder.setHeader("Accept-Encoding", supported);
-
-    return builder.build();
+    return toBuilder(request)
+        .setHeader("Accept-Encoding", supported)
+        .build();
   }
 
   private <T> DecompressingBodyHandler<T> decompressingHandler(HttpResponse.BodyHandler<T> bodyHandler) {
