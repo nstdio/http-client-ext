@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.Authenticator;
 import java.net.CookieHandler;
 import java.net.ProxySelector;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.BodyPublishers;
@@ -162,8 +163,8 @@ public class ExtendedHttpClient extends HttpClient {
   }
 
   private <T> CompletableFuture<HttpResponse<T>> send0(HttpRequest request, BodyHandler<T> bodyHandler, Sender<T> sender) {
-    if (!allowInsecure && "http".equalsIgnoreCase(request.uri().getScheme())) {
-      throw new IllegalArgumentException("Client does not allow insecure HTTP requests.");
+    if (!allowInsecure) {
+      checkInsecureScheme(request);
     }
 
     Chain<T> chain = buildAndExecute(RequestContext.of(request, bodyHandler));
@@ -174,6 +175,13 @@ public class ExtendedHttpClient extends HttpClient {
         .orElseGet(() -> sender.apply(chain.ctx()));
 
     return future.isDone() ? future.handle(handler) : future.handleAsync(handler);
+  }
+
+  private void checkInsecureScheme(HttpRequest request) {
+    URI uri = request.uri();
+    if ("http".equalsIgnoreCase(uri.getScheme())) {
+      throw new IllegalArgumentException("Client does not allow insecure HTTP requests. URI: " + uri);
+    }
   }
 
   private <T> Chain<T> buildAndExecute(RequestContext ctx) {

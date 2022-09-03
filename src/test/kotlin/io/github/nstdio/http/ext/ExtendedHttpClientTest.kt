@@ -17,6 +17,8 @@ package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.ExtendedHttpClient.Builder
 import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.should
+import io.kotest.matchers.string.shouldEndWith
 import io.kotest.matchers.throwable.shouldHaveCause
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
@@ -117,15 +119,18 @@ internal class ExtendedHttpClientTest {
     val mockBuilderDelegate = mock(HttpClient.Builder::class.java)
     given(mockBuilderDelegate.build()).willReturn(mockDelegate)
 
+    val uri = "HTTP://abc.local"
     client = Builder(mockBuilderDelegate)
       .allowInsecure(false)
       .build()
 
-    val request = HttpRequest.newBuilder("HTTP://abc.local".toUri()).build()
+    val request = HttpRequest.newBuilder(uri.toUri()).build()
 
     //when + then
     shouldThrowExactly<IllegalArgumentException> {
       client.send(request, ofString())
+    }.should {
+      it.message.shouldEndWith("URI: $uri")
     }
   }
 
