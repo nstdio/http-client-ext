@@ -19,6 +19,11 @@ import io.github.nstdio.http.ext.Assertions.assertThat
 import io.github.nstdio.http.ext.Assertions.awaitFor
 import io.github.nstdio.http.ext.Compression.deflate
 import io.github.nstdio.http.ext.Compression.gzip
+import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.maps.shouldContain
+import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.should
+import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.next
 import io.kotest.property.arbitrary.string
@@ -28,7 +33,10 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
-import java.net.http.HttpResponse
+import java.net.http.HttpResponse.BodyHandlers
+import java.net.http.HttpResponse.BodyHandlers.discarding
+import java.util.*
+import java.util.concurrent.LinkedBlockingDeque
 
 @MockWebServerTest
 internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: MockWebServer) {
@@ -62,7 +70,7 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
         .build()
 
       //when + then
-      val r1 = client.send(request1, HttpResponse.BodyHandlers.ofString())
+      val r1 = client.send(request1, BodyHandlers.ofString())
       assertThat(r1)
         .isNetwork
         .hasStatusCode(200)
@@ -70,7 +78,7 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
         .hasBody(expectedBody)
         .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
       awaitFor {
-        val r2 = client.send(request2, HttpResponse.BodyHandlers.ofString())
+        val r2 = client.send(request2, BodyHandlers.ofString())
         assertThat(r2)
           .isCached
           .hasStatusCode(200)
@@ -103,8 +111,8 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
       val request = HttpRequest.newBuilder(testUri).build()
 
       //when
-      val r1 = client.send(request, HttpResponse.BodyHandlers.ofString())
-      val r2 = client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).join()
+      val r1 = client.send(request, BodyHandlers.ofString())
+      val r2 = client.sendAsync(request, BodyHandlers.ofString()).join()
 
       //then
       assertThat(r1)
@@ -117,6 +125,65 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
         .hasStatusCode(200)
         .hasBody(expectedBody)
         .hasNoHeader(Headers.HEADER_CONTENT_ENCODING)
+    }
+  }
+
+  @Nested
+  internal inner class DefaultHeadersTest {
+    @Test
+    fun `Should add default headers`() {
+      //given
+      val client: HttpClient = ExtendedHttpClient.newBuilder()
+        .defaultHeader("X-Testing-Value", "1")
+        .defaultHeader("X-Testing-Supplier") { "2" }
+        .build()
+
+      val request = HttpRequest.newBuilder(mockWebServer.url("/test").toUri()).build()
+      mockWebServer.enqueue(MockResponse().setResponseCode(200))
+
+      //when
+      val response = client.send(request, discarding())
+
+      //then
+      response.request().headers().map().should {
+        it.shouldContain("X-Testing-Value", listOf("1"))
+        it.shouldContain("X-Testing-Supplier", listOf("2"))
+      }
+
+      val actualRequest = mockWebServer.takeRequest()
+      actualRequest.headers.should {
+        it["X-Testing-Value"]
+          .shouldNotBeNull()
+          .shouldBe("1")
+
+        it["X-Testing-Supplier"]
+          .shouldNotBeNull()
+          .shouldBe("2")
+      }
+    }
+
+    @Test
+    fun `Should resolve supplier by each call`() {
+      //given
+      val requestIds = (0..3).map { UUID.randomUUID().toString() }
+      val queue = LinkedBlockingDeque(requestIds)
+
+      val headerName = "X-Testing-Supplier-Resolved"
+      val client: HttpClient = ExtendedHttpClient.newBuilder()
+        .defaultHeader(headerName) { queue.pop() }
+        .build()
+
+      val request = HttpRequest.newBuilder(mockWebServer.url("/test").toUri()).build()
+      mockWebServer.enqueue(MockResponse().setResponseCode(200), requestIds.size)
+
+      //when
+      val headerValues = requestIds
+        .map { client.send(request, discarding()) }
+        .map { mockWebServer.takeRequest() }
+        .map { it.headers[headerName] }
+
+      //then
+      headerValues.shouldContainExactly(requestIds)
     }
   }
 }

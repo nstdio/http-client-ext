@@ -29,9 +29,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static io.github.nstdio.http.ext.ExtendedHttpClient.toBuilder;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
+import static io.github.nstdio.http.ext.HttpRequests.toBuilder;
 import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
 import static io.github.nstdio.http.ext.Responses.isSafeRequest;
 import static io.github.nstdio.http.ext.Responses.isSuccessful;

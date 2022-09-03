@@ -17,13 +17,15 @@ package io.github.nstdio.http.ext;
 
 import java.net.http.HttpHeaders;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.BiPredicate;
 
+import static io.github.nstdio.http.ext.Headers.ALLOW_ALL;
+
 class HttpHeadersBuilder {
-  private static final BiPredicate<String, String> ALWAYS_ALLOW = (s, s2) -> true;
   private final TreeMap<String, List<String>> headersMap;
 
   HttpHeadersBuilder() {
@@ -92,8 +94,12 @@ class HttpHeadersBuilder {
     return this;
   }
 
+  Map<String, List<String>> map() {
+    return Collections.unmodifiableMap(headersMap);
+  }
+
   HttpHeaders build() {
-    return build(ALWAYS_ALLOW);
+    return build(ALLOW_ALL);
   }
 
   HttpHeaders build(BiPredicate<String, String> filter) {

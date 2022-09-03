@@ -25,37 +25,50 @@ import java.net.ProxySelector;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpRequest.BodyPublishers;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
 import java.net.http.HttpResponse.PushPromiseHandler;
 import java.net.http.WebSocket;
 import java.time.Clock;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 public class ExtendedHttpClient extends HttpClient {
   private final CompressionInterceptor compressionInterceptor;
   private final CachingInterceptor cachingInterceptor;
+  private final HeadersAddingInterceptor headersAddingInterceptor;
 
   private final HttpClient delegate;
   private final boolean allowInsecure;
 
   ExtendedHttpClient(HttpClient delegate, Cache cache, Clock clock) {
-    this(delegate, cache, false, true, clock);
+    this(
+        null,
+        cache instanceof NullCache ? null : new CachingInterceptor(cache, clock),
+        null,
+        delegate,
+        true
+    );
   }
 
-  ExtendedHttpClient(HttpClient delegate, Cache cache, boolean transparentEncoding, boolean allowInsecure, Clock clock) {
+  private ExtendedHttpClient(CompressionInterceptor compressionInterceptor,
+                             CachingInterceptor cachingInterceptor,
+                             HeadersAddingInterceptor headersAddingInterceptor,
+                             HttpClient delegate, boolean allowInsecure) {
+    this.compressionInterceptor = compressionInterceptor;
+    this.cachingInterceptor = cachingInterceptor;
+    this.headersAddingInterceptor = headersAddingInterceptor;
     this.delegate = delegate;
-    this.cachingInterceptor = cache instanceof NullCache ? null : new CachingInterceptor(cache, clock);
-    this.compressionInterceptor = transparentEncoding ? new CompressionInterceptor() : null;
     this.allowInsecure = allowInsecure;
   }
 
@@ -78,20 +91,6 @@ public class ExtendedHttpClient extends HttpClient {
         .cache(Cache.newInMemoryCacheBuilder().build())
         .transparentEncoding(true)
         .build();
-  }
-
-  static HttpRequest.Builder toBuilder(HttpRequest r) {
-    var builder = HttpRequest.newBuilder();
-    builder
-        .uri(r.uri())
-        .method(r.method(), r.bodyPublisher().orElseGet(BodyPublishers::noBody))
-        .expectContinue(r.expectContinue());
-
-    r.version().ifPresent(builder::version);
-    r.timeout().ifPresent(builder::timeout);
-    r.headers().map().forEach((name, values) -> values.forEach(value -> builder.header(name, value)));
-
-    return builder;
   }
 
   //<editor-fold desc="Delegate Methods">
@@ -186,10 +185,15 @@ public class ExtendedHttpClient extends HttpClient {
 
   private <T> Chain<T> buildAndExecute(RequestContext ctx) {
     Chain<T> chain = Chain.of(ctx);
-    chain = compressionInterceptor != null ? compressionInterceptor.intercept(chain) : chain;
-    chain = cachingInterceptor != null ? cachingInterceptor.intercept(chain) : chain;
+    chain = possiblyApply(compressionInterceptor, chain);
+    chain = possiblyApply(cachingInterceptor, chain);
+    chain = possiblyApply(headersAddingInterceptor, chain);
 
     return chain;
+  }
+
+  private <T> Chain<T> possiblyApply(Interceptor i, Chain<T> c) {
+    return i != null ? i.intercept(c) : c;
   }
 
   /**
@@ -239,6 +243,8 @@ public class ExtendedHttpClient extends HttpClient {
     private boolean transparentEncoding;
     private boolean allowInsecure = true;
     private Cache cache = Cache.noop();
+    private Map<String, String> headers = Map.of();
+    private Map<String, Supplier<String>> resolvableHeaders = Map.of();
 
     Builder(HttpClient.Builder delegate) {
       this.delegate = delegate;
@@ -376,11 +382,58 @@ public class ExtendedHttpClient extends HttpClient {
       return this;
     }
 
+    /**
+     * Provided header will be included on each request.
+     *
+     * @param name  The header name.
+     * @param value The header value.
+     *
+     * @return builder itself.
+     */
+    public Builder defaultHeader(String name, String value) {
+      Objects.requireNonNull(name);
+      Objects.requireNonNull(value);
+
+      if (headers.isEmpty()) {
+        headers = new HashMap<>(1);
+      }
+      headers.put(name, value);
+
+      return this;
+    }
+
+    /**
+     * Provided header will be included on each request. Note that {@code valueSupplier} will be resolved before each
+     * request.
+     *
+     * @param name          The header name.
+     * @param valueSupplier The header value supplier.
+     *
+     * @return builder itself.
+     */
+    public Builder defaultHeader(String name, Supplier<String> valueSupplier) {
+      Objects.requireNonNull(name);
+      Objects.requireNonNull(valueSupplier);
+
+      if (resolvableHeaders.isEmpty()) {
+        resolvableHeaders = new HashMap<>(1);
+      }
+      resolvableHeaders.put(name, valueSupplier);
+
+      return this;
+    }
+
     @Override
     public ExtendedHttpClient build() {
       HttpClient client = delegate.build();
 
-      return new ExtendedHttpClient(client, cache, transparentEncoding, allowInsecure, Clock.systemUTC());
+      return new ExtendedHttpClient(
+          transparentEncoding ? new CompressionInterceptor() : null,
+          cache instanceof NullCache ? null : new CachingInterceptor(cache, Clock.systemUTC()),
+          new HeadersAddingInterceptor(Map.copyOf(headers), Map.copyOf(resolvableHeaders)),
+          client,
+          allowInsecure
+      );
     }
   }
 }
