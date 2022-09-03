@@ -34,4 +34,38 @@ class PredicatesTest {
       .accepts(r1)
       .rejects(r2)
   }
+
+  @Test
+  fun `Should accept or reject with header name and value`() {
+    //given
+    val r = StaticHttpResponse.builder<Any>()
+      .statusCode(200)
+      .headers(HttpHeadersBuilder().add("Content-Type", "text/plain").build())
+      .build()
+
+    //when + then
+    assertThat(Predicates.hasHeader<Any>("Content-Type", "text/plain"))
+      .accepts(r)
+
+    assertThat(Predicates.hasHeader<Any>("Content-Type", "text/plain;charset=UTF-8"))
+      .rejects(r)
+    assertThat(Predicates.hasHeader<Any>("Content-Length", "12"))
+      .rejects(r)
+  }
+
+  @Test
+  fun `Should accept or reject with header name`() {
+    //given
+    val r = StaticHttpResponse.builder<Any>()
+      .statusCode(200)
+      .headers(HttpHeadersBuilder().add("Content-Type", "*/*").build())
+      .build()
+
+    //when + then
+    assertThat(Predicates.hasHeader<Any>("Content-Type"))
+      .accepts(r)
+
+    assertThat(Predicates.hasHeader<Any>("Content-Length"))
+      .rejects(r)
+  }
 }

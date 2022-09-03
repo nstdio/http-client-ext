@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Objects;
 import java.util.function.Predicate;
 
@@ -44,5 +45,33 @@ public final class Predicates {
   public static Predicate<HttpRequest> uri(URI uri) {
     Objects.requireNonNull(uri);
     return r -> r.uri().equals(uri);
+  }
+
+  /**
+   * The {@code Predicate} that matches only {@code HttpResponse} with given header.
+   *
+   * @param name  The header name.
+   * @param value The header value.
+   *
+   * @return The {@code Predicate} that matches {@code HttpResponse} with given header.
+   */
+  public static <T> Predicate<HttpResponse<T>> hasHeader(String name, String value) {
+    Objects.requireNonNull(name);
+    Objects.requireNonNull(value);
+
+    return r -> r.headers().firstValue(name).filter(value::equals).isPresent();
+  }
+
+  /**
+   * The {@code Predicate} that matches only {@code HttpRequest} with given header.
+   *
+   * @param name The header name.
+   *
+   * @return The {@code Predicate} that matches {@code HttpRequest} with given header.
+   */
+  public static <T> Predicate<HttpResponse<T>> hasHeader(String name) {
+    Objects.requireNonNull(name);
+
+    return r -> r.headers().firstValue(name).isPresent();
   }
 }
