@@ -2,10 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.1.3...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.2.0...HEAD)
+
+## [v2.2.0](https://github.com/nstdio/http-client-ext/compare/v2.1.3...v2.2.0)
 
 ### ⭐ Features
 
+- Add possibility to add default headers to
+  request. ([0dd3ffc](https://github.com/nstdio/http-client-ext/commit/0dd3ffc96e1dd27b7290c204a0f7931174a3114d))
 - Add Predicates to match header value and
   presence. ([adaa821](https://github.com/nstdio/http-client-ext/commit/adaa8213a04512ebf21689c3704ca98820688399))
 - Flag to disable insecure HTTP requests via
@@ -58,14 +62,22 @@ All notable changes to this project will be documented in this file.
 
 - Optimize encrypted file header length
   reading ([7cd8c1f](https://github.com/nstdio/http-client-ext/commit/7cd8c1fabd15b28f91c02dea4aaa9dd80c5d489e))
- -  **perf**  Store Cipher instance in ThreadLocal. ([1e1a5a1](https://github.com/nstdio/http-client-ext/commit/1e1a5a1443dd50f6148df1a936d3f43fadee96f7))
+- **perf**  Store Cipher instance in
+  ThreadLocal. ([1e1a5a1](https://github.com/nstdio/http-client-ext/commit/1e1a5a1443dd50f6148df1a936d3f43fadee96f7))
+
 ## [v2.1.0](https://github.com/nstdio/http-client-ext/compare/v2.0.0...v2.1.0)
 
-### ⭐  Features
- -  Optional encryption for disk cache. ([3a1af2d](https://github.com/nstdio/http-client-ext/commit/3a1af2d7ffd832210cf588483699911b81817a15))
- -  Disk cache supports Gson as well. ([5f26718](https://github.com/nstdio/http-client-ext/commit/5f26718d22a88173efebee56e2855c13652744db))
+### ⭐ Features
+
+- Optional encryption for disk
+  cache. ([3a1af2d](https://github.com/nstdio/http-client-ext/commit/3a1af2d7ffd832210cf588483699911b81817a15))
+- Disk cache supports Gson as
+  well. ([5f26718](https://github.com/nstdio/http-client-ext/commit/5f26718d22a88173efebee56e2855c13652744db))
+
 ### ♻️ Improvements
- -  **perf**  Optimize header value splitting. ([e1873c7](https://github.com/nstdio/http-client-ext/commit/e1873c7ab7694e15e69bec4186b0c7ce006debe5))
+
+- **perf**  Optimize header value
+  splitting. ([e1873c7](https://github.com/nstdio/http-client-ext/commit/e1873c7ab7694e15e69bec4186b0c7ce006debe5))
  -  **doc**  Add changelog. ([9ae5bcf](https://github.com/nstdio/http-client-ext/commit/9ae5bcf5ec4730d36e037401a8da168af76ed7b4))
  -  **doc**  Polish Javadoc. ([fbf12cc](https://github.com/nstdio/http-client-ext/commit/fbf12cc75f69e13de9f02bcdae339eb01487e165))
  -  **test**  Add test for asserting exception in JdkCompressionFactory. ([4498f0d](https://github.com/nstdio/http-client-ext/commit/4498f0d1fa43c10e1b84ca85e9a3221666a89861))
