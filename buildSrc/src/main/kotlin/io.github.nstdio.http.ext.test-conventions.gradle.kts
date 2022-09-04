@@ -80,6 +80,7 @@ val jacksonVersion = "2.13.3"
 val brotli4JVersion = "1.8.0"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.9.0"
+val equalsverifierVersion = "3.10.1"
 
 val jsonLibs = mapOf(
   "jackson" to "com.fasterxml.jackson.core",
@@ -112,7 +113,7 @@ dependencies {
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
   testImplementation("com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.10")
 
-  testImplementation("nl.jqno.equalsverifier:equalsverifier:3.10")
+  testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion`")
   testImplementation("com.tngtech.archunit:archunit-junit5:1.0.0-rc1")
 
   spiDeps.forEach { spiTestImplementation(it) }
