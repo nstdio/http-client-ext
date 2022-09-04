@@ -73,7 +73,7 @@ tasks.withType<Test> {
 val junitVersion = "5.9.0"
 val assertJVersion = "3.23.1"
 val kotestAssertionsVersion = "5.4.2"
-val mockitoVersion = "4.6.1"
+val mockitoVersion = "4.7.0"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "1.7.36"
 val jacksonVersion = "2.13.3"
@@ -113,7 +113,7 @@ dependencies {
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
   testImplementation("com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.10")
 
-  testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion`")
+  testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion")
   testImplementation("com.tngtech.archunit:archunit-junit5:1.0.0-rc1")
 
   spiDeps.forEach { spiTestImplementation(it) }
