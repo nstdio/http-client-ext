@@ -1,8 +1,13 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.2.0...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.2.1...HEAD)
 
+## [v2.2.1](https://github.com/nstdio/http-client-ext/compare/v2.2.0...v2.2.1)
+
+### 🐞  Bug Fixes
+ -  Safely remove entry from the cache. ([cfbb458](https://github.com/nstdio/http-client-ext/commit/cfbb4586cf9f48fa6f0733c54e98e245b8a79b31))
+ -  Amend cache holder map's loadFactor. ([8dad0df](https://github.com/nstdio/http-client-ext/commit/8dad0df4106f54a3ded249215eedc0896d9134b6))
 ## [v2.2.0](https://github.com/nstdio/http-client-ext/compare/v2.1.3...v2.2.0)
 
 ### ⭐  Features
