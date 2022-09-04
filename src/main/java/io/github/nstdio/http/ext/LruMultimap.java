@@ -133,8 +133,8 @@ class LruMultimap<K, V> {
     List<V> vs = m.get(k);
 
     V v = null;
-    int i = idxFn.applyAsInt(vs);
-    if (i != -1) {
+    int i;
+    if (vs != null && (i = idxFn.applyAsInt(vs)) >= 0 && i < vs.size()) {
       v = vs.remove(i);
       notifyEvicted(v);
       size--;

@@ -17,12 +17,16 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.Assertions.assertThat
+import io.kotest.matchers.nulls.shouldBeNull
+import io.kotest.matchers.shouldBe
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.verifyNoMoreInteractions
 import java.util.function.Consumer
 import java.util.function.ToIntFunction
@@ -180,7 +184,7 @@ class LruMultimapTest {
 
     //then
     assertThat(map).isEmpty
-    Mockito.verifyNoInteractions(mockEl)
+    verifyNoInteractions(mockEl)
   }
 
   @Test
@@ -217,7 +221,7 @@ class LruMultimapTest {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun mockConsumer() = Mockito.mock(Consumer::class.java) as Consumer<String?>
+  private fun mockConsumer() = mock(Consumer::class.java) as Consumer<String?>
 
   @Test
   fun shouldEvictAllForNonExistingKey() {
@@ -232,6 +236,27 @@ class LruMultimapTest {
 
     //then
     assertThat(map).hasMapSize(1).hasSize(2)
-    Mockito.verifyNoInteractions(mockEl)
+    verifyNoInteractions(mockEl)
+  }
+
+  @Test
+  fun `Should remove`() {
+    //given
+    val map = LruMultimap<String, String>(8, null)
+    val nonExistingKeyFn = mock(ToIntFunction::class.java) as ToIntFunction<List<String>>
+
+    //when
+    map.putSingle("a", "1", addFn)
+    map.putSingle("a", "2", addFn)
+    map.putSingle("b", "2", addFn)
+
+
+    //then
+    map.remove("a") { 2 }.shouldBeNull()
+    map.remove("a") { -1 }.shouldBeNull()
+    map.remove("a") { 0 }.shouldBe("2")
+    map.remove("b") { 0 }.shouldBe("2")
+    map.remove("c", nonExistingKeyFn).shouldBeNull()
+    verifyNoInteractions(nonExistingKeyFn)
   }
 }
