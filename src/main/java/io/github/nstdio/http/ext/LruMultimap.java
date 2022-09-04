@@ -32,7 +32,7 @@ class LruMultimap<K, V> {
   private int size;
 
   LruMultimap(int maxSize, Consumer<V> evictListener) {
-    m = new LinkedHashMap<>(maxSize + 1, 0.75f, true);
+    m = new LinkedHashMap<>(maxSize + 1, 1.0f, true);
     this.maxSize = maxSize;
     this.evictListener = evictListener;
   }
