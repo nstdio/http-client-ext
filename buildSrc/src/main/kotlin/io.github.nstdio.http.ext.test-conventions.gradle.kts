@@ -77,7 +77,7 @@ val mockitoVersion = "4.6.1"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "1.7.36"
 val jacksonVersion = "2.13.3"
-val brotli4JVersion = "1.7.1"
+val brotli4JVersion = "1.8.0"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.9.0"
 
