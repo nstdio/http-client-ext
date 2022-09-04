@@ -132,15 +132,7 @@ Generator.subset(jsonLibs.keys)
       classpath = sourceSetsSpiTest.runtimeClasspath
 
       doFirst {
-        val toExclude = classpath.filter { file ->
-          it?.any { file.absolutePath.contains(it) } ?: false
-        }
-        if (!toExclude.isEmpty) {
-          logger.info("Excluding jars from classpath: ")
-          toExclude.forEach {
-            logger.info("    - ${it.name}")
-          }
-        }
+        val toExclude = classpath.filter { file -> it?.any { file.absolutePath.contains(it) } ?: false }
         classpath -= toExclude
       }
     }
