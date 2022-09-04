@@ -20,10 +20,8 @@ import io.github.nstdio.http.ext.Assertions.awaitFor
 import io.github.nstdio.http.ext.Compression.deflate
 import io.github.nstdio.http.ext.Compression.gzip
 import io.kotest.matchers.collections.shouldContainExactly
-import io.kotest.matchers.maps.shouldContain
-import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.maps.shouldContainAll
 import io.kotest.matchers.should
-import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.next
 import io.kotest.property.arbitrary.string
@@ -37,6 +35,7 @@ import java.net.http.HttpResponse.BodyHandlers
 import java.net.http.HttpResponse.BodyHandlers.discarding
 import java.util.*
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.function.Supplier
 
 @MockWebServerTest
 internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: MockWebServer) {
@@ -133,11 +132,15 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
     @Test
     fun `Should add default headers`() {
       //given
-      val client: HttpClient = ExtendedHttpClient.newBuilder()
-        .defaultHeader("X-Testing-Value", "1")
-        .defaultHeader("X-Testing-Supplier") { "2" }
-        .build()
+      val builder = ExtendedHttpClient.newBuilder()
 
+      val headers = (0..4).associate { "X-Testing-Value-$it" to it.toString() }
+      val headersSuppliers = (0..4).associate { "X-Testing-Supplier-$it" to Supplier { it.toString() } }
+
+      headers.forEach { (k, v) -> builder.defaultHeader(k, v) }
+      headersSuppliers.forEach { (k, v) -> builder.defaultHeader(k, v) }
+
+      val client = builder.build()
       val request = HttpRequest.newBuilder(mockWebServer.url("/test").toUri()).build()
       mockWebServer.enqueue(MockResponse().setResponseCode(200))
 
@@ -146,19 +149,14 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
 
       //then
       response.request().headers().map().should {
-        it.shouldContain("X-Testing-Value", listOf("1"))
-        it.shouldContain("X-Testing-Supplier", listOf("2"))
+        it.shouldContainAll(headers.toMultimap())
+        it.shouldContainAll(headersSuppliers.withResolvedValues().toMultimap())
       }
 
       val actualRequest = mockWebServer.takeRequest()
-      actualRequest.headers.should {
-        it["X-Testing-Value"]
-          .shouldNotBeNull()
-          .shouldBe("1")
-
-        it["X-Testing-Supplier"]
-          .shouldNotBeNull()
-          .shouldBe("2")
+      actualRequest.headers.toMap().should {
+        it.shouldContainAll(headers)
+        it.shouldContainAll(headersSuppliers.withResolvedValues().toMap())
       }
     }
 
@@ -186,4 +184,10 @@ internal class ExtendedHttpClientIntegrationTest(private val mockWebServer: Mock
       headerValues.shouldContainExactly(requestIds)
     }
   }
+
+  private fun <K, V> Map<K, V>.toMultimap(): Map<K, List<V>> =
+    asSequence().map { e -> e.key to listOf(e.value) }.toMap()
+
+  private fun <K, V> Map<K, Supplier<V>>.withResolvedValues(): Map<K, V> =
+    asSequence().map { e -> e.key to e.value.get() }.toMap()
 }
