@@ -1,3 +1,5 @@
+import io.github.nstdio.http.ext.ReadmeUpdateTask
+
 /*
  * Copyright (C) 2022 Edgar Asatryan
  *
@@ -15,29 +17,29 @@
  */
 
 plugins {
-    id("net.researchgate.release")
+  id("net.researchgate.release")
 
-    id("io.github.nstdio.http.ext.benchmark-conventions")
-    id("io.github.nstdio.http.ext.library-conventions")
-    id("io.github.nstdio.http.ext.test-conventions")
-    id("io.github.nstdio.http.ext.quality-conventions")
-    id("io.github.nstdio.http.ext.publish-conventions")
+  id("io.github.nstdio.http.ext.benchmark-conventions")
+  id("io.github.nstdio.http.ext.library-conventions")
+  id("io.github.nstdio.http.ext.test-conventions")
+  id("io.github.nstdio.http.ext.quality-conventions")
+  id("io.github.nstdio.http.ext.publish-conventions")
 }
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 release {
-    tagTemplate = "v\${version}"
-    with(propertyMissing("git") as net.researchgate.release.GitAdapter.GitConfig) {
-        requireBranch = "main"
-        pushToRemote = "origin"
-    }
+  tagTemplate.set("v\${version}")
+  git {
+    requireBranch.set("main")
+    pushToRemote.set("origin")
+  }
 }
 
-tasks.register("updateReadme", io.github.nstdio.http.ext.ReadmeUpdateTask::class)
+tasks.register("updateReadme", ReadmeUpdateTask::class)
 
 tasks.named("afterReleaseBuild") {
-    dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository", "updateReadme")
+  dependsOn("publishToSonatype", "closeAndReleaseSonatypeStagingRepository", "updateReadme")
 }
