@@ -27,7 +27,7 @@ jacoco {
 }
 
 spotbugs {
-  toolVersion.set("4.6.0")
+  toolVersion.set("4.7.2")
   effort.set(Effort.MAX_VALUE)
   excludeFilter.set(file("spotbugs.exclude.xml"))
 }
