@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext
 
-package io.github.nstdio.http.ext;
+import mockwebserver3.junit5.internal.MockWebServerExtension
+import org.junit.jupiter.api.extension.ExtendWith
 
-import mockwebserver3.junit5.internal.MockWebServerExtension;
-import org.junit.jupiter.api.extension.ExtendWith;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-@Target(ElementType.TYPE)
-@Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(MockWebServerExtension.class)
-public @interface MockWebServerTest {
-}
+@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.CLASS)
+@ExtendWith(MockWebServerExtension::class)
+annotation class MockWebServerTest 
