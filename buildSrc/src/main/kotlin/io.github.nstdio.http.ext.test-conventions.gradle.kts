@@ -171,11 +171,7 @@ configurations.names
   .forEach {
     configure(listOf(it)) {
       attributes {
-        @Suppress("UNCHECKED_CAST")
-        val forName = Class.forName("java.lang.Boolean") as Class<Boolean>
-        val value: Boolean = Boolean.valueOf("false") as Boolean
-
-        attribute(Attribute.of("javaModule", forName), value)
+        attribute(Attribute.of("javaModule", Boolean::class.java), Boolean.valueOf("false") as Boolean)
       }
     }
   }
