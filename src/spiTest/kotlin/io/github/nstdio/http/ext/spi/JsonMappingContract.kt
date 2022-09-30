@@ -16,6 +16,7 @@
 package io.github.nstdio.http.ext.spi
 
 import com.tngtech.archunit.thirdparty.com.google.common.reflect.TypeToken
+import io.kotest.assertions.json.shouldBeJsonObject
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldNotBeNull
 import org.assertj.core.api.Assertions.assertThat
@@ -24,8 +25,10 @@ import org.mockito.Mockito.atLeastOnce
 import org.mockito.Mockito.spy
 import org.mockito.Mockito.verify
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.io.InputStream
+import java.nio.charset.StandardCharsets.UTF_8
 
 internal interface JsonMappingContract {
   fun get(): JsonMapping
@@ -110,6 +113,20 @@ internal interface JsonMappingContract {
       .hasSize(2)
       .containsEntry("a", 1)
       .containsEntry("b", 2)
+  }
+
+  @Test
+  fun `Should write object as JSON`() {
+    //given
+    val obj = mapOf("a" to 1, "b" to 2)
+    val mapping = get()
+    val out = ByteArrayOutputStream()
+
+    //when
+    mapping.write(obj, out)
+
+    //then
+    out.toString(UTF_8).shouldBeJsonObject()
   }
 
   open class TestInputStream(private val inputStream: InputStream) : InputStream() {

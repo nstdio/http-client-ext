@@ -89,7 +89,7 @@ class InMemoryCache extends SizeConstrainedCache {
 
     @Override
     public void subscribeTo(Flow.Subscriber<List<ByteBuffer>> sub) {
-      Flow.Subscription subscription = new ByteArraySubscription(sub, body);
+      Flow.Subscription subscription = ByteArraySubscription.ofByteBufferList(sub, body);
       sub.onSubscribe(subscription);
     }
 

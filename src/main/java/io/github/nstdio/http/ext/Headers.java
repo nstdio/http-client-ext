@@ -41,6 +41,7 @@ class Headers {
   static final String HEADER_VARY = "Vary";
   static final String HEADER_CONTENT_ENCODING = "Content-Encoding";
   static final String HEADER_CONTENT_LENGTH = "Content-Length";
+  static final String HEADER_CONTENT_TYPE = "Content-Type";
   static final String HEADER_IF_MODIFIED_SINCE = "If-Modified-Since";
   static final String HEADER_IF_NONE_MATCH = "If-None-Match";
   static final String HEADER_CACHE_CONTROL = "Cache-Control";

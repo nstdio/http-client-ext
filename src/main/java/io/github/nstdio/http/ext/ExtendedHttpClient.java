@@ -47,6 +47,7 @@ public class ExtendedHttpClient extends HttpClient {
   private final CompressionInterceptor compressionInterceptor;
   private final CachingInterceptor cachingInterceptor;
   private final HeadersAddingInterceptor headersAddingInterceptor;
+  private final ContentTypeInterceptor contentTypeInterceptor;
 
   private final HttpClient delegate;
   private final boolean allowInsecure;
@@ -68,6 +69,7 @@ public class ExtendedHttpClient extends HttpClient {
     this.compressionInterceptor = compressionInterceptor;
     this.cachingInterceptor = cachingInterceptor;
     this.headersAddingInterceptor = headersAddingInterceptor;
+    this.contentTypeInterceptor = new ContentTypeInterceptor("application/json");
     this.delegate = delegate;
     this.allowInsecure = allowInsecure;
   }
@@ -188,6 +190,7 @@ public class ExtendedHttpClient extends HttpClient {
     chain = possiblyApply(compressionInterceptor, chain);
     chain = possiblyApply(cachingInterceptor, chain);
     chain = possiblyApply(headersAddingInterceptor, chain);
+    chain = possiblyApply(contentTypeInterceptor, chain);
 
     return chain;
   }
