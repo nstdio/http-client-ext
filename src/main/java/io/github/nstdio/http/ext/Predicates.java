@@ -52,6 +52,7 @@ public final class Predicates {
    *
    * @param name  The header name.
    * @param value The header value.
+   * @param <T>   The response body type.
    *
    * @return The {@code Predicate} that matches {@code HttpResponse} with given header.
    */
@@ -66,6 +67,7 @@ public final class Predicates {
    * The {@code Predicate} that matches only {@code HttpRequest} with given header.
    *
    * @param name The header name.
+   * @param <T>  The response body type.
    *
    * @return The {@code Predicate} that matches {@code HttpRequest} with given header.
    */
