@@ -18,6 +18,7 @@ package io.github.nstdio.http.ext.spi;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 
 /**
@@ -77,4 +78,16 @@ public interface JsonMapping {
    * @throws IOException When there is a JSON parsing or binding error or I/O error occurred.
    */
   <T> T read(byte[] bytes, Type targetType) throws IOException;
+
+  /**
+   * Writes JSON representation of {@code o} object to {@code os} stream.
+   *
+   * @param o  The object to write.
+   * @param os The output stream.
+   *
+   * @throws IOException When I/O error occurred.
+   */
+  default void write(Object o, OutputStream os) throws IOException {
+    throw new RuntimeException("not supported!");
+  }
 }

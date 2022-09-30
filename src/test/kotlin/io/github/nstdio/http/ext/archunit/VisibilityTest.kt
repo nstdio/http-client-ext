@@ -27,6 +27,7 @@ import com.tngtech.archunit.lang.conditions.ArchPredicates.are
 import com.tngtech.archunit.lang.syntax.ArchRuleDefinition
 import io.github.nstdio.http.ext.BodyHandlers
 import io.github.nstdio.http.ext.BodyHandlers.DecompressingBodyHandlerBuilder
+import io.github.nstdio.http.ext.BodyPublishers
 import io.github.nstdio.http.ext.BodySubscribers
 import io.github.nstdio.http.ext.Cache
 import io.github.nstdio.http.ext.Cache.DiskCacheBuilder
@@ -60,6 +61,7 @@ internal object VisibilityTest {
         .and(not(DecompressingBodyHandlerBuilder::class.java))
         .and(not(BodyHandlers::class.java))
         .and(not(BodySubscribers::class.java))
+        .and(not(BodyPublishers::class.java))
         .and(not(Cache.CacheBuilder::class.java))
         .and(not(Cache.CacheEntry::class.java))
         .and(not(InMemoryCacheBuilder::class.java))

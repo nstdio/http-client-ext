@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 
 public class JacksonJsonMapping implements JsonMapping {
@@ -59,6 +60,10 @@ public class JacksonJsonMapping implements JsonMapping {
     return mapper.readValue(bytes, constructType(targetType));
   }
 
+  @Override
+  public void write(Object o, OutputStream os) throws IOException {
+    mapper.writeValue(os, o);
+  }
 
   private JavaType constructType(Type targetType) {
     return mapper.constructType(targetType);

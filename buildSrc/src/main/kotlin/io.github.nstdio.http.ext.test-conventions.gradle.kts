@@ -81,6 +81,7 @@ val brotli4JVersion = "1.8.0"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.9.1"
 val equalsverifierVersion = "3.10.1"
+val coroutinesVersion = "1.6.4"
 
 val jsonLibs = mapOf(
   "jackson" to "com.fasterxml.jackson.core",
@@ -96,6 +97,8 @@ val spiDeps = listOf(
 
 dependencies {
   spiDeps.forEach { compileOnly(it) }
+
+  testImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:$coroutinesVersion"))
 
   /** AssertJ & Friends */
   testImplementation("org.assertj:assertj-core:$assertJVersion")
@@ -115,6 +118,9 @@ dependencies {
 
   testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion")
   testImplementation("com.tngtech.archunit:archunit-junit5:1.0.0-rc1")
+
+  /** Kotlin Coroutines */
+  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 
   spiDeps.forEach { spiTestImplementation(it) }
   spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")

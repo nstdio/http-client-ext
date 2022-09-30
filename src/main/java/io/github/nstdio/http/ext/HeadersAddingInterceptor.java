@@ -30,6 +30,10 @@ class HeadersAddingInterceptor implements Interceptor {
     this.headers = headers;
     this.resolvableHeaders = resolvableHeaders;
   }
+  
+  HeadersAddingInterceptor(Map<String, String> headers) {
+    this(headers, Map.of());
+  }
 
   @Override
   public <T> Chain<T> intercept(Chain<T> in) {
