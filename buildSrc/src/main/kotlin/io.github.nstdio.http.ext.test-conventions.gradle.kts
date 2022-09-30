@@ -19,11 +19,14 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.kotlin.dsl.invoke
-import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
+import org.gradle.nativeplatform.OperatingSystemFamily.LINUX
+import org.gradle.nativeplatform.OperatingSystemFamily.MACOS
+import org.gradle.nativeplatform.OperatingSystemFamily.WINDOWS
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentArchitecture
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.paukov.combinatorics3.Generator
 import java.lang.Boolean
-import kotlin.String
 import kotlin.Suppress
 import kotlin.to
 
@@ -123,7 +126,7 @@ dependencies {
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 
   spiDeps.forEach { spiTestImplementation(it) }
-  spiTestImplementation("com.aayushatharva.brotli4j:native-${getArch()}:$brotli4JVersion")
+  spiTestImplementation("com.aayushatharva.brotli4j:native-${arch()}:$brotli4JVersion")
 }
 
 Generator.subset(jsonLibs.keys)
@@ -189,14 +192,9 @@ extraJavaModuleInfo {
   }
 }
 
-fun getArch(): String {
-  val operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
-
-  if (operatingSystem.isWindows) return "windows-x86_64"
-  else if (operatingSystem.isMacOsX) return "osx-x86_64"
-  else if (operatingSystem.isLinux)
-    return if (DefaultNativePlatform.getCurrentArchitecture().isArm) "linux-aarch64"
-    else "linux-x86_64"
-
-  return ""
+fun arch() = when (getCurrentOperatingSystem().toFamilyName()) {
+  LINUX -> if (getCurrentArchitecture().isArm) "linux-aarch64" else "linux-x86_64"
+  WINDOWS -> "windows-x86_64"
+  MACOS -> "osx-x86_64"
+  else -> "unknown"
 }
