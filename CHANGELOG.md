@@ -3,6 +3,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.2.1...HEAD)
 
+### 🐞  Bug Fixes
+ -  Do not duplicate headers when configured via builder. ([d4e4051](https://github.com/nstdio/http-client-ext/commit/d4e40513cdd928273928f18b65e91694e907a495))
 ## [v2.2.1](https://github.com/nstdio/http-client-ext/compare/v2.2.0...v2.2.1)
 
 ### 🐞  Bug Fixes
