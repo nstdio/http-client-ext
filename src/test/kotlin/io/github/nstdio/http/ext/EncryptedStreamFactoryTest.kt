@@ -81,7 +81,7 @@ class EncryptedStreamFactoryTest {
   }
 
   @Test
-  fun `Should close input when exception occures`() {
+  fun `Should close input when exception occurs`() {
     //given
     val delegate = mock(StreamFactory::class.java)
     val mockIs = mock(InputStream::class.java)
@@ -93,6 +93,8 @@ class EncryptedStreamFactoryTest {
 
     given(mockIs.read()).willThrow(expectedIO)
     given(mockOut.write(anyInt())).willThrow(expectedIO)
+    given(mockOut.write(any(ByteArray::class.java))).willThrow(expectedIO)
+    given(mockOut.write(any(), anyInt(), anyInt())).willThrow(expectedIO)
     given(delegate.input(any(), any())).willReturn(mockIs)
     given(delegate.output(any(), any())).willReturn(mockOut)
 
