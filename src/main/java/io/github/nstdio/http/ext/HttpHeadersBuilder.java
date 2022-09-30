@@ -44,16 +44,31 @@ class HttpHeadersBuilder {
     }
   }
 
+  private List<String> values(String name, int capacity) {
+    return headersMap.computeIfAbsent(name, k -> new ArrayList<>(capacity));
+  }
+  
+  private List<String> values(String name) {
+    return values(name, 1);
+  }
+
   HttpHeadersBuilder add(String name, String value) {
-    headersMap.computeIfAbsent(name, k -> new ArrayList<>(1))
-        .add(value);
+    values(name).add(value);
+    return this;
+  }
+
+  HttpHeadersBuilder addIfNotExist(String name, String value) {
+    List<String> existing = values(name);
+    if (!existing.contains(value)) {
+      existing.add(value);
+    }
+
     return this;
   }
 
   HttpHeadersBuilder add(String name, List<String> values) {
     if (!values.isEmpty()) {
-      headersMap.computeIfAbsent(name, k -> new ArrayList<>(values.size()))
-          .addAll(values);
+      values(name, values.size()).addAll(values);
     }
     return this;
   }

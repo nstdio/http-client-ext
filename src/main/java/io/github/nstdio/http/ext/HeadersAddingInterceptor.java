@@ -52,8 +52,8 @@ class HeadersAddingInterceptor implements Interceptor {
   private Map<String, List<String>> addHeaders(HttpHeaders h) {
     var headersBuilder = new HttpHeadersBuilder(h);
 
-    headers.forEach(headersBuilder::add);
-    resolvableHeaders.forEach((name, valueSupplier) -> headersBuilder.add(name, valueSupplier.get()));
+    headers.forEach(headersBuilder::addIfNotExist);
+    resolvableHeaders.forEach((name, valueSupplier) -> headersBuilder.addIfNotExist(name, valueSupplier.get()));
 
     return headersBuilder.map();
   }

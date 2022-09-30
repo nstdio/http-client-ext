@@ -57,6 +57,31 @@ class HeadersAddingInterceptorTest {
   }
 
   @Test
+  fun `Should not duplicate headers`() {
+    //given
+    val interceptor = HeadersAddingInterceptor(
+      mapOf("a" to "1", "b" to "3"),
+      mapOf("b" to Supplier { "2" }),
+    )
+
+    val request = HttpRequest.newBuilder("https://example.com".toUri())
+      .header("a", "1")
+      .header("b", "2")
+      .header("b", "3")
+      .build()
+    val chain = Chain.of<Any>(RequestContext.of(request, bodyHandler))
+
+    //when
+    val actual = interceptor.intercept(chain).request().headers()
+
+    //then
+    actual.map().should { 
+      it.shouldContain("a", listOf("1"))
+      it.shouldContain("b", listOf("2", "3"))
+    }
+  }
+
+  @Test
   fun `Should not add headers to the chain when response is present`() {
     //given
     val interceptor = HeadersAddingInterceptor(
