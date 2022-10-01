@@ -35,6 +35,7 @@ publishing {
         name.set("JDK Http Client Extensions")
         description.set("The set of useful extensions for JDK HttpClient.")
         url.set("https://github.com/nstdio/http-client-ext")
+        inceptionYear.set("2021")
 
         licenses {
           license {
