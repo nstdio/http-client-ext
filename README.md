@@ -146,7 +146,17 @@ just drop one of them as dependency and voilà
 
 ```java
 // will create object using Jackson or Gson
-client.send(request, BodyHandlers.ofJson(User.class));
+User user = client.send(request, BodyHandlers.ofJson(User.class));
+
+// or send JSON
+Object user = null;
+HttpRequest request = HttpRequest.newBuilder()
+  .uri(URI.create("https://example.com/users"))
+  .POST(BodyPublishers.ofJson(user))
+  .build();
+
+ExtendedHttpClient client = ExtendedHttpClient.newHttpClient();
+HttpResponse<User> response = client.send(request, BodyHandlers.ofJson(User.class));
 ```
 
 And if special configuration required

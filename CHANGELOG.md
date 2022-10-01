@@ -1,7 +1,17 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.2.1...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.0...HEAD)
+
+## [v2.3.0](https://github.com/nstdio/http-client-ext/compare/vv2.3.0...v2.3.0)
+
+## [vv2.3.0](https://github.com/nstdio/http-client-ext/compare/v2.2.2...vv2.3.0)
+
+### ⭐  Features
+ -  Publishing JSON body. ([79a9799](https://github.com/nstdio/http-client-ext/commit/79a97998f27500a461d47da20697cebe4ddb9b33))
+### ♻️ Improvements
+ -  Remove accidentally leaked kotlin stdlib dependency. ([ea66180](https://github.com/nstdio/http-client-ext/commit/ea66180b0634daf66133ec34939c07f5c9e870f4))
+## [v2.2.2](https://github.com/nstdio/http-client-ext/compare/v2.2.1...v2.2.2)
 
 ### 🐞  Bug Fixes
  -  Do not duplicate headers when configured via builder. ([d4e4051](https://github.com/nstdio/http-client-ext/commit/d4e40513cdd928273928f18b65e91694e907a495))
