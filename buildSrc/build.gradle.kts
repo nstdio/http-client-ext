@@ -36,5 +36,5 @@ dependencies {
         exclude("org.gitlab", "java-gitlab-api")
         exclude("org.ow2.asm", "asm")
     }
-    implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.6")
+    implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.12")
 }
