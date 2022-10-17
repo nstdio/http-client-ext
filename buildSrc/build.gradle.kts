@@ -23,7 +23,7 @@ repositories {
 }
 
 dependencies {
-    implementation("de.jjohannes.gradle:extra-java-module-info:0.16")
+    implementation("org.gradlex:extra-java-module-info:1.0")
     implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
     implementation("net.researchgate:gradle-release:3.0.2")
     implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
