@@ -33,7 +33,7 @@ import kotlin.to
 plugins {
   `java-library`
   idea
-  id("de.jjohannes.extra-java-module-info")
+  id("org.gradlex.extra-java-module-info")
 }
 
 val isCI = System.getenv("CI").toBoolean()
@@ -53,7 +53,6 @@ val spiTestImplementation by configurations
 idea.module {
   testSourceDirs.addAll(sourceSetsSpiTest.allSource.srcDirs)
 }
-
 
 mapOf(
   "spiTestImplementation" to "testImplementation",
