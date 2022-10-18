@@ -194,6 +194,6 @@ extraJavaModuleInfo {
 fun arch() = when (getCurrentOperatingSystem().toFamilyName()) {
   LINUX -> if (getCurrentArchitecture().isArm) "linux-aarch64" else "linux-x86_64"
   WINDOWS -> "windows-x86_64"
-  MACOS -> "osx-x86_64"
+  MACOS -> if (getCurrentArchitecture().isArm) "osx-aarch64" else "osx-x86_64"
   else -> "unknown"
 }
