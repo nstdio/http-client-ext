@@ -19,6 +19,8 @@ package io.github.nstdio.http.ext;
 import io.github.nstdio.http.ext.Cache.CacheEntry;
 import io.github.nstdio.http.ext.Cache.CacheStats;
 
+import java.net.URI;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandler;
@@ -27,7 +29,6 @@ import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_MODIFIED_SINCE;
 import static io.github.nstdio.http.ext.Headers.HEADER_IF_NONE_MATCH;
@@ -36,9 +37,10 @@ import static io.github.nstdio.http.ext.Responses.gatewayTimeoutResponse;
 import static io.github.nstdio.http.ext.Responses.isSafeRequest;
 import static io.github.nstdio.http.ext.Responses.isSuccessful;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toList;
 
 class CachingInterceptor implements Interceptor {
+  private final static List<String> INVALIDATION_HEADERS = List.of("Location", "Content-Location");
+
   private final Cache cache;
   private final Clock clock;
 
@@ -170,14 +172,18 @@ class CachingInterceptor implements Interceptor {
   }
 
   private <T> HttpResponse<T> invalidate(HttpResponse<T> response) {
-    List<HttpRequest> toEvict = Stream.of("Location", "Content-Location")
-        .flatMap(s -> Headers.effectiveUri(response.headers(), s, response.uri()).stream())
-        .filter(uri -> response.uri().getHost().equals(uri.getHost()))
-        .map(uri -> HttpRequest.newBuilder(uri).build())
-        .collect(toList());
-    toEvict.add(response.request());
+    HttpHeaders headers = response.headers();
+    URI uri = response.uri();
+    String host = uri.getHost();
 
-    toEvict.forEach(cache::evictAll);
+    for (String headerName : INVALIDATION_HEADERS) {
+      Headers.effectiveUri(headers, headerName, uri)
+          .filter(u -> host.equals(u.getHost()))
+          .map(u -> HttpRequest.newBuilder(u).build())
+          .forEach(cache::evictAll);
+    }
+
+    cache.evictAll(response.request());
 
     return response;
   }

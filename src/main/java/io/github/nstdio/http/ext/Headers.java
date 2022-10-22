@@ -33,9 +33,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
 
 class Headers {
   static final String HEADER_VARY = "Vary";
@@ -176,12 +176,11 @@ class Headers {
         .map(Headers::parseInstant);
   }
 
-  static List<URI> effectiveUri(HttpHeaders headers, String headerName, URI responseUri) {
+  static Stream<URI> effectiveUri(HttpHeaders headers, String headerName, URI responseUri) {
     return headers.allValues(headerName)
         .stream()
         .map(s -> effectiveUri(s, responseUri))
-        .filter(Objects::nonNull)
-        .collect(toList());
+        .filter(Objects::nonNull);
   }
 
   static URI effectiveUri(String s, URI responseUri) {

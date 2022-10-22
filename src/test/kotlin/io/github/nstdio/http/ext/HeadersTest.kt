@@ -25,6 +25,7 @@ import java.net.http.HttpHeaders
 import java.time.Instant
 import java.util.Map
 import java.util.stream.Stream
+import kotlin.streams.asSequence
 
 internal class HeadersTest {
   @ParameterizedTest
@@ -61,7 +62,7 @@ internal class HeadersTest {
   @MethodSource("effectiveUriHeadersData")
   fun effectiveUriHeaders(headers: HttpHeaders?, headerName: String?, responseUri: URI?, expected: List<URI?>?) {
     //when
-    val uris = Headers.effectiveUri(headers, headerName, responseUri)
+    val uris = Headers.effectiveUri(headers, headerName, responseUri).asSequence().toList()
 
     //then
     assertThat(uris).isEqualTo(expected)
