@@ -18,7 +18,7 @@ plugins {
   id("me.champeau.jmh")
 }
 
-val jmhVersion = "1.35"
+val jmhVersion = "1.36"
 val jmhArtifactIds = listOf("jmh-core", "jmh-generator-annprocess", "jmh-generator-bytecode")
 
 dependencies {
