@@ -155,6 +155,7 @@ tasks.create<Task>("spiMatrixTest") {
 
 tasks.withType<KotlinCompile> {
   kotlinOptions {
+    useK2 = true
     jvmTarget = JavaVersion.VERSION_11.toString()
   }
 }
