@@ -26,12 +26,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.stream.Collectors.toCollection
-import java.util.stream.Collectors.toList
-import java.util.stream.IntStream
-import kotlin.streams.toList
 
 internal class FixedRateTickClockTest {
   @RepeatedTest(16)
@@ -42,9 +36,8 @@ internal class FixedRateTickClockTest {
     val clock = FixedRateTickClock(baseInstant, ZoneOffset.UTC, tick)
 
     //when
-    val actual = IntStream.range(0, 32)
-      .mapToObj { clock.instant() }
-      .toList()
+    val actual = (0..32)
+      .map { clock.instant() }
       .toTypedArray()
 
     //then
@@ -82,19 +75,10 @@ internal class FixedRateTickClockTest {
     @RepeatedTest(16)
     fun shouldBeSafe() {
       //when
-      val futures = IntStream.range(0, nTasks)
-        .mapToObj { executor.submit<Instant> { clock.instant() } }
-        .collect(toList())
-      val actual = futures.stream()
-        .map { f: Future<Instant> ->
-          try {
-            return@map f[1, TimeUnit.SECONDS]
-          } catch (e: Exception) {
-            throw RuntimeException(e)
-          }
-        }
-        .sorted()
-        .collect(toCollection { LinkedHashSet() })
+      val actual = (0 until nTasks)
+        .map { executor.submit<Instant> { clock.instant() } }
+        .map { it.get() }
+        .toSortedSet()
 
       //then
 

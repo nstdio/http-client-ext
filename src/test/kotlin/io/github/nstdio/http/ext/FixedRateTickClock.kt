@@ -45,7 +45,7 @@ internal class FixedRateTickClock(baseInstant: Instant, zone: ZoneId, tickDurati
   }
 
   override fun instant(): Instant {
-    return currentInstantRef.updateAndGet { i: Instant -> i.plus(tickDuration) }
+    return currentInstantRef.updateAndGet { it.plus(tickDuration) }
   }
 
   companion object {
