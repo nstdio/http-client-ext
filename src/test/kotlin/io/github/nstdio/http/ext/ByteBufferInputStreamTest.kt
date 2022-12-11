@@ -23,6 +23,7 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.long
 import io.kotest.property.arbitrary.next
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatIOException
@@ -269,13 +270,75 @@ internal class ByteBufferInputStreamTest {
       .shouldHaveMessage("nothing to reset")
   }
 
+  @RepeatedTest(8)
+  fun `Should skip specified amount if bytes`() {
+    //given
+    val bytes = Arb.byteArray(Arb.int(1, 64)).next()
+    val s = ByteBufferInputStream().also { bytes.toChunkedBuffers().forEach(it::add) }
+
+    // when + then
+    var next = bytes.size.toLong()
+    while (next > 0) {
+      val skip = Arb.long(1 .. next).next()
+
+      s.skip(skip).shouldBe(skip)
+
+      val actual = s.read().toByte()
+      val index = (bytes.size - next + skip).toInt()
+      val expected = if (index < bytes.size) bytes[index] else -1
+      
+      actual.shouldBe(expected)
+
+      next -= (skip + 1)
+    }
+
+    s.drainToList().shouldBeEmpty()
+    s.close()
+  }
+
+  @Test
+  fun `Should skip only available amount`() {
+    //given
+    val bytes = arbByteArray.next()
+    val s = ByteBufferInputStream().also { bytes.toChunkedBuffers().forEach(it::add) }
+
+    // when + then
+    s.skip(bytes.size.toLong() + 1).shouldBe(bytes.size.toLong())
+    s.drainToList().shouldBeEmpty()
+
+    s.read().shouldBe(-1)
+
+    s.close()
+  }
+
+  @Test
+  fun `Should not skip if closed`() {
+    //given
+    val s = ByteBufferInputStream()
+
+    // when + then
+    s.close()
+    s.skip(10).shouldBe(0)
+  }
+
+  @Test
+  @Suppress("KotlinConstantConditions")
+  fun `Should not negative or zero`() {
+    //given
+    val s = ByteBufferInputStream()
+
+    // when + then
+    s.skip(0).shouldBe(0)
+    s.skip(-1).shouldBe(0)
+  }
+
   companion object {
     @JvmStatic
     fun fullReadingData(): Stream<Named<ByteArray>> {
       return IntStream.of(8192, 16384, 65536)
-        .mapToObj { n: Int ->
+        .mapToObj {
           Named.named(
-            "Size: $n", Arb.byteArray(n).next()
+            "Size: $it", Arb.byteArray(it).next()
           )
         }
     }

@@ -84,7 +84,10 @@ class ByteBufferInputStream extends InputStream {
   }
 
   private ByteBuffer nextBuffer() {
-    Deque<ByteBuffer> buffs = buffers;
+    return nextBuffer(buffers);
+  }
+  
+  private ByteBuffer nextBuffer(Deque<ByteBuffer> buffs) {
     ByteBuffer buf;
 
     while ((buf = buffs.peek()) != null && !buf.hasRemaining()) {
@@ -150,6 +153,25 @@ class ByteBufferInputStream extends InputStream {
   }
 
   @Override
+  public long skip(long n) {
+    if (n <= 0 || closed) {
+      return 0;
+    }
+
+    ByteBuffer buf;
+    long rem = n;
+
+    while (rem > 0 && (buf = nextBuffer()) != null) {
+      int skip = Math.min((int) rem, buf.remaining());
+      buf.position(buf.position() + skip);
+
+      rem -= skip;
+    }
+
+    return n - rem;
+  }
+
+  @Override
   public boolean markSupported() {
     return true;
   }
@@ -192,6 +214,8 @@ class ByteBufferInputStream extends InputStream {
 
   List<ByteBuffer> drainToList() {
     var buffs = buffers;
+    nextBuffer(buffs); // drain empty buffers
+
     if (buffs.isEmpty()) {
       return List.of();
     }
