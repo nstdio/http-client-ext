@@ -163,7 +163,7 @@ internal class ExternalizableHttpHeadersTest {
     @JvmStatic
     fun httpHeaders(): List<HttpHeaders> {
       return listOf(
-        HttpHeaders.of(hashMapOf("Content-Type" to listOf("application/json")), Headers.ALLOW_ALL),
+        HttpHeaders.of(hashMapOf("Content-Type" to listOf("application/json")), ALLOW_ALL),
         HttpHeaders.of(
           hashMapOf(
             "Host" to listOf("www.random.org"),
@@ -186,9 +186,9 @@ internal class ExternalizableHttpHeadersTest {
             "Sec-Fetch-Site" to listOf("same-origin"),
             "Sec-Fetch-User" to listOf("?1"),
             "Cache-Control" to listOf("max-age=0"),
-          ), Headers.ALLOW_ALL
+          ), ALLOW_ALL
         ),
-        HttpHeaders.of(hashMapOf(), Headers.ALLOW_ALL)
+        HttpHeaders.of(hashMapOf(), ALLOW_ALL)
       )
     }
   }

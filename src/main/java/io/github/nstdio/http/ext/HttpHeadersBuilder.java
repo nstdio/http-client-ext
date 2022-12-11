@@ -123,10 +123,8 @@ class HttpHeadersBuilder {
 
   @Override
   public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append(super.toString()).append(" { ");
-    sb.append(headersMap);
-    sb.append(" }");
-    return sb.toString();
+    return super.toString() + " { " +
+        headersMap +
+        " }";
   }
 }
