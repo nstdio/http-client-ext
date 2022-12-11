@@ -16,7 +16,6 @@
 package io.github.nstdio.http.ext
 
 import java.nio.ByteBuffer
-import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Flow
@@ -27,13 +26,13 @@ internal class PlainSubscription @JvmOverloads constructor(
   private val buffers: MutableList<ByteBuffer>,
   async: Boolean = true
 ) : Flow.Subscription {
-  private val executor: Optional<ExecutorService>
+  private val executor: ExecutorService?
   private val it: Iterator<ByteBuffer>
   private var completed = false
 
   init {
     it = buffers.iterator()
-    executor = if (async) Optional.of(Executors.newSingleThreadExecutor()) else Optional.empty()
+    executor = if (async) Executors.newSingleThreadExecutor() else null
   }
 
   override fun request(n: Long) {
@@ -56,7 +55,7 @@ internal class PlainSubscription @JvmOverloads constructor(
   }
 
   private fun execute(cmd: Runnable) {
-    executor.ifPresentOrElse({ service: ExecutorService -> service.execute(cmd) }, cmd)
+    executor?.execute(cmd) ?: run { cmd.run() }
   }
 
   override fun cancel() {
@@ -70,13 +69,9 @@ internal class PlainSubscription @JvmOverloads constructor(
 
   private fun clean() {
     buffers.clear()
-    executor.ifPresent { service: ExecutorService ->
-      service.shutdown()
-      try {
-        service.awaitTermination(5, TimeUnit.SECONDS)
-      } catch (e: InterruptedException) {
-        // noop
-      }
+    executor?.let {
+      it.shutdown()
+      it.awaitTermination(5, TimeUnit.SECONDS)
     }
   }
 }
