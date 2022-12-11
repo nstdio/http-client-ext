@@ -26,6 +26,10 @@ class Buffers {
   }
 
   static ByteBuffer duplicate(ByteBuffer buf) {
+    if (buf.capacity() == 0) {
+      return buf;
+    }
+
     var dup = buf.asReadOnlyBuffer();
     return dup.hasRemaining() ? dup : dup.flip();
   }

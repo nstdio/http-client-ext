@@ -15,6 +15,7 @@
  */
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.map
@@ -52,6 +53,18 @@ internal class BuffersTest {
 
     //then
     assertThat(actual.position()).isZero
+  }
+
+  @Test
+  fun shouldNotCreateNewBufferIfInputIsEmpty() {
+    //given
+    val buffer = ByteBuffer.allocate(0)
+
+    //when
+    val actual = Buffers.duplicate(buffer)
+
+    //then
+    actual.shouldBeSameInstanceAs(buffer)   
   }
 
   companion object {
