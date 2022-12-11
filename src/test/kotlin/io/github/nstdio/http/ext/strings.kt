@@ -18,11 +18,12 @@ package io.github.nstdio.http.ext
 
 import java.net.URI
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets.UTF_8
 
 fun String.toUri(): URI = URI.create(this)
 
+fun String.toByteBuffer() = toByteArray().toBuffer()
+
 /**
- * Randomly scatters contents of this string across byte buffers. 
+ * Randomly scatters contents of this string across byte buffers.
  */
-fun String.toChunkedBuffers(): MutableList<ByteBuffer> = toByteArray(UTF_8).toChunkedBuffers()
+fun String.toChunkedBuffers(): MutableList<ByteBuffer> = toByteArray().toChunkedBuffers()

@@ -17,13 +17,13 @@ package io.github.nstdio.http.ext
 
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.map
 import io.kotest.property.arbitrary.next
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets.UTF_8
 import java.util.stream.Stream
 
 internal class BuffersTest {
@@ -44,7 +44,7 @@ internal class BuffersTest {
   @Test
   fun shouldDuplicatedSingleBuffer() {
     //given
-    val buffer = ByteBuffer.wrap(Arb.byteArray(16).next())
+    val buffer = Arb.byteArray(16).map { it.toBuffer() }.next()
 
     //when
     val actual = Buffers.duplicate(buffer)
@@ -59,13 +59,10 @@ internal class BuffersTest {
     fun listBuffersData(): Stream<List<ByteBuffer>> {
       return Stream.of(
         listOf(),
-        listOf(ByteBuffer.wrap("abcde".repeat(16).toByteArray(UTF_8))),
+        listOf("abcde".repeat(16).toByteBuffer()),
         listOf(
-          ByteBuffer.wrap("ab".repeat(16).toByteArray(UTF_8)), ByteBuffer.wrap(
-            "cd".repeat(16).toByteArray(
-              UTF_8
-            )
-          )
+          "ab".repeat(16).toByteBuffer(),
+          "cd".repeat(16).toByteBuffer()
         ),
         Arb.byteArray(Arb.int(96, 96)).next().toChunkedBuffers(true)
       )

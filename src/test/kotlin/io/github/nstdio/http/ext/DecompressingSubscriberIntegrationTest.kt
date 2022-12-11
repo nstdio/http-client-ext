@@ -18,7 +18,6 @@ package io.github.nstdio.http.ext
 import io.github.nstdio.http.ext.Assertions.assertThat
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.next
-import io.kotest.property.arbitrary.string
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import mockwebserver3.junit5.internal.MockWebServerExtension
@@ -43,7 +42,7 @@ internal class DecompressingSubscriberIntegrationTest(private val mockWebServer:
     //when
     val stringResponse = client.send(request) { info: ResponseInfo? ->
       DecompressingSubscriber(
-        HttpResponse.BodyHandlers.ofString().apply(info)
+        HttpResponse.BodyHandlers.ofByteArray().apply(info)
       )
     }
 
@@ -51,7 +50,7 @@ internal class DecompressingSubscriberIntegrationTest(private val mockWebServer:
     assertThat(stringResponse).hasBody(expectedBody)
   }
 
-  private fun setupLargeBodyDecompressionTest(body: String = Arb.string(16384 * 10).next()): LargeBodyDataDecompression {
+  private fun setupLargeBodyDecompressionTest(body: ByteArray = Arb.byteArray(16384 * 10).next()): LargeBodyDataDecompression {
     val gzippedBody = Compression.gzip(body)
     val testUrl = "/gzip"
     mockWebServer.enqueue(
@@ -65,5 +64,5 @@ internal class DecompressingSubscriberIntegrationTest(private val mockWebServer:
     return LargeBodyDataDecompression(request, body)
   }
 
-  internal data class LargeBodyDataDecompression(val request: HttpRequest, val expectedBody: String)
+  internal data class LargeBodyDataDecompression(val request: HttpRequest, val expectedBody: ByteArray)
 }

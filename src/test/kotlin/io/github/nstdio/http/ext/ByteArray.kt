@@ -24,21 +24,19 @@ import java.nio.ByteBuffer
 
 fun ByteArray.toBuffer(): ByteBuffer = ByteBuffer.wrap(this)
 
-fun ByteArray.toBuffer(fromIndex: Int, toIndex: Int): ByteBuffer = ByteBuffer.wrap(copyOfRange(fromIndex, toIndex))
-
 fun ByteArray.toChunkedBuffers(checkResult: Boolean = false): MutableList<ByteBuffer> {
   val ret = mutableListOf<ByteBuffer>()
   var start = 0
-  val stop = size
-  var end = 1.coerceAtLeast(Arb.int(start, stop).next())
+  var end = 1.coerceAtLeast(Arb.int(start, size).next())
+  val buffer = toBuffer()
 
-  while (end != stop) {
-    ret.add(toBuffer(start, end))
+  while (end != size) {
+    ret.add(buffer.slice0(start, end))
     start = end
-    end = Arb.int(start + 1, stop).next()
+    end = Arb.int(start + 1, size).next()
   }
   if (start < end) {
-    ret.add(toBuffer(start, end))
+    ret.add(buffer.slice0(start, end))
   }
 
   if (checkResult) {
@@ -54,3 +52,5 @@ fun ByteArray.toChunkedBuffers(checkResult: Boolean = false): MutableList<ByteBu
 
   return ret
 }
+
+private fun ByteBuffer.slice0(start: Int, end: Int) = position(start).limit(end).slice()
