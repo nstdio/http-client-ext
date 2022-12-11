@@ -58,8 +58,7 @@ internal class CachingBodySubscriberTest {
     val subscriber = CachingBodySubscriber(original, other) { }
 
     //when
-    val buffers = Helpers.toBuffers(body)
-    val subscription = PlainSubscription(subscriber, buffers, false)
+    val subscription = PlainSubscription(subscriber, body.toChunkedBuffers(), false)
     subscriber.onSubscribe(subscription)
     val actual1 = subscriber.body.toCompletableFuture().join()
     val actual2 = other.body.toCompletableFuture().join()

@@ -15,15 +15,9 @@
  */
 package io.github.nstdio.http.ext
 
-import io.kotest.matchers.shouldBe
-import io.kotest.property.Arb
-import io.kotest.property.arbitrary.int
-import io.kotest.property.arbitrary.next
 import java.net.http.HttpClient
 import java.net.http.HttpHeaders
 import java.net.http.HttpResponse.ResponseInfo
-import java.nio.ByteBuffer
-import java.nio.charset.StandardCharsets
 
 internal object Helpers {
   fun responseInfo(headers: Map<String, String>): ResponseInfo {
@@ -42,38 +36,5 @@ internal object Helpers {
         return HttpClient.Version.HTTP_1_1
       }
     }
-  }
-
-  fun toBuffers(bytes: ByteArray, checkResult: Boolean = false): MutableList<ByteBuffer> {
-    val ret: MutableList<ByteBuffer> = ArrayList()
-    var start = 0
-    val stop = bytes.size
-    var end = 1.coerceAtLeast(Arb.int(start, stop).next())
-
-    while (end != stop) {
-      ret.add(bytes.toBuffer(start, end))
-      start = end
-      end = Arb.int(start + 1, stop).next()
-    }
-    if (start < end) {
-      ret.add(bytes.toBuffer(start, end))
-    }
-    
-    if (checkResult) {
-      var i = 0
-      for (b in ret) {
-        while (b.hasRemaining()) {
-          bytes[i++].shouldBe(b.get())
-        }
-        b.flip()
-      }
-      i.shouldBe(bytes.size)
-    }
-
-    return ret
-  }
-
-  fun toBuffers(`in`: String): MutableList<ByteBuffer> {
-    return toBuffers(`in`.toByteArray(StandardCharsets.UTF_8), false)
   }
 }

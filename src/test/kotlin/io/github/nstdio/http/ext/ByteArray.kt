@@ -16,8 +16,41 @@
 
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.shouldBe
+import io.kotest.property.Arb
+import io.kotest.property.arbitrary.int
+import io.kotest.property.arbitrary.next
 import java.nio.ByteBuffer
 
 fun ByteArray.toBuffer(): ByteBuffer = ByteBuffer.wrap(this)
 
 fun ByteArray.toBuffer(fromIndex: Int, toIndex: Int): ByteBuffer = ByteBuffer.wrap(copyOfRange(fromIndex, toIndex))
+
+fun ByteArray.toChunkedBuffers(checkResult: Boolean = false): MutableList<ByteBuffer> {
+  val ret = mutableListOf<ByteBuffer>()
+  var start = 0
+  val stop = size
+  var end = 1.coerceAtLeast(Arb.int(start, stop).next())
+
+  while (end != stop) {
+    ret.add(toBuffer(start, end))
+    start = end
+    end = Arb.int(start + 1, stop).next()
+  }
+  if (start < end) {
+    ret.add(toBuffer(start, end))
+  }
+
+  if (checkResult) {
+    var i = 0
+    ret.forEach {
+      while (it.hasRemaining()) {
+        this[i++].shouldBe(it.get())
+      }
+      it.flip()
+    }
+    i.shouldBe(size)
+  }
+
+  return ret
+}

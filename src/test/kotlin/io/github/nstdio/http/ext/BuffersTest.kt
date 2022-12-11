@@ -67,7 +67,7 @@ internal class BuffersTest {
             )
           )
         ),
-        Helpers.toBuffers(Arb.byteArray(Arb.int(96, 96)).next(), true)
+        Arb.byteArray(Arb.int(96, 96)).next().toChunkedBuffers(true)
       )
     }
   }

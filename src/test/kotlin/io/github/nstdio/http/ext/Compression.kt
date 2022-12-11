@@ -16,9 +16,7 @@
 package io.github.nstdio.http.ext
 
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.io.OutputStream
-import java.io.UncheckedIOException
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.function.Function
 import java.util.zip.DeflaterOutputStream
@@ -30,13 +28,7 @@ internal object Compression {
   }
 
   fun gzip(input: ByteArray): ByteArray {
-    return compress(input) { out: OutputStream ->
-      try {
-        return@compress GZIPOutputStream(out, true)
-      } catch (e: IOException) {
-        throw UncheckedIOException(e)
-      }
-    }
+    return compress(input) { GZIPOutputStream(it, true) }
   }
 
   fun deflate(input: String): ByteArray {

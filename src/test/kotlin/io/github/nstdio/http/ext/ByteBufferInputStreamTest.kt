@@ -48,7 +48,7 @@ internal class ByteBufferInputStreamTest {
   fun fullReading(bytes: ByteArray) {
     //given
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes).forEach(s::add)
+    bytes.toChunkedBuffers().forEach(s::add)
 
     //when
     val available = s.available()
@@ -77,7 +77,7 @@ internal class ByteBufferInputStreamTest {
     //given
     val s = ByteBufferInputStream()
     val bytes = arbByteArray.next()
-    Helpers.toBuffers(bytes).forEach(s::add)
+    bytes.toChunkedBuffers().forEach(s::add)
     val out = ByteArrayOutputStream()
 
     //when
@@ -96,7 +96,7 @@ internal class ByteBufferInputStreamTest {
     //given
     val bytes = arbByteArray.next()
     val stream = ByteBufferInputStream()
-    Helpers.toBuffers(bytes)
+    bytes.toChunkedBuffers()
       .map { it.position(it.limit()) }
       .forEach(stream::add)
 
@@ -130,7 +130,7 @@ internal class ByteBufferInputStreamTest {
     //given
     val bytes = arbByteArray.next()
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes).forEach(s::add)
+    bytes.toChunkedBuffers().forEach(s::add)
 
     //when
     val actual = s.available()
@@ -144,7 +144,7 @@ internal class ByteBufferInputStreamTest {
     //given
     val bytes = arbByteArray.next()
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes).forEach(s::add)
+    bytes.toChunkedBuffers().forEach(s::add)
 
     //when
     val actual = s.readAllBytes()
@@ -168,7 +168,7 @@ internal class ByteBufferInputStreamTest {
     val bytes = arbByteArray.next()
     val count = bytes.size
     val s = ByteBufferInputStream()
-    Helpers.toBuffers(bytes).forEach(s::add)
+    bytes.toChunkedBuffers().forEach(s::add)
 
     //when
     val actual = s.readNBytes(count + 1)
@@ -187,7 +187,7 @@ internal class ByteBufferInputStreamTest {
   fun shouldDumpBuffersToList() {
     //given
     val s = ByteBufferInputStream()
-    val buffers = Helpers.toBuffers(arbByteArray.next())
+    val buffers = arbByteArray.next().toChunkedBuffers()
     buffers.forEach(s::add)
 
     //when

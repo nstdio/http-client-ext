@@ -15,13 +15,13 @@
  */
 package io.github.nstdio.http.ext
 
+import io.kotest.matchers.future.shouldBeCompletedExceptionally
+import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.byte
+import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.next
 import io.kotest.property.arbitrary.string
-import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Named
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -29,20 +29,18 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.http.HttpResponse.BodySubscribers.ofByteArray
 import java.net.http.HttpResponse.BodySubscribers.ofString
-import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.stream.IntStream
 import java.util.stream.Stream
 
 internal class DecompressingSubscriberTest {
   @ParameterizedTest
-  @MethodSource("randomLargeStrings")
-  fun shouldDecompressLargeBodies(bodyString: String) {
+  @MethodSource("randomLargeByteArray")
+  fun shouldDecompressLargeBodies(bytes: ByteArray) {
     //given
-    val body = bodyString.toByteArray(UTF_8)
-    val gzip = Compression.gzip(bodyString)
+    val gzip = Compression.gzip(bytes)
     val subscriber = DecompressingSubscriber(ofByteArray())
-    val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, true))
+    val sub = PlainSubscription(subscriber, gzip.toChunkedBuffers())
 
     //when
     subscriber.onSubscribe(sub)
@@ -50,7 +48,7 @@ internal class DecompressingSubscriberTest {
     val actual = subscriber.body.toCompletableFuture().join()
 
     //then
-    assertArrayEquals(body, actual)
+    actual.shouldBe(bytes)
   }
 
   @ParameterizedTest
@@ -58,10 +56,10 @@ internal class DecompressingSubscriberTest {
   fun shouldDecompressWithVerySmallChunks(len: Int) {
     //given
     val body = Arb.string(len).next()
-    val gzip = Compression.gzip(body)
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
-    val buffers = ArrayList<ByteBuffer>()
-    for (b in gzip) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
+    val buffers = Compression.gzip(body)
+      .map { byteArrayOf(it).toBuffer() }
+      .toMutableList()
     val sub = PlainSubscription(subscriber, buffers)
 
     //when
@@ -70,7 +68,7 @@ internal class DecompressingSubscriberTest {
     val actual = subscriber.body.toCompletableFuture().join()
 
     //then
-    Assertions.assertEquals(body, actual)
+    actual.shouldBe(body)
   }
 
   @ParameterizedTest
@@ -79,8 +77,9 @@ internal class DecompressingSubscriberTest {
     //given
     val body = Arb.string(len).next()
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
-    val buffers = ArrayList<ByteBuffer>()
-    for (b in body.toByteArray(UTF_8)) buffers.add(ByteBuffer.wrap(byteArrayOf(b)))
+    val buffers = body.toByteArray()
+      .map { byteArrayOf(it).toBuffer() }
+      .toMutableList()
     val sub = PlainSubscription(subscriber, buffers)
 
     //when
@@ -89,7 +88,7 @@ internal class DecompressingSubscriberTest {
     val actual = subscriber.body.toCompletableFuture().join()
 
     //then
-    Assertions.assertEquals(body, actual)
+    actual.shouldBe(body)
   }
 
   @Test
@@ -106,7 +105,7 @@ internal class DecompressingSubscriberTest {
       i++
     }
     val subscriber = DecompressingSubscriber(ofString(UTF_8))
-    val sub = PlainSubscription(subscriber, Helpers.toBuffers(gzip, false))
+    val sub = PlainSubscription(subscriber, gzip.toChunkedBuffers(false))
 
     //when
     subscriber.onSubscribe(sub)
@@ -114,17 +113,16 @@ internal class DecompressingSubscriberTest {
     val actual = subscriber.body.toCompletableFuture()
 
     //then
-    assertThat(actual).isCompletedExceptionally
+    actual.shouldBeCompletedExceptionally()
   }
 
   companion object {
     @JvmStatic
-    fun randomLargeStrings(): Stream<Named<String>> {
-      return IntStream.rangeClosed(0, 100)
-        .mapToObj {
-          val s = Arb.string(8192, 40960).next()
-          Named.of("Length: " + s.length, s)
-        }
-    }
+    fun randomLargeByteArray(): Stream<Named<ByteArray>> = IntStream.rangeClosed(0, 15)
+      .mapToObj {
+        val bytes = Arb.byteArray(Arb.int(8192, 20480)).next()
+
+        Named.of("Size: ${bytes.size}", bytes)
+      }
   }
 }
