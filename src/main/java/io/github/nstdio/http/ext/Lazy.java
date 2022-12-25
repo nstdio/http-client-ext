@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-plugins {
-  id("me.champeau.jmh")
-  id("io.github.reyerizo.gradle.jcstress")
-}
+package io.github.nstdio.http.ext;
 
-val jmhVersion = "1.36"
-val jmhArtifactIds = listOf("jmh-core", "jmh-generator-annprocess", "jmh-generator-bytecode")
+import java.util.function.Supplier;
 
-dependencies {
-  jmhArtifactIds.forEach { jmh("org.openjdk.jmh:$it:$jmhVersion") }
-}
+class Lazy<T> implements Supplier<T> {
+  private final Supplier<T> delegate;
+  private volatile T value;
 
-jmh {
-  includeTests.set(false)
+  Lazy(Supplier<T> delegate) {
+    this.delegate = delegate;
+  }
+
+  @Override
+  public T get() {
+    if (value == null) {
+      synchronized (this) {
+        if (value == null) {
+          value = delegate.get();
+        }
+      }
+    }
+
+    return value;
+  }
 }

@@ -22,7 +22,6 @@ import java.io.ByteArrayOutputStream;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.concurrent.ForkJoinPool;
@@ -95,29 +94,20 @@ public final class BodyPublishers {
     private final Object body;
     private final JsonMappingProvider provider;
     private final Executor executor;
-    private volatile CompletableFuture<byte[]> result;
+    private final Lazy<byte[]> result;
 
     JsonPublisher(Object body, JsonMappingProvider provider, Executor executor) {
       this.body = body;
       this.provider = provider;
       this.executor = executor;
+      this.result = new Lazy<>(this::json);
     }
 
     @Override
     public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
-      var subscription = ByteArraySubscription.ofByteBuffer(subscriber, this::resultUncheckedGet, executor);
+      var subscription = ByteArraySubscription.ofByteBuffer(subscriber, result, executor);
 
       subscriber.onSubscribe(subscription);
-    }
-
-    private byte[] resultUncheckedGet() {
-      try {
-        return result.get();
-      } catch (Throwable e) {
-        Throwables.sneakyThrow(e);
-      }
-      
-      return new byte[0]; // unreachable
     }
 
     private byte[] json() {
@@ -133,15 +123,7 @@ public final class BodyPublishers {
 
     @Override
     public long contentLength() {
-      if (result == null) {
-        synchronized (this) {
-          if (result == null) {
-            result = CompletableFuture.supplyAsync(this::json, executor);
-          }
-        }
-      }
-
-      return resultUncheckedGet().length;
+      return result.get().length;
     }
   }
 

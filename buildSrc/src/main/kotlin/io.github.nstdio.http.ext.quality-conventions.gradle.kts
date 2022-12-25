@@ -46,7 +46,7 @@ tasks.withType<JacocoReport> {
 
   afterEvaluate {
     classDirectories.setFrom(files(classDirectories.files.map {
-      fileTree(it).apply { exclude("io/**/NullCache.class") }
+      fileTree(it).apply { exclude("io/**/NullCache.class", "io/**/Lazy.class") }
     }))
   }
 
