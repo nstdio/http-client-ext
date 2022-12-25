@@ -1,8 +1,16 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.0...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.1...HEAD)
 
+## [v2.3.1](https://github.com/nstdio/http-client-ext/compare/v2.3.0...v2.3.1)
+
+### ♻️ Improvements
+ -  Use read readable byte channel instead. ([c92c230](https://github.com/nstdio/http-client-ext/commit/c92c23029f5cc967e18511eb52946e644107e2a1))
+ -  Increase write performance by using bulk writes when possible. ([59a08f0](https://github.com/nstdio/http-client-ext/commit/59a08f0e379e4d69558dbecda9c9b2c5a1a96be4))
+ -  Do not duplicate byte buffer if it has no capacity. ([913b611](https://github.com/nstdio/http-client-ext/commit/913b61120c40bb62987fbcf456965cebae5dea2b))
+ -  Improve performance of ByteBufferInputStream#skip. ([2b245da](https://github.com/nstdio/http-client-ext/commit/2b245daf339b09772c275ea5c65a21eed21eb3dc))
+ -  Optimize cache invalidation. ([bfe58ef](https://github.com/nstdio/http-client-ext/commit/bfe58efe421a636469b7981479acce78cf5ff073))
 ## [v2.3.0](https://github.com/nstdio/http-client-ext/compare/vv2.3.0...v2.3.0)
 
 ## [vv2.3.0](https://github.com/nstdio/http-client-ext/compare/v2.2.2...vv2.3.0)
