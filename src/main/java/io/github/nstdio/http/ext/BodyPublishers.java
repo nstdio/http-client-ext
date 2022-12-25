@@ -23,7 +23,6 @@ import java.net.http.HttpRequest.BodyPublisher;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.concurrent.ForkJoinPool;
@@ -114,9 +113,11 @@ public final class BodyPublishers {
     private byte[] resultUncheckedGet() {
       try {
         return result.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
+      } catch (Throwable e) {
+        Throwables.sneakyThrow(e);
       }
+      
+      return new byte[0]; // unreachable
     }
 
     private byte[] json() {
