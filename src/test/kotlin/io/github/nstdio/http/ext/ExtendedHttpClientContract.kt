@@ -27,7 +27,6 @@ import io.kotest.property.arbitrary.string
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.ThrowingConsumer
 import org.awaitility.core.ThrowingRunnable
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
@@ -148,7 +147,7 @@ interface ExtendedHttpClientContract {
   }
 
   @ParameterizedTest
-  @ValueSource(ints = [201, 202, 205, 207, 226, 302, 303, 304, 305, 306, 307, 308, 400, 401, 402, 403, 406, 407, 408, 409, 411, 412, 413, 415, 416, 417, 418, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 502, 503, 504, 505, 506, 507, 508, 510, 511])
+  @ValueSource(ints = [201, 202, 205, 207, 226, 302, 303, 305, 306, 307, 308, 400, 401, 402, 403, 406, 407, 408, 409, 411, 412, 413, 415, 416, 417, 418, 421, 422, 423, 424, 425, 426, 428, 429, 431, 451, 500, 502, 503, 504, 505, 506, 507, 508, 510, 511])
   fun shouldNotCacheStatusCodesOtherThen(statusCode: Int) {
     //given
     val body = "abc"
@@ -165,10 +164,9 @@ interface ExtendedHttpClientContract {
     val r2 = send(requestBuilder().build())
 
     //then
-    assertThat(listOf(r1, r2)).allSatisfy(
-      ThrowingConsumer { r: HttpResponse<String> ->
-        assertThat(r).isNotCached.hasStatusCode(statusCode)
-      })
+    assertThat(listOf(r1, r2)).allSatisfy {
+      assertThat(it).isNotCached.hasStatusCode(statusCode)
+    }
   }
 
   @Test
