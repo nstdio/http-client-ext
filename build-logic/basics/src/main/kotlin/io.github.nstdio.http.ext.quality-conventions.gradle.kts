@@ -37,26 +37,28 @@ dependencies {
   spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0")
 }
 
-tasks.withType<JacocoReport> {
-  reports {
-    val isCI = System.getenv("CI").toBoolean()
-    xml.required.set(isCI)
-    html.required.set(!isCI)
+tasks {
+  withType<JacocoReport> {
+    reports {
+      val isCI = System.getenv("CI").toBoolean()
+      xml.required.set(isCI)
+      html.required.set(!isCI)
+    }
+
+    afterEvaluate {
+      classDirectories.setFrom(files(classDirectories.files.map {
+        fileTree(it).apply { exclude("io/**/NullCache.class", "io/**/Lazy.class") }
+      }))
+    }
+
+    executionData(withType<Test>())
   }
 
-  afterEvaluate {
-    classDirectories.setFrom(files(classDirectories.files.map {
-      fileTree(it).apply { exclude("io/**/NullCache.class", "io/**/Lazy.class") }
-    }))
+  withType<Test> {
+    finalizedBy(named("jacocoTestReport"))
   }
 
-  executionData(tasks.withType<Test>())
-}
-
-tasks.withType<Test> {
-  finalizedBy(tasks.named("jacocoTestReport"))
-}
-
-tasks.withType<SpotBugsTask> {
-  enabled = name == "spotbugsMain"
+  withType<SpotBugsTask> {
+    enabled = name == "spotbugsMain"
+  }
 }

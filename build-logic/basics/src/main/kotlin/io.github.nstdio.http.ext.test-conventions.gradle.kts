@@ -61,17 +61,6 @@ mapOf(
   configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
 }
 
-tasks.withType<Test> {
-  useJUnitPlatform()
-  reports {
-    html.required.set(!isCI)
-  }
-  testLogging {
-    events("skipped", "failed")
-    exceptionFormat = TestExceptionFormat.FULL
-  }
-}
-
 val junitVersion = "5.9.1"
 val assertJVersion = "3.23.1"
 val kotestAssertionsVersion = "5.5.4"
@@ -147,25 +136,38 @@ Generator.subset(jsonLibs.keys)
     }
   }
 
-tasks.create<Task>("spiMatrixTest") {
-  description = "The aggregator task for all tests"
-  group = "verification"
-  dependsOn(tasks.filter { it.name.startsWith("spiTest") })
-}
-
-tasks.withType<KotlinCompile> {
-  kotlinOptions {
-    useK2 = true
-    jvmTarget = JavaVersion.VERSION_11.toString()
+tasks {
+  withType<Test> {
+    useJUnitPlatform()
+    reports {
+      html.required.set(!isCI)
+    }
+    testLogging {
+      events("skipped", "failed")
+      exceptionFormat = TestExceptionFormat.FULL
+    }
   }
-}
 
-tasks.check {
-  dependsOn("spiMatrixTest")
-}
+  create<Task>("spiMatrixTest") {
+    description = "The aggregator task for all tests"
+    group = "verification"
+    dependsOn(filter { it.name.startsWith("spiTest") })
+  }
 
-tasks.build {
-  dependsOn("spiMatrixTest")
+  withType<KotlinCompile> {
+    kotlinOptions {
+      useK2 = true
+      jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+  }
+
+  check {
+    dependsOn("spiMatrixTest")
+  }
+
+  build {
+    dependsOn("spiMatrixTest")
+  }
 }
 
 configurations.names

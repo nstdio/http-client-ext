@@ -56,7 +56,9 @@ dependencies {
   }
 }
 
-tasks.withType<JavaCompile>().configureEach {
-  options.encoding = "UTF-8"
-  options.compilerArgs = listOf("-Xlint:all", "-Xlint:-deprecation")
+tasks {
+  withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs = listOf("-Xlint:all", "-Xlint:-deprecation")
+  }
 }
