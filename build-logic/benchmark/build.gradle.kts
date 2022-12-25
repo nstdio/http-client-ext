@@ -15,13 +15,11 @@
  */
 
 plugins {
-    `kotlin-dsl`
-}
-
-repositories {
-    gradlePluginPortal()
+  `java-library`
+  `kotlin-dsl`
 }
 
 dependencies {
-    implementation("net.researchgate:gradle-release:3.0.2")
+  implementation("me.champeau.jmh:jmh-gradle-plugin:0.6.8")
+  implementation("io.github.reyerizo.gradle:jcstress-gradle-plugin:0.8.14")  
 }

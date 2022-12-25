@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-plugins {
-    `kotlin-dsl`
-}
-
-repositories {
+pluginManagement {
+  repositories {
     gradlePluginPortal()
+    
+    mavenCentral()
+  }
 }
 
-dependencies {
-    implementation("net.researchgate:gradle-release:3.0.2")
-}
+rootProject.name = "build-logic"
+
+include("basics")
+include("benchmark")
+include("publishing")

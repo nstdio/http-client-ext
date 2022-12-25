@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-plugins {
-    `kotlin-dsl`
-}
+description = "Provides plugins that are used by subprojects"
 
-repositories {
+subprojects {
+  repositories {
     gradlePluginPortal()
-}
 
-dependencies {
-    implementation("net.researchgate:gradle-release:3.0.2")
+    mavenCentral()
+  }
 }

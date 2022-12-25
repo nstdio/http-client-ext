@@ -13,15 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 plugins {
-    `kotlin-dsl`
+  `java-library`
+  `kotlin-dsl`
 }
 
-repositories {
-    gradlePluginPortal()
-}
+description = "Provides plugins that are used by Gradle subprojects"
 
 dependencies {
-    implementation("net.researchgate:gradle-release:3.0.2")
+  implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
+  implementation("net.researchgate:gradle-release:3.0.2")
+  implementation("net.researchgate:gradle-release:3.0.2")
+  implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.77.0") {
+    isTransitive = false
+  }
+  implementation("se.bjurr.gitchangelog:git-changelog-lib:1.168.6") {
+    exclude("org.gitlab", "java-gitlab-api")
+    exclude("org.ow2.asm", "asm")
+  }
 }
