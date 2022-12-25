@@ -15,10 +15,17 @@
  */
 package io.github.nstdio.http.ext
 
-import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.future.shouldBeCompletedExceptionally
 import org.junit.jupiter.api.Test
+import org.mockito.BDDMockito.given
+import org.mockito.BDDMockito.verify
+import org.mockito.Mockito.any
+import org.mockito.Mockito.mock
 import java.io.IOException
+import java.nio.ByteBuffer
+import java.nio.channels.WritableByteChannel
 import java.nio.file.Path
+import java.util.concurrent.Flow
 
 internal class PathSubscriberTest {
   @Test
@@ -32,7 +39,7 @@ internal class PathSubscriberTest {
     val body = subscriber.body.toCompletableFuture()
 
     //then
-    body.isCompletedExceptionally.shouldBeTrue()
+    body.shouldBeCompletedExceptionally()
   }
 
   @Test
@@ -45,6 +52,29 @@ internal class PathSubscriberTest {
     val body = subscriber.body.toCompletableFuture()
 
     //then
-    body.isCompletedExceptionally.shouldBeTrue()
+    body.shouldBeCompletedExceptionally()
+  }
+
+  @Test
+  fun `Should complete exceptional when next throws`() {
+    //given
+    val mockStreamFactory = mock(StreamFactory::class.java)
+    val mockSub = mock(Flow.Subscription::class.java)
+    val mockChannel = mock(WritableByteChannel::class.java)
+    val subscriber = PathSubscriber(mockStreamFactory, Path.of("abc"))
+
+    given(mockStreamFactory.writable(any(), any()))
+      .willReturn(mockChannel)
+    given(mockChannel.write(any())).willThrow(IOException())
+
+    //when
+    subscriber.onSubscribe(mockSub)
+    subscriber.onNext(listOf(ByteBuffer.allocate(1)))
+
+    val body = subscriber.body.toCompletableFuture()
+
+    //then
+    body.shouldBeCompletedExceptionally()
+    verify(mockChannel).close()
   }
 }

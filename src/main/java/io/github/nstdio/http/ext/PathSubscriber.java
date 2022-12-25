@@ -19,6 +19,7 @@ package io.github.nstdio.http.ext;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
+import java.nio.channels.GatheringByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.Path;
 import java.util.List;
@@ -70,11 +71,19 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
   @Override
   public void onNext(List<ByteBuffer> item) {
     try {
+      write(item);
+    } catch (IOException ex) {
+      onError(ex);
+    }
+  }
+
+  private void write(List<ByteBuffer> item) throws IOException {
+    if (out instanceof GatheringByteChannel) {
+      ((GatheringByteChannel) out).write(item.toArray(ByteBuffer[]::new));
+    } else {
       for (ByteBuffer buffer : item) {
         out.write(buffer);
       }
-    } catch (IOException ex) {
-      onError(ex);
     }
   }
 

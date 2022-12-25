@@ -19,14 +19,33 @@ package io.github.nstdio.http.ext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+
+import static java.nio.file.StandardOpenOption.READ;
 
 class SimpleStreamFactory implements StreamFactory {
+  private static void assertNotContains(OpenOption[] options, StandardOpenOption needle) {
+    for (OpenOption option : options) {
+      if (option == needle) {
+        throw new IllegalArgumentException(needle + " not allowed");
+      }
+    }
+  }
+
   @Override
   public OutputStream output(Path path, OpenOption... options) throws IOException {
     return Files.newOutputStream(path, options);
+  }
+
+  @Override
+  public WritableByteChannel writable(Path path, OpenOption... options) throws IOException {
+    assertNotContains(options, READ);
+
+    return Files.newByteChannel(path, options);
   }
 
   @Override
