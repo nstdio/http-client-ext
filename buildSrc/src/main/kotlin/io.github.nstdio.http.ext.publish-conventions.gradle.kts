@@ -100,6 +100,7 @@ tasks.withType<AbstractArchiveTask>().configureEach {
 tasks.create("changelog", GitChangelogTask::class) {
   fromRepo = project.rootDir.path
   file = File("CHANGELOG.md")
+  ignoreTagsIfNameMatches = "refs/tags/vv[0-9.]+"
   handlebarsHelpers = listOf(HelperParam("shortHash") { _: Any, options ->
     return@HelperParam options.get<String>("hash").substring(0, 7)
   }, HelperParam("compare") { _, options ->
