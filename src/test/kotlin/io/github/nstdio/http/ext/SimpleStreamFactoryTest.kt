@@ -17,13 +17,25 @@
 package io.github.nstdio.http.ext
 
 import io.kotest.assertions.throwables.shouldThrowExactly
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
+import java.nio.ByteBuffer
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.nio.file.StandardOpenOption.READ
 import java.nio.file.StandardOpenOption.WRITE
 
 class SimpleStreamFactoryTest {
+  private val anyPath = Path.of("any")
+
+  @TempDir
+  private lateinit var tempDir: Path
+
   @Test
   fun `Should not allow read option on write method`() {
     //given
@@ -31,7 +43,34 @@ class SimpleStreamFactoryTest {
 
     //when + then
     shouldThrowExactly<IllegalArgumentException> {
-      factory.writable(Path.of("any"), READ, WRITE)
+      factory.writable(anyPath, READ, WRITE)
     }.shouldHaveMessage("READ not allowed")
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = ["WRITE", "APPEND"])
+  fun `Should not allow write option on read method`(option: StandardOpenOption) {
+    //given
+    val factory = SimpleStreamFactory()
+
+    //when + then
+    shouldThrowExactly<IllegalArgumentException> {
+      factory.readable(anyPath, READ, option)
+    }.shouldHaveMessage("$option not allowed")
+  }
+
+  @Test
+  fun `Should create channel`() {
+    //given
+    val file = tempDir.resolve("temp")
+    Files.write(file, listOf("a"), StandardOpenOption.CREATE)
+
+    val factory = SimpleStreamFactory()
+
+    //when
+    val channel = factory.readable(file)
+
+    //then
+    channel.read(ByteBuffer.allocate(1)) shouldBe 1
   }
 }
