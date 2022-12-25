@@ -125,7 +125,7 @@ interface ExtendedHttpClientContract {
     //given
     mockWebServer().enqueue(
       ok()
-        .addHeader(Headers.HEADER_CACHE_CONTROL, "max-age=1")
+        .addHeader(Headers.HEADER_CACHE_CONTROL, "max-age=4")
         .setBody("abc"),
       5
     )
@@ -138,7 +138,7 @@ interface ExtendedHttpClientContract {
       assertThat(r2).isCached
     }
     awaitFor {
-      val r3 = send(requestBuilder().header(Headers.HEADER_CACHE_CONTROL, "only-if-cached,max-age=2").build())
+      val r3 = send(requestBuilder().header(Headers.HEADER_CACHE_CONTROL, "only-if-cached,max-age=8").build())
       assertThat(r3).isCached
     }
     val r4 = send(requestBuilder().header(Headers.HEADER_CACHE_CONTROL, "only-if-cached,max-age=0").build())
