@@ -62,6 +62,9 @@ class BodyPublishersTest(private val mockWebServer: MockWebServer) {
       actual.headers["Content-Type"]
         .shouldNotBeNull()
         .shouldBe("application/json")
+      actual.headers["Content-Length"]
+        .shouldNotBeNull()
+        .shouldBe("13")
     }
   }
 

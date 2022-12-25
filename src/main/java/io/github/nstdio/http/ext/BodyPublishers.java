@@ -22,10 +22,11 @@ import java.io.ByteArrayOutputStream;
 import java.net.http.HttpRequest.BodyPublisher;
 import java.nio.ByteBuffer;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Flow;
 import java.util.concurrent.ForkJoinPool;
-import java.util.function.Supplier;
 
 /**
  * Implementations of various useful {@link BodyPublisher}s.
@@ -95,6 +96,7 @@ public final class BodyPublishers {
     private final Object body;
     private final JsonMappingProvider provider;
     private final Executor executor;
+    private volatile CompletableFuture<byte[]> result;
 
     JsonPublisher(Object body, JsonMappingProvider provider, Executor executor) {
       this.body = body;
@@ -104,27 +106,41 @@ public final class BodyPublishers {
 
     @Override
     public void subscribe(Flow.Subscriber<? super ByteBuffer> subscriber) {
-      var subscription = ByteArraySubscription.ofByteBuffer(subscriber, bytesSupplier(), executor);
+      var subscription = ByteArraySubscription.ofByteBuffer(subscriber, this::resultUncheckedGet, executor);
 
       subscriber.onSubscribe(subscription);
     }
 
-    private Supplier<byte[]> bytesSupplier() {
-      return () -> {
-        var os = new ByteArrayOutputStream();
-        try {
-          provider.get().write(body, os);
-        } catch (Throwable e) {
-          Throwables.sneakyThrow(e);
-        }
+    private byte[] resultUncheckedGet() {
+      try {
+        return result.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
-        return os.toByteArray();
-      };
+    private byte[] json() {
+      var os = new ByteArrayOutputStream();
+      try {
+        provider.get().write(body, os);
+      } catch (Throwable e) {
+        Throwables.sneakyThrow(e);
+      }
+
+      return os.toByteArray();
     }
 
     @Override
     public long contentLength() {
-      return -1;
+      if (result == null) {
+        synchronized (this) {
+          if (result == null) {
+            result = CompletableFuture.supplyAsync(this::json, executor);
+          }
+        }
+      }
+
+      return resultUncheckedGet().length;
     }
   }
 
