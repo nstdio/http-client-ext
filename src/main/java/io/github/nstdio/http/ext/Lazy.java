@@ -38,4 +38,11 @@ class Lazy<T> implements Supplier<T> {
 
     return value;
   }
+
+  @Override
+  public String toString() {
+    return "Lazy{" +
+        "value=" + (value != null ? value : "<not computed>") +
+        '}';
+  }
 }

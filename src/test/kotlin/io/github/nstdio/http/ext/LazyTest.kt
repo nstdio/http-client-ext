@@ -28,11 +28,7 @@ internal class LazyTest {
   @Test
   fun `Should invoke delegate once`() {
     //given
-    val i = LongAdder()
-    val delegate = Supplier<Int> {
-      i.increment()
-      1
-    }
+    val delegate = CountingSupplier(1)
     val lazy = Lazy(delegate)
 
     //when
@@ -45,6 +41,44 @@ internal class LazyTest {
     }
 
     //then
-    i.toInt() shouldBe 1
+    delegate.count() shouldBe 1L
+  }
+
+  @Test
+  fun `Should not resolve value when toString() called`() {
+    //given
+    val delegate = CountingSupplier(1)
+    val lazy = Lazy(delegate)
+
+    //when
+    val actual = lazy.toString()
+
+    //then
+    actual.shouldBe("Lazy{value=<not computed>}")
+    delegate.count() shouldBe 0L
+  }
+
+  @Test
+  fun `Should have proper toString`() {
+    //given
+    val lazy = Lazy { 10 }
+
+    //when
+    lazy.get()
+    val actual = lazy.toString()
+
+    //then
+    actual.shouldBe("Lazy{value=10}")
+  }
+
+  class CountingSupplier<T>(private val value: T) : Supplier<T> {
+    private val count = LongAdder()
+
+    override fun get(): T {
+      count.increment()
+      return value
+    }
+
+    fun count() = count.toLong()
   }
 }
