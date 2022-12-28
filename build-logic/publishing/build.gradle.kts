@@ -24,7 +24,7 @@ dependencies {
   implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
   implementation("net.researchgate:gradle-release:3.0.2")
   implementation("net.researchgate:gradle-release:3.0.2")
-  implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.77.0") {
+  implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.77.1") {
     isTransitive = false
   }
   implementation("se.bjurr.gitchangelog:git-changelog-lib:1.168.6") {
