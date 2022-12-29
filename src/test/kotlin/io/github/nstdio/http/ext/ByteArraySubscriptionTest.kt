@@ -16,6 +16,7 @@
 package io.github.nstdio.http.ext
 
 import io.kotest.assertions.timing.eventually
+import io.kotest.matchers.shouldBe
 import io.kotest.property.Arb
 import io.kotest.property.arbitrary.next
 import io.kotest.property.arbitrary.string
@@ -28,7 +29,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
-import org.mockito.BDDMockito.given
 import org.mockito.Mock
 import org.mockito.Mockito.inOrder
 import org.mockito.Mockito.mock
@@ -42,7 +42,6 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ForkJoinPool
-import java.util.concurrent.Future
 import kotlin.time.Duration.Companion.seconds
 
 @ExtendWith(MockitoExtension::class)
@@ -142,10 +141,6 @@ internal class ByteArraySubscriptionTest {
   fun `Should cancel result`() {
     //given
     val mockExecutor = mock(ExecutorService::class.java)
-    val mockFuture = mock(Future::class.java)
-
-    given(mockExecutor.submit(any(Runnable::class.java)))
-      .willReturn(mockFuture)
 
     val bytes = Arb.byteArray(8).next()
     val item = listOf(bytes.toBuffer())
@@ -156,7 +151,7 @@ internal class ByteArraySubscriptionTest {
     subscription.cancel()
 
     //then
-    verify(mockFuture).cancel(false)
+    subscription.result.isCancelled shouldBe true
   }
 
   private fun runAsyncAwait(block: suspend CoroutineScope.() -> Unit) {

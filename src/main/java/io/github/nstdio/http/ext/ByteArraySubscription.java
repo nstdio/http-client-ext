@@ -19,13 +19,14 @@ package io.github.nstdio.http.ext;
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static java.util.concurrent.CompletableFuture.runAsync;
 
 class ByteArraySubscription<T> implements Subscription {
   private final Subscriber<T> subscriber;
@@ -35,7 +36,7 @@ class ByteArraySubscription<T> implements Subscription {
   private final Supplier<byte[]> bytes;
 
   private final AtomicBoolean completed = new AtomicBoolean(false);
-  private Future<?> result;
+  Future<?> result;
 
   ByteArraySubscription(Subscriber<T> subscriber, Executor executor, Supplier<byte[]> bytes, Function<byte[], T> mapper) {
     this.subscriber = subscriber;
@@ -83,11 +84,7 @@ class ByteArraySubscription<T> implements Subscription {
   }
 
   private void submit(Runnable r) {
-    if (executor instanceof ExecutorService) {
-      result = ((ExecutorService) executor).submit(r);
-    } else {
-      executor.execute(r);
-    }
+    result = runAsync(r, executor);
   }
 
   private enum DirectExecutor implements Executor {
