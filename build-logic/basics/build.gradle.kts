@@ -20,7 +20,7 @@ plugins {
 
 dependencies {
   implementation("org.gradlex:extra-java-module-info:1.1")
-  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0-RC2")
+  implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0")
   implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.13")
   implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
 }
