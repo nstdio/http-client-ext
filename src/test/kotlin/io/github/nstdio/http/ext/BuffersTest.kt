@@ -17,7 +17,6 @@ package io.github.nstdio.http.ext
 
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import io.kotest.property.Arb
-import io.kotest.property.arbitrary.int
 import io.kotest.property.arbitrary.map
 import io.kotest.property.arbitrary.next
 import org.assertj.core.api.Assertions.assertThat
@@ -72,12 +71,17 @@ internal class BuffersTest {
     fun listBuffersData(): Stream<List<ByteBuffer>> {
       return Stream.of(
         listOf(),
-        listOf("abcde".repeat(16).toByteBuffer()),
+        listOf("abcde".repeat(8).toByteBuffer()),
         listOf(
-          "ab".repeat(16).toByteBuffer(),
-          "cd".repeat(16).toByteBuffer()
+          "ab".repeat(8).toByteBuffer(),
+          "cd".repeat(8).toByteBuffer()
         ),
-        Arb.byteArray(Arb.int(96, 96)).next().toChunkedBuffers(true)
+        listOf(
+          "ab".repeat(8).toByteBuffer(),
+          "cd".repeat(8).toByteBuffer(),
+          "ef".repeat(8).toByteBuffer()
+        ),
+        Arb.byteArray(96).next().toChunkedBuffers(true)
       )
     }
   }
