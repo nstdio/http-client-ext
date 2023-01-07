@@ -3,6 +3,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.1...HEAD)
 
+### ♻️ Improvements
+ -  Use fixed thread pool to perform disk I/O. ([6349789](https://github.com/nstdio/http-client-ext/commit/6349789959e027dc960abbbad1005224fe2f231a))
+ -  Improve task cancellation. ([b7b8223](https://github.com/nstdio/http-client-ext/commit/b7b8223be7eb694314fd5e221a8126fe7d7e33e5))
+ -  Json publisher produces Content-Length header. ([ee94d87](https://github.com/nstdio/http-client-ext/commit/ee94d873b713a3ef13ca70d101a82c02f5b84273))
 ## [v2.3.1](https://github.com/nstdio/http-client-ext/compare/v2.3.0...v2.3.1)
 
 ### ♻️ Improvements
