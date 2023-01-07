@@ -17,6 +17,9 @@ package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.Assertions.assertThat
 import io.kotest.matchers.maps.shouldBeEmpty
+import io.kotest.matchers.should
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldStartWith
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -138,5 +141,19 @@ internal class HttpHeadersBuilderTest {
     //then
     h1 shouldBeSameInstanceAs h2
     h1.map().shouldBeEmpty()
+  }
+  
+  @Test
+  fun `Should have proper toString`() {
+    //when
+   builder
+      .add("b", listOf("3", "4"))
+      .add("a", listOf("1", "2"))
+    
+    //then
+    builder.toString().should {
+      it shouldStartWith "${HttpHeadersBuilder::class.qualifiedName}@"
+      it shouldEndWith "{ {a=[1, 2], b=[3, 4]} }"
+    }
   }
 }
