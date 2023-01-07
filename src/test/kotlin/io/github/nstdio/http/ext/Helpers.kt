@@ -20,21 +20,13 @@ import java.net.http.HttpHeaders
 import java.net.http.HttpResponse.ResponseInfo
 
 internal object Helpers {
-  fun responseInfo(headers: Map<String, String>): ResponseInfo {
-    return object : ResponseInfo {
-      override fun statusCode(): Int {
-        return 200
-      }
+  fun responseInfo(headers: Map<String, String>) = responseInfo0(headers.mapValues { listOf(it.value) }.toMutableMap())
 
-      override fun headers(): HttpHeaders {
-        return HttpHeaders.of(headers
-          .mapValues { listOf(it.value) }
-          .toMutableMap()) { _, _ -> true }
-      }
+  fun responseInfo0(headers: Map<String, List<String>>): ResponseInfo = object : ResponseInfo {
+    override fun statusCode() = 200
 
-      override fun version(): HttpClient.Version {
-        return HttpClient.Version.HTTP_1_1
-      }
-    }
+    override fun headers() = HttpHeaders.of(headers) { _, _ -> true }
+
+    override fun version() = HttpClient.Version.HTTP_1_1
   }
 }

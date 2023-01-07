@@ -15,9 +15,14 @@
  */
 package io.github.nstdio.http.ext
 
+import io.github.nstdio.http.ext.Headers.HEADER_WARNING
+import io.github.nstdio.http.ext.Helpers.responseInfo
+import io.github.nstdio.http.ext.Helpers.responseInfo0
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldContainOnly
 import io.kotest.matchers.longs.shouldBeNegative
+import io.kotest.matchers.should
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
@@ -47,7 +52,7 @@ internal class CacheEntryMetadataTest {
         "Accept-Language", "en-EN"
       )
       .build()
-    val m = CacheEntryMetadata(0, 0, Helpers.responseInfo(headers), r, Clock.systemDefaultZone())
+    val m = CacheEntryMetadata(0, 0, responseInfo(headers), r, Clock.systemDefaultZone())
 
     //when
     val actual = m.varyHeaders()
@@ -60,6 +65,34 @@ internal class CacheEntryMetadataTest {
   }
 
   @Test
+  fun `Should remove warning header from response`() {
+    //given
+    val request = HttpRequest.newBuilder(URI.create("https://example.com")).build()
+    val responseInfo = responseInfo0(
+      mapOf(
+        HEADER_WARNING to listOf(
+          "112 - \"cache down\" \"Wed, 21 Oct 2015 07:28:00 GMT\"",
+          "110 anderson/1.3.37 \"Response is stale\"",
+          "299 - \"Deprecated\""
+        )
+      )
+    )
+    val metadata = CacheEntryMetadata(0, 0, responseInfo, request, Clock.systemDefaultZone())
+    val responseHeaders = HttpHeadersBuilder()
+      .add("X-A", "B")
+      .build()
+
+    //when
+    metadata.update(responseHeaders, 0, 0)
+
+    //then
+    metadata.response().headers().should {
+      it.allValues(HEADER_WARNING).shouldContainOnly("299 - \"Deprecated\"")
+      it.allValues("X-A").shouldContainOnly("B")
+    }
+  }
+
+  @Test
   fun shouldGenerateHeuristicExpirationWarning() {
     //given
     val tickDuration = Duration.ofSeconds(1)
@@ -68,7 +101,7 @@ internal class CacheEntryMetadataTest {
     // Creating Last-Modified just about to exceed 24 hour limit
     val lastModified = baseInstant.minus(241, ChronoUnit.HOURS)
     val expectedExpirationTime = baseInstant.plus(2, ChronoUnit.DAYS)
-    val info = Helpers.responseInfo(
+    val info = responseInfo(
       mutableMapOf(
         "Last-Modified" to Headers.toRFC1123(lastModified),
         "Date" to Headers.toRFC1123(Instant.ofEpochSecond(0))
@@ -110,7 +143,7 @@ internal class CacheEntryMetadataTest {
     val baseClock = Clock.systemUTC()
     val dateHeader = baseClock.instant()
     val clock = FixedRateTickClock.of(baseClock, Duration.ofSeconds(1))
-    val info = Helpers.responseInfo(
+    val info = responseInfo(
       mutableMapOf(
         "Cache-Control" to "max-age=1,must-revalidate",
         "Date" to Headers.toRFC1123(dateHeader)
@@ -141,7 +174,7 @@ internal class CacheEntryMetadataTest {
       val responseTimeMs: Long = 350
       val serverDate = responseTimeMs - 50
       val clock = Clock.fixed(Instant.ofEpochMilli(responseTimeMs + 5), ZoneId.systemDefault())
-      val info = Helpers.responseInfo(
+      val info = responseInfo(
         mutableMapOf(
           "Cache-Control" to "max-age=1",
           "Date" to Headers.toRFC1123(Instant.ofEpochMilli(serverDate))

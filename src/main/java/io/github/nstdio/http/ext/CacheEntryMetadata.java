@@ -22,7 +22,6 @@ import java.net.http.HttpResponse.ResponseInfo;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -34,7 +33,6 @@ import static io.github.nstdio.http.ext.Headers.HEADER_WARNING;
 import static io.github.nstdio.http.ext.Headers.parseInstant;
 import static io.github.nstdio.http.ext.Headers.toRFC1123;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.stream.Collectors.toUnmodifiableList;
 
 public final class CacheEntryMetadata {
   private final HttpRequest request;
@@ -236,15 +234,14 @@ public final class CacheEntryMetadata {
     this.requestTimeMs = requestTimeMs;
     this.responseTimeMs = responseTimeMs;
 
-    List<String> toRemove = response.headers()
-        .allValues(HEADER_WARNING)
-        .stream()
-        .filter(warn -> warn.startsWith("1"))
-        .collect(toUnmodifiableList());
+    var headersBuilder = new HttpHeadersBuilder(response.headers());
 
-    HttpHeadersBuilder headersBuilder = new HttpHeadersBuilder(response.headers());
+    for (String warn : response.headers().allValues(HEADER_WARNING)) {
+      if (warn.startsWith("1")) {
+        headersBuilder.remove(HEADER_WARNING, warn);
+      }
+    }
 
-    toRemove.forEach(value -> headersBuilder.remove(HEADER_WARNING, value));
     responseHeaders.map().forEach(headersBuilder::set);
 
     response = ImmutableResponseInfo.toBuilder(response).headers(headersBuilder.build()).build();
