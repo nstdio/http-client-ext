@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.function.BiPredicate;
 
 import static io.github.nstdio.http.ext.Headers.ALLOW_ALL;
+import static io.github.nstdio.http.ext.Headers.EMPTY_HEADERS;
 
 class HttpHeadersBuilder {
   private final TreeMap<String, List<String>> headersMap;
@@ -47,7 +48,7 @@ class HttpHeadersBuilder {
   private List<String> values(String name, int capacity) {
     return headersMap.computeIfAbsent(name, k -> new ArrayList<>(capacity));
   }
-  
+
   private List<String> values(String name) {
     return values(name, 1);
   }
@@ -118,7 +119,7 @@ class HttpHeadersBuilder {
   }
 
   HttpHeaders build(BiPredicate<String, String> filter) {
-    return HttpHeaders.of(headersMap, filter);
+    return headersMap.isEmpty() ? EMPTY_HEADERS : HttpHeaders.of(headersMap, filter);
   }
 
   @Override

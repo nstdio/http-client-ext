@@ -16,6 +16,8 @@
 package io.github.nstdio.http.ext
 
 import io.github.nstdio.http.ext.Assertions.assertThat
+import io.kotest.matchers.maps.shouldBeEmpty
+import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -125,5 +127,16 @@ internal class HttpHeadersBuilderTest {
     //then
     assertThat(builder.build())
       .isEmpty()
+  }
+
+  @Test
+  fun `Should not create new empty instances`() {
+    //when
+    val h1 = builder.build()
+    val h2 = builder.build()
+
+    //then
+    h1 shouldBeSameInstanceAs h2
+    h1.map().shouldBeEmpty()
   }
 }

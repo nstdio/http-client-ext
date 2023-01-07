@@ -51,7 +51,7 @@ class Headers {
   static final String HEADER_LAST_MODIFIED = "Last-Modified";
   static final String HEADER_WARNING = "Warning";
   static final BiPredicate<String, String> ALLOW_ALL = (s, s2) -> true;
-  private static final HttpHeaders EMPTY_HEADERS = HttpHeaders.of(Map.of(), ALLOW_ALL);
+  static final HttpHeaders EMPTY_HEADERS = HttpHeaders.of(Map.of(), ALLOW_ALL);
   private static final DateTimeFormatter ASCTIME_DATE_TIME = new DateTimeFormatterBuilder()
       .appendPattern("EEE MMM")
       .appendLiteral(' ')
