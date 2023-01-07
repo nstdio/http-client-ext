@@ -27,7 +27,7 @@ dependencies {
   implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.77.2") {
     isTransitive = false
   }
-  implementation("se.bjurr.gitchangelog:git-changelog-lib:1.168.6") {
+  implementation("se.bjurr.gitchangelog:git-changelog-lib:1.168.7") {
     exclude("org.gitlab", "java-gitlab-api")
     exclude("org.ow2.asm", "asm")
   }
