@@ -51,7 +51,7 @@ class DiskCache extends SizeConstrainedCache {
     this.metadataSerializer = metadataSerializer;
     this.streamFactory = streamFactory;
     this.dir = dir;
-    this.executor = Executors.newSingleThreadExecutor(r -> new Thread(r, "disk-cache-io"));
+    this.executor = Executors.newFixedThreadPool(1, r -> new Thread(r, "disk-cache-io"));
 
     restore();
   }
