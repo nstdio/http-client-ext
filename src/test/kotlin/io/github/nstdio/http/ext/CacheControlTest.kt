@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 package io.github.nstdio.http.ext
 
@@ -26,15 +25,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.net.http.HttpHeaders
-import java.util.Map
+import java.util.concurrent.TimeUnit.MILLISECONDS
 
 internal class CacheControlTest {
   @ParameterizedTest
   @ValueSource(strings = ["max-age=92233720368547758070,max-stale=92233720368547758070,min-fresh=92233720368547758070", "max-age= ,max-stale=,min-fresh=abc"])
   fun shouldNotFailWhenLongOverflow(value: String) {
     //given
-    val httpHeaders =
-      HttpHeaders.of(Map.of(Headers.HEADER_CACHE_CONTROL, listOf(value))) { _: String?, _: String? -> true }
+    val httpHeaders = HttpHeaders.of(mapOf(Headers.HEADER_CACHE_CONTROL to listOf(value))) { _, _ -> true }
 
     //when
     val actual = CacheControl.of(httpHeaders)
@@ -47,20 +45,20 @@ internal class CacheControlTest {
   @ValueSource(strings = ["max-age=32,max-stale=64,min-fresh=128,stale-if-error=256,stale-while-revalidate=512", "max-age=\"32\" ,max-stale=\"64\",min-fresh=\"128\",stale-if-error=\"256\",stale-while-revalidate=\"512\""])
   fun shouldParseValues(value: String) {
     //given
-    val httpHeaders =
-      HttpHeaders.of(Map.of(Headers.HEADER_CACHE_CONTROL, listOf(value))) { _: String?, _: String? -> true }
+    val httpHeaders = HttpHeaders.of(mapOf(Headers.HEADER_CACHE_CONTROL to listOf(value))) { _, _ -> true }
 
     //when
     val actual = CacheControl.of(httpHeaders)
 
     //then
-    assertThat(actual.maxAge()).isEqualTo(32)
-    assertThat(actual.maxStale()).isEqualTo(64)
-    assertThat(actual.minFresh()).isEqualTo(128)
-    assertThat(actual.staleIfError()).isEqualTo(256)
-    assertThat(actual.staleWhileRevalidate()).isEqualTo(512)
-    assertThat(actual)
-      .hasToString("max-age=32, max-stale=64, min-fresh=128, stale-if-error=256, stale-while-revalidate=512")
+    actual.maxAge() shouldBe 32
+    actual.maxStale() shouldBe 64
+    actual.minFresh() shouldBe 128
+    actual.staleIfError() shouldBe 256
+    actual.staleWhileRevalidate() shouldBe 512
+    actual.staleWhileRevalidate(MILLISECONDS) shouldBe 512000
+    
+    actual.toString() shouldBe "max-age=32, max-stale=64, min-fresh=128, stale-if-error=256, stale-while-revalidate=512"
   }
 
   @Test
@@ -92,7 +90,7 @@ internal class CacheControlTest {
     """.trimIndent().replace("\n", " ")
 
     //when + then
-    cc.toString().shouldBe(expected)
+    cc.toString() shouldBe expected
     assertThat(CacheControl.parse(expected))
       .usingRecursiveComparison()
       .isEqualTo(cc)
