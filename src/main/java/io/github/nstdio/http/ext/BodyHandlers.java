@@ -112,7 +112,7 @@ public final class BodyHandlers {
      */
     public DecompressingBodyHandlerBuilder lenient(boolean lenient) {
       return failOnUnsupportedDirectives(!lenient)
-          .failOnUnsupportedDirectives(!lenient);
+          .failOnUnknownDirectives(!lenient);
     }
 
     /**

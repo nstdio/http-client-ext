@@ -37,7 +37,6 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.junit.jupiter.MockitoExtension
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.io.InputStream
 import java.net.http.HttpHeaders
 import java.net.http.HttpResponse.BodyHandler
@@ -118,9 +117,6 @@ internal class DecompressingBodyHandlerTest {
 
   @ParameterizedTest
   @ValueSource(strings = ["gzip", "x-gzip"])
-  @Throws(
-    IOException::class
-  )
   fun shouldReturnGzipInputStream(directive: String?) {
     val gzipContent = ByteArrayInputStream(Compression.gzip("abc"))
 
@@ -153,8 +149,7 @@ internal class DecompressingBodyHandlerTest {
     fun shouldThrowUnsupportedOperationException(directive: String?) {
       //given
       val handler = BodyHandlers.decompressingBuilder()
-        .failOnUnsupportedDirectives(true)
-        .failOnUnknownDirectives(true)
+        .lenient(false)
         .build(mockHandler) as DecompressingBodyHandler
 
       //when + then
@@ -167,8 +162,7 @@ internal class DecompressingBodyHandlerTest {
     @ValueSource(strings = ["", "abc", "gz", "a"])
     fun shouldThrowIllegalArgumentException(directive: String?) {
       val handler = BodyHandlers.decompressingBuilder()
-        .failOnUnsupportedDirectives(true)
-        .failOnUnknownDirectives(true)
+        .lenient(false)
         .build(mockHandler) as DecompressingBodyHandler
       //when + then
       assertThatIllegalArgumentException()
@@ -178,8 +172,7 @@ internal class DecompressingBodyHandlerTest {
 
     @ParameterizedTest
     @ValueSource(strings = ["compress", "br"])
-    @DisplayName("Should not throw exception when 'failOnUnsupportedDirectives' is 'false'")
-    fun shouldNotThrowUnsupportedOperationException(directive: String?) {
+    fun `Should not throw exception when 'failOnUnsupportedDirectives' is 'false'`(directive: String?) {
       //given
       val handler = BodyHandlers.decompressingBuilder()
         .failOnUnsupportedDirectives(false)
@@ -203,6 +196,23 @@ internal class DecompressingBodyHandlerTest {
       val handler = BodyHandlers.decompressingBuilder()
         .failOnUnsupportedDirectives(true)
         .failOnUnknownDirectives(false)
+        .build(mockHandler) as DecompressingBodyHandler
+      val s = InputStream.nullInputStream()
+
+      //when
+      val fn = handler.decompressionFn(directive)
+      val actual = fn.apply(s)
+
+      //then
+      actual shouldBeSameInstanceAs s
+    }
+    
+    @ParameterizedTest
+    @ValueSource(strings = ["", "abc", "gz", "a"])
+    fun `Should not throw exception in lenient mode`(directive: String?) {
+      //given
+      val handler = BodyHandlers.decompressingBuilder()
+        .lenient(true)
         .build(mockHandler) as DecompressingBodyHandler
       val s = InputStream.nullInputStream()
 
