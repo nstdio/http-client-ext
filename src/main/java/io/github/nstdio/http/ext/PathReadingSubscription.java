@@ -62,12 +62,11 @@ class PathReadingSubscription implements Subscription {
       var sub = subscriber;
       while (n-- > 0) {
         ByteBuffer buff = ByteBuffer.allocate(DEFAULT_BUFF_CAPACITY);
-        int r = chan.read(buff);
-        if (r != -1) {
+        if (chan.read(buff) != -1) {
           buff.flip();
           sub.onNext(Collections.singletonList(buff));
         } else {
-          completed.set(true);
+          cancel();
           sub.onComplete();
           break;
         }
