@@ -15,10 +15,15 @@
  */
 package io.github.nstdio.http.ext
 
+import io.github.nstdio.http.ext.Responses.DelegatingHttpResponse
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import java.net.URI
 import java.net.http.HttpRequest
 import java.net.http.HttpRequest.BodyPublishers.noBody
@@ -43,6 +48,34 @@ internal class ResponsesTest {
   @MethodSource("safeRequest")
   fun `Should be safe request`(response: HttpResponse<Any>) {
     Responses.isSafeRequest(response).shouldBeTrue()
+  }
+
+  @Test
+  fun `Should invoke delegate`() {
+    //given
+    val mockDelegate = mock(HttpResponse::class.java)
+    val response = DelegatingHttpResponse(mockDelegate)
+
+    //when
+    response.body()
+    response.request()
+    response.uri()
+    response.statusCode()
+    response.headers()
+    response.sslSession()
+    response.previousResponse()
+    response.version()
+
+    //then
+    verify(mockDelegate).body()
+    verify(mockDelegate).request()
+    verify(mockDelegate).uri()
+    verify(mockDelegate).statusCode()
+    verify(mockDelegate).headers()
+    verify(mockDelegate).sslSession()
+    verify(mockDelegate).previousResponse()
+    verify(mockDelegate).version()
+    verifyNoMoreInteractions(mockDelegate)
   }
 
   @ParameterizedTest
