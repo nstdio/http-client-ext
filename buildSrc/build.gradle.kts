@@ -23,5 +23,19 @@ repositories {
 }
 
 dependencies {
+    implementation("org.gradlex:extra-java-module-info:1.1")
+    implementation("io.github.gradle-nexus:publish-plugin:1.1.0")
     implementation("net.researchgate:gradle-release:3.0.2")
+    implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0-RC2")
+    implementation("me.champeau.jmh:jmh-gradle-plugin:0.6.8")
+    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.77.0") {
+        isTransitive = false
+    }
+    implementation("se.bjurr.gitchangelog:git-changelog-lib:1.168.6") {
+        exclude("org.gitlab", "java-gitlab-api")
+        exclude("org.ow2.asm", "asm")
+    }
+    implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.13")
+    implementation("io.github.reyerizo.gradle:jcstress-gradle-plugin:0.8.14")
 }
