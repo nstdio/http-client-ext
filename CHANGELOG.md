@@ -1,9 +1,14 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.1...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.2...HEAD)
 
+## [v2.3.2](https://github.com/nstdio/http-client-ext/compare/v2.3.1...v2.3.2)
+
+### 🐞  Bug Fixes
+ -  Decompression lenient mode fails on unknown directives. ([e816aa0](https://github.com/nstdio/http-client-ext/commit/e816aa019f77a78ed4cc7678b1860523195821e8))
 ### ♻️ Improvements
+ -  Use empty headers when there is no value in builder. ([88d2bb8](https://github.com/nstdio/http-client-ext/commit/88d2bb8b2b7d1786d299ff5cf43cf87c273e5fd5))
  -  Use fixed thread pool to perform disk I/O. ([6349789](https://github.com/nstdio/http-client-ext/commit/6349789959e027dc960abbbad1005224fe2f231a))
  -  Improve task cancellation. ([b7b8223](https://github.com/nstdio/http-client-ext/commit/b7b8223be7eb694314fd5e221a8126fe7d7e33e5))
  -  Json publisher produces Content-Length header. ([ee94d87](https://github.com/nstdio/http-client-ext/commit/ee94d873b713a3ef13ca70d101a82c02f5b84273))
