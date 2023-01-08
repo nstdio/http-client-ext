@@ -138,8 +138,5 @@ class StaticHttpResponse<T> implements HttpResponse<T> {
       return new StaticHttpResponse<>(statusCode, request, headers, sslSession, uri, version, body);
     }
 
-    public String toString() {
-      return "StaticHttpResponse.StaticHttpResponseBuilder(statusCode=" + this.statusCode + ", request=" + this.request + ", headers=" + this.headers + ", sslSession=" + this.sslSession + ", uri=" + this.uri + ", version=" + this.version + ", body=" + this.body + ")";
-    }
   }
 }
