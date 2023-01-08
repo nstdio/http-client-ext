@@ -82,4 +82,8 @@ class SynchronizedCache implements Cache {
   public synchronized void close() throws IOException {
     delegate.close();
   }
+  
+  Cache delegate() {
+    return delegate;
+  }
 }

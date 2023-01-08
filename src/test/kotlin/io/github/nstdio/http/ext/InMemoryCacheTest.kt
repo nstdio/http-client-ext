@@ -25,7 +25,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse.ResponseInfo
 import java.time.Clock
 import java.util.stream.Collectors.toList
-import java.util.stream.IntStream
 
 internal class InMemoryCacheTest {
   private lateinit var cache: InMemoryCache
@@ -70,11 +69,12 @@ internal class InMemoryCacheTest {
   fun shouldWorkAsLRU() {
     //given
     val maxItems = 2
-    cache = InMemoryCache(maxItems, -1)
-    val requests = uris(10)
-      .stream()
-      .map { uri: URI? -> HttpRequest.newBuilder(uri).build() }
-      .collect(toList())
+    cache = (Cache.newInMemoryCacheBuilder()
+      .maxItems(maxItems)
+      .size(-1)
+      .build() as SynchronizedCache).delegate() as InMemoryCache 
+
+    val requests = uris(10).map { HttpRequest.newBuilder(it).build() }
     val expected = requests.subList(requests.size - maxItems, requests.size)
     for (request in requests) {
       val e = cacheEntry(java.util.Map.of(), request)
@@ -198,11 +198,7 @@ internal class InMemoryCacheTest {
     }
 
     fun uris(size: Int): List<URI> {
-      val baseUri = URI.create("http://example.com/")
-      return IntStream.rangeClosed(1, size)
-        .mapToObj { it.toString() }
-        .map { baseUri.resolve(it) }
-        .collect(toList())
+      return (1..size).map { "https://example.com/$it".toUri() }
     }
   }
 }

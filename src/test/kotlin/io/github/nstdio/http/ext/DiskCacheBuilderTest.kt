@@ -21,6 +21,7 @@ import org.assertj.core.api.Assertions.assertThatNullPointerException
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.nio.file.Path
 
 internal class DiskCacheBuilderTest {
   @ParameterizedTest
@@ -32,6 +33,17 @@ internal class DiskCacheBuilderTest {
     //when + then
     assertThatIllegalArgumentException()
       .isThrownBy { builder.maxItems(maxItems) }
+  }
+  
+  @ParameterizedTest
+  @ValueSource(ints = [1, 2, 256])
+  fun `Should not throw when max items is positive`(maxItems: Int) {
+    //given
+    val builder = Cache.newDiskCacheBuilder()
+      .dir(Path.of("abc"))
+
+    //when + then
+    builder.maxItems(maxItems).build()
   }
 
   @Test
