@@ -37,5 +37,5 @@ dependencies {
         exclude("org.ow2.asm", "asm")
     }
     implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.0.13")
-    implementation("io.github.reyerizo.gradle:jcstress-gradle-plugin:0.8.14")
+    implementation("io.github.reyerizo.gradle:jcstress-gradle-plugin:0.8.15")
 }
