@@ -128,7 +128,7 @@ HttpRequest request = HttpRequest.newBuilder(uri)
 HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressing(ofString()));
 ```
 Out of the box support for `gzip` and `deflate` is provided by JDK itself. For `br` (brotli) compression please add
-one of following dependencies to you project:
+one of following dependencies to your project:
 
 - [org.brotli:dec](https://mvnrepository.com/artifact/org.brotli/dec/0.1.2)
 - [Brotli4j](https://github.com/hyperxpro/Brotli4j)
