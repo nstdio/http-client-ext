@@ -17,14 +17,19 @@ package io.github.nstdio.http.ext
 
 import io.kotest.matchers.future.shouldBeCompletedExceptionally
 import org.junit.jupiter.api.Test
-import org.mockito.BDDMockito.given
-import org.mockito.BDDMockito.verify
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.eq
+import org.mockito.BDDMockito.*
 import org.mockito.Mockito.any
 import org.mockito.Mockito.mock
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.WritableByteChannel
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
+import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
+import java.nio.file.StandardOpenOption.WRITE
 import java.util.concurrent.Flow
 
 internal class PathSubscriberTest {
@@ -63,7 +68,7 @@ internal class PathSubscriberTest {
     val mockChannel = mock(WritableByteChannel::class.java)
     val subscriber = PathSubscriber(mockStreamFactory, Path.of("abc"))
 
-    given(mockStreamFactory.writable(any(), any()))
+    given(mockStreamFactory.writable(any(), eq(WRITE), eq(TRUNCATE_EXISTING)))
       .willReturn(mockChannel)
     given(mockChannel.write(any())).willThrow(IOException())
 

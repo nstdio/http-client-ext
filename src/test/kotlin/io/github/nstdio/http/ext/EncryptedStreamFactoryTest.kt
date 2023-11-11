@@ -42,6 +42,7 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets.UTF_8
+import java.nio.file.OpenOption
 import java.nio.file.Path
 import java.security.InvalidKeyException
 import java.security.Key
@@ -95,8 +96,8 @@ class EncryptedStreamFactoryTest {
     given(mockOut.write(anyInt())).willThrow(expectedIO)
     given(mockOut.write(any(ByteArray::class.java))).willThrow(expectedIO)
     given(mockOut.write(any(), anyInt(), anyInt())).willThrow(expectedIO)
-    given(delegate.input(any(), any())).willReturn(mockIs)
-    given(delegate.output(any(), any())).willReturn(mockOut)
+    given(delegate.input(any(), *arrayOf<OpenOption>())).willReturn(mockIs)
+    given(delegate.output(any(), *arrayOf<OpenOption>())).willReturn(mockOut)
 
     //when + then
     shouldThrowExactly<IOException> { factory.input(Path.of("abc")) }
