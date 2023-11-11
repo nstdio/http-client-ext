@@ -28,7 +28,7 @@ dependencies {
     implementation("net.researchgate:gradle-release:3.0.2")
     implementation("com.github.dpaukov:combinatoricslib3:3.3.3")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
-    implementation("me.champeau.jmh:jmh-gradle-plugin:0.7.1")
+    implementation("me.champeau.jmh:jmh-gradle-plugin:0.7.2")
     implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.81.3") {
         isTransitive = false
     }
