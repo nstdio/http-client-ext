@@ -19,7 +19,7 @@ plugins {
   id("io.github.reyerizo.gradle.jcstress")
 }
 
-val jmhVersion = "1.36"
+val jmhVersion = "1.37"
 val jmhArtifactIds = listOf("jmh-core", "jmh-generator-annprocess", "jmh-generator-bytecode")
 
 dependencies {
