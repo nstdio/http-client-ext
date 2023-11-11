@@ -71,7 +71,7 @@ val jacksonVersion = "2.14.1"
 val brotli4JVersion = "1.13.0"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.10"
-val equalsverifierVersion = "3.12.3"
+val equalsverifierVersion = "3.15.3"
 val coroutinesVersion = "1.6.4"
 
 val jsonLibs = mapOf(
