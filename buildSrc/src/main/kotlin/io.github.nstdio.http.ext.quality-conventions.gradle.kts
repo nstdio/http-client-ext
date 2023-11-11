@@ -33,7 +33,7 @@ spotbugs {
 }
 
 dependencies {
-  spotbugsPlugins("com.mebigfatguy.sb-contrib:sb-contrib:7.4.7")
+  spotbugsPlugins("com.mebigfatguy.sb-contrib:sb-contrib:7.6.0")
   spotbugsPlugins("com.h3xstream.findsecbugs:findsecbugs-plugin:1.12.0")
 }
 

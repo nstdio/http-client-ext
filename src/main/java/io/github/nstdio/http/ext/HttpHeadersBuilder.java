@@ -35,13 +35,13 @@ class HttpHeadersBuilder {
 
   HttpHeadersBuilder(HttpHeaders headers) {
     this();
-    copyTo(this, headers.map());
+    copyTo(headers.map());
   }
 
-  private void copyTo(HttpHeadersBuilder builder, Map<String, List<String>> source) {
+  private void copyTo(Map<String, List<String>> source) {
     for (Map.Entry<String, List<String>> entry : source.entrySet()) {
       List<String> valuesCopy = new ArrayList<>(entry.getValue());
-      builder.headersMap.put(entry.getKey(), valuesCopy);
+      headersMap.put(entry.getKey(), valuesCopy);
     }
   }
 

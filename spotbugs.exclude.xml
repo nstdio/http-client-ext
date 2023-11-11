@@ -90,4 +90,8 @@
         <Method name="read"/>
         <BugCode name="SECOBDES"/>
     </Match>
+    <Match>
+        <Class name="io.github.nstdio.http.ext.ByteArraySubscription$DirectExecutor"/>
+        <BugCode name="ENMI"/>
+    </Match>
 </FindBugsFilter>
