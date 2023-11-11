@@ -182,13 +182,6 @@ configurations.names
   }
 
 extraJavaModuleInfo {
-  module("brotli4j-${brotli4JVersion}.jar", "com.aayushatharva.brotli4j", brotli4JVersion) {
-    exports("com.aayushatharva.brotli4j")
-    exports("com.aayushatharva.brotli4j.common")
-    exports("com.aayushatharva.brotli4j.decoder")
-    exports("com.aayushatharva.brotli4j.encoder")
-  }
-
   module("dec-${brotliOrgVersion}.jar", "org.brotli.dec", brotliOrgVersion) {
     exports("org.brotli.dec")
   }
