@@ -32,7 +32,7 @@ dependencies {
     implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.81.3") {
         isTransitive = false
     }
-    implementation("se.bjurr.gitchangelog:git-changelog-lib:1.175.1") {
+    implementation("se.bjurr.gitchangelog:git-changelog-lib:1.175.2") {
         exclude("org.gitlab", "java-gitlab-api")
         exclude("org.ow2.asm", "asm")
     }
