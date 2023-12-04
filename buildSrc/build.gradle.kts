@@ -36,6 +36,6 @@ dependencies {
         exclude("org.gitlab", "java-gitlab-api")
         exclude("org.ow2.asm", "asm")
     }
-    implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:5.2.3")
+    implementation("com.github.spotbugs.snom:spotbugs-gradle-plugin:6.0.1")
     implementation("io.github.reyerizo.gradle:jcstress-gradle-plugin:0.8.15")
 }
