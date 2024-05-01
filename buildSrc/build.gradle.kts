@@ -29,7 +29,7 @@ dependencies {
     implementation("com.github.dpaukov:combinatoricslib3:3.4.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
     implementation("me.champeau.jmh:jmh-gradle-plugin:0.7.2")
-    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:1.81.3") {
+    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:2.1.0") {
         isTransitive = false
     }
     implementation("se.bjurr.gitchangelog:git-changelog-lib:2.1.0") {
