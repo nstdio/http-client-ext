@@ -30,6 +30,6 @@ jobs:
         if: always()
         with:
           files: "build/test-results/**/*.xml"
-      - uses: codecov/codecov-action@v4
+      - uses: codecov/codecov-action@v5
         with:
           verbose: true
