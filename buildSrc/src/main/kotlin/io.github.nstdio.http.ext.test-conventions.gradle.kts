@@ -63,7 +63,7 @@ mapOf(
 
 val junitVersion = "5.11.4"
 val assertJVersion = "3.27.3"
-val kotestAssertionsVersion = "5.8.0"
+val kotestAssertionsVersion = "5.9.1"
 val mockitoVersion = "5.15.2"
 val jsonPathAssertVersion = "2.7.0"
 val slf4jVersion = "2.0.16"
