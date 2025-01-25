@@ -72,7 +72,7 @@ val brotli4JVersion = "1.18.0"
 val brotliOrgVersion = "0.1.2"
 val gsonVersion = "2.11.0"
 val equalsverifierVersion = "3.18.1"
-val coroutinesVersion = "1.7.3"
+val coroutinesVersion = "1.10.1"
 
 val jsonLibs = mapOf(
   "jackson" to "com.fasterxml.jackson.core",
