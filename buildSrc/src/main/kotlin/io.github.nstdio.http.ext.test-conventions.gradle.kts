@@ -108,7 +108,7 @@ dependencies {
   testImplementation("com.squareup.okhttp3:mockwebserver3-junit5:5.0.0-alpha.10")
 
   testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion")
-  testImplementation("com.tngtech.archunit:archunit-junit5:1.2.0")
+  testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 
   /** Kotlin Coroutines */
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
