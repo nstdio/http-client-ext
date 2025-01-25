@@ -156,7 +156,7 @@ tasks {
 
   withType<KotlinCompile> {
     kotlinOptions {
-      useK2 = true
+      languageVersion = "2.0"
       jvmTarget = JavaVersion.VERSION_11.toString()
     }
   }
