@@ -61,7 +61,7 @@ mapOf(
   configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
 }
 
-val junitVersion = "5.10.1"
+val junitVersion = "5.11.4"
 val assertJVersion = "3.27.3"
 val kotestAssertionsVersion = "5.8.0"
 val mockitoVersion = "5.7.0"
