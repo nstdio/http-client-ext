@@ -70,7 +70,7 @@ val slf4jVersion = "1.7.36"
 val jacksonVersion = "2.18.2"
 val brotli4JVersion = "1.18.0"
 val brotliOrgVersion = "0.1.2"
-val gsonVersion = "2.10"
+val gsonVersion = "2.11.0"
 val equalsverifierVersion = "3.15.3"
 val coroutinesVersion = "1.7.3"
 
