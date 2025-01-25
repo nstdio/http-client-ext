@@ -34,7 +34,8 @@ java {
 configurations
   .filter { arrayOf("compileClasspath", "runtimeClasspath").contains(it.name) }
   .forEach {
-    it.exclude("org.jetbrains.kotlin", "kotlin-stdlib-jdk8")
+    it.exclude("org.jetbrains.kotlin")
+    it.exclude("org.jetbrains", "annotations")
   }
 
 tasks.named("compileKotlin") {
