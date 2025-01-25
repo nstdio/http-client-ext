@@ -35,7 +35,7 @@ implementation 'io.github.nstdio:http-client-ext:2.3.2'
 ### Features
 
 - [Caching](#Caching), both in memory and disk.
-- [Decompression](#Decompression): `gzip, deflate`
+- [Decompression](#Decompression): `br, gzip, deflate`
 - [JSON](#JSON) mappings
 
 ### Caching
