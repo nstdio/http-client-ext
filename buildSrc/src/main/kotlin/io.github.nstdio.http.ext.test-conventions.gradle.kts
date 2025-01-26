@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ val slf4jVersion = "2.0.16"
 val jacksonVersion = "2.18.2"
 val brotli4JVersion = "1.18.0"
 val brotliOrgVersion = "0.1.2"
+val zstdJniVersion = "1.5.6-9"
 val gsonVersion = "2.11.0"
 val equalsverifierVersion = "3.18.1"
 val coroutinesVersion = "1.10.1"
@@ -82,6 +83,7 @@ val jsonLibs = mapOf(
 val spiDeps = listOf(
   "org.brotli:dec:$brotliOrgVersion",
   "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion",
+  "com.github.luben:zstd-jni:$zstdJniVersion",
   "com.google.code.gson:gson:$gsonVersion",
   "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 )

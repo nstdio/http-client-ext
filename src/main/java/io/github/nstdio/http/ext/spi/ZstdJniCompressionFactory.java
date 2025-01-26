@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022, 2025 Edgar Asatryan
+ * Copyright (C) 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package io.github.nstdio.http.ext.spi;
 
-import static io.github.nstdio.http.ext.spi.Classpath.isBrotli4jPresent;
-import static io.github.nstdio.http.ext.spi.Classpath.isOrgBrotliPresent;
+import com.github.luben.zstd.ZstdInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
-public class OptionalBrotliCompressionFactory extends DelegatingCompressionFactory {
+final class ZstdJniCompressionFactory implements CompressionFactory {
 
-  public OptionalBrotliCompressionFactory() {
-    super(getDelegate());
+  private final List<String> supported = List.of("zstd");
+
+  @Override
+  public List<String> supported() {
+    return supported;
   }
 
-  private static CompressionFactory getDelegate() {
-    if (isOrgBrotliPresent()) {
-      return new BrotliOrgCompressionFactory();
-    } else if (isBrotli4jPresent()) {
-      return new Brotli4JCompressionFactory();
-    }
-
-    return null;
+  @Override
+  public InputStream decompressing(InputStream in, String type) throws IOException {
+    return new ZstdInputStream(in);
   }
 }

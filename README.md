@@ -35,7 +35,7 @@ implementation 'io.github.nstdio:http-client-ext:2.3.2'
 ### Features
 
 - [Caching](#Caching), both in memory and disk.
-- [Decompression](#Decompression): `br, gzip, deflate`
+- [Decompression](#Decompression): `br, zstd, gzip, deflate`
 - [JSON](#JSON) mappings
 
 ### Caching
@@ -127,11 +127,12 @@ HttpRequest request = HttpRequest.newBuilder(uri)
 
 HttpResponse<String> response = client.send(request, BodyHandlers.ofDecompressing(ofString()));
 ```
-Out of the box support for `gzip` and `deflate` is provided by JDK itself. For `br` (brotli) compression please add
-one of following dependencies to your project:
+Out of the box support for `gzip` and `deflate` is provided by JDK itself. For `br` (brotli) or `zstd` compression
+please add one of following dependencies to your project:
 
 - [org.brotli:dec](https://mvnrepository.com/artifact/org.brotli/dec/0.1.2)
 - [Brotli4j](https://github.com/hyperxpro/Brotli4j)
+- [zstd-jni](https://github.com/luben/zstd-jni)
 
 service loader will pick up correct dependency. If none of these preferred there is always an options to extend via [SPI](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/util/ServiceLoader.html)
 by providing [CompressionFactory](https://github.com/nstdio/http-client-ext/blob/main/src/main/java/io/github/nstdio/http/ext/spi/CompressionFactory.java)

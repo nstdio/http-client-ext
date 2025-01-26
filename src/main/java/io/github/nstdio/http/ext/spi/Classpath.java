@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,8 +19,6 @@ package io.github.nstdio.http.ext.spi;
 public class Classpath {
   private static final boolean JACKSON = isPresent("com.fasterxml.jackson.databind.ObjectMapper");
   private static final boolean GSON = isPresent("com.google.gson.Gson");
-  private static final boolean ORG_BROTLI = isPresent("org.brotli.dec.BrotliInputStream");
-  private static final boolean BROTLI_4J = isPresent("com.aayushatharva.brotli4j.Brotli4jLoader");
 
   private Classpath() {
   }
@@ -34,16 +32,20 @@ public class Classpath {
   }
 
   public static boolean isOrgBrotliPresent() {
-    return ORG_BROTLI;
+    return isPresent("org.brotli.dec.BrotliInputStream");
   }
 
   public static boolean isBrotli4jPresent() {
-    return BROTLI_4J;
+    return isPresent("com.aayushatharva.brotli4j.Brotli4jLoader");
+  }
+
+  public static boolean isZstdJniPresent() {
+    return isPresent("com.github.luben.zstd.ZstdInputStream");
   }
 
   public static boolean isPresent(String cls) {
     try {
-      Class.forName(cls);
+      Class.forName(cls, false, Thread.currentThread().getContextClassLoader());
       return true;
     } catch (ClassNotFoundException e) {
       return false;
