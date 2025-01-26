@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,10 @@
 
 package io.github.nstdio.http.ext;
 
+import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
+import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
+import static java.nio.file.StandardOpenOption.WRITE;
+
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
@@ -26,15 +30,14 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Flow;
-
-import static io.github.nstdio.http.ext.IOUtils.closeQuietly;
-import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
-import static java.nio.file.StandardOpenOption.WRITE;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
   private final StreamFactory streamFactory;
   private final Path path;
   private final CompletableFuture<Path> future = new CompletableFuture<>();
+  private final Lock lock = new ReentrantLock();
   private WritableByteChannel out;
 
   PathSubscriber(Path path) {
@@ -56,15 +59,20 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
     createChannel();
   }
 
-  private synchronized void createChannel() {
-    if (out != null) {
-      return;
-    }
-
+  private void createChannel() {
+    lock.lock();
     try {
-      out = streamFactory.writable(path, WRITE, TRUNCATE_EXISTING);
-    } catch (IOException e) {
-      future.completeExceptionally(e);
+      if (out != null) {
+        return;
+      }
+
+      try {
+        out = streamFactory.writable(path, WRITE, TRUNCATE_EXISTING);
+      } catch (IOException e) {
+        future.completeExceptionally(e);
+      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -87,9 +95,14 @@ class PathSubscriber implements HttpResponse.BodySubscriber<Path> {
     }
   }
 
-  private synchronized void close() {
-    closeQuietly(out);
-    out = null;
+  private void close() {
+    lock.lock();
+    try {
+      closeQuietly(out);
+      out = null;
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
