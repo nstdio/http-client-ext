@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.github.nstdio.http.ext.spi
 
-import io.github.nstdio.http.ext.GSON
-import io.github.nstdio.http.ext.jupiter.EnabledIfOnClasspath
+package io.github.nstdio.http.ext
 
-@EnabledIfOnClasspath(GSON)
-class GsonJsonMappingTest : JsonMappingContract {
-  override fun get(): JsonMapping {
-    return GsonJsonMapping()
-  }
-}
+const val JACKSON = "com.fasterxml.jackson.databind.ObjectMapper"
+const val GSON = "com.google.gson.Gson"
+val ALL_JSON = arrayOf(JACKSON, GSON)

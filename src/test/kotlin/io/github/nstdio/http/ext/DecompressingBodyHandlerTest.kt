@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@
 
 package io.github.nstdio.http.ext
 
+import com.aayushatharva.brotli4j.Brotli4jLoader
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.github.nstdio.http.ext.jupiter.FilteredClassLoaderTest
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeSameInstanceAs
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.Assertions.assertThatIllegalArgumentException
+import org.brotli.dec.BrotliInputStream
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -98,7 +102,7 @@ internal class DecompressingBodyHandlerTest {
     assertThat(actual).isExactlyInstanceOf(AsyncMappingSubscriber::class.java)
   }
 
-  @Test
+  @FilteredClassLoaderTest(BrotliInputStream::class, Brotli4jLoader::class)
   fun shouldReturnOriginalSubWhenDirectivesUnsupported() {
     //given
     val responseInfo = ImmutableResponseInfo.builder()
@@ -144,9 +148,17 @@ internal class DecompressingBodyHandlerTest {
 
   @Nested
   internal inner class FailureControlOptionsTest {
-    @ParameterizedTest
-    @ValueSource(strings = ["compress", "br"])
-    fun shouldThrowUnsupportedOperationException(directive: String?) {
+    @Test
+    fun `Should throw unsupported operation exception when not lenient`() {
+      shouldThrowUnsupportedOperationException("compress")
+    }
+
+    @FilteredClassLoaderTest(BrotliInputStream::class, Brotli4jLoader::class)
+    fun `Should throw unsupported operation exception when not lenient and missing compression`() {
+      shouldThrowUnsupportedOperationException("br")
+    }
+
+    private fun shouldThrowUnsupportedOperationException(directive: String?) {
       //given
       val handler = BodyHandlers.decompressingBuilder()
         .lenient(false)
@@ -170,9 +182,17 @@ internal class DecompressingBodyHandlerTest {
         .withMessage("Unknown compression directive '%s'", directive)
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = ["compress", "br"])
-    fun `Should not throw exception when 'failOnUnsupportedDirectives' is 'false'`(directive: String?) {
+    @Test
+    fun `Should not throw exception when 'failOnUnsupportedDirectives' is 'false' 1`() {
+      `Should not throw exception when 'failOnUnsupportedDirectives' is 'false'`("compress")
+    }
+
+    @FilteredClassLoaderTest(BrotliInputStream::class, Brotli4jLoader::class)
+    fun `Should not throw exception when 'failOnUnsupportedDirectives' is 'false' 2`() {
+      `Should not throw exception when 'failOnUnsupportedDirectives' is 'false'`("br")
+    }
+
+    private fun `Should not throw exception when 'failOnUnsupportedDirectives' is 'false'`(directive: String?) {
       //given
       val handler = BodyHandlers.decompressingBuilder()
         .failOnUnsupportedDirectives(false)

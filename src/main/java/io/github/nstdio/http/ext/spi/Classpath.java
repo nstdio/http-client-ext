@@ -17,18 +17,16 @@
 package io.github.nstdio.http.ext.spi;
 
 public class Classpath {
-  private static final boolean JACKSON = isPresent("com.fasterxml.jackson.databind.ObjectMapper");
-  private static final boolean GSON = isPresent("com.google.gson.Gson");
 
   private Classpath() {
   }
 
   public static boolean isJacksonPresent() {
-    return JACKSON;
+    return isPresent("com.fasterxml.jackson.databind.ObjectMapper");
   }
 
   public static boolean isGsonPresent() {
-    return GSON;
+    return isPresent("com.google.gson.Gson");
   }
 
   public static boolean isOrgBrotliPresent() {

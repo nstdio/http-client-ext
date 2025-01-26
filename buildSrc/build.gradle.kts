@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ dependencies {
     implementation("org.gradlex:extra-java-module-info:1.4.1")
     implementation("io.github.gradle-nexus:publish-plugin:1.3.0")
     implementation("net.researchgate:gradle-release:3.0.2")
-    implementation("com.github.dpaukov:combinatoricslib3:3.4.0")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0")
     implementation("me.champeau.jmh:jmh-gradle-plugin:0.7.2")
     implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:2.1.0") {

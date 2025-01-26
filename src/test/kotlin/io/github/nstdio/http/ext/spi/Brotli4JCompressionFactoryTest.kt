@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,12 @@ import io.kotest.matchers.collections.shouldContainExactly
 import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 
-internal class BrotliOrgCompressionFactorySpiTest {
+internal class Brotli4JCompressionFactoryTest {
   @Test
   fun shouldDecompress() {
     //given
-    val inputStream = Brotli4JCompressionFactorySpiTest::class.java.getResource("/__files/br")?.openStream()
-    val factory = BrotliOrgCompressionFactory()
+    val inputStream = javaClass.getResource("/__files/br")?.openStream()
+    val factory = Brotli4JCompressionFactory()
 
     //when
     val supported = factory.supported()

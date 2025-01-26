@@ -20,11 +20,11 @@ import io.kotest.matchers.collections.shouldContainExactly
 import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 
-internal class ZstdJniCompressionFactorySpiTest {
+internal class ZstdJniCompressionFactoryTest {
   @Test
   fun shouldDecompress() {
     //given
-    val inputStream = ZstdJniCompressionFactorySpiTest::class.java.getResource("/__files/zstd")?.openStream()
+    val inputStream = javaClass.getResource("/__files/zstd")?.openStream()
     val factory = ZstdJniCompressionFactory()
 
     //when

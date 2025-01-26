@@ -15,11 +15,14 @@
  */
 package io.github.nstdio.http.ext.spi
 
+import com.github.luben.zstd.ZstdInputStream
+import io.github.nstdio.http.ext.jupiter.FilteredClassLoaderTest
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import org.junit.jupiter.api.Test
 
 internal class OptionalZstdCompressionFactoryTest {
-  @Test
+  @FilteredClassLoaderTest(ZstdInputStream::class)
   fun shouldSupportNothing() {
     //given
     val factory = OptionalZstdCompressionFactory()
@@ -29,5 +32,17 @@ internal class OptionalZstdCompressionFactoryTest {
 
     //then
     actual.shouldBeEmpty()
+  }
+
+  @Test
+  fun shouldSupportSomething() {
+    //given
+    val factory = OptionalZstdCompressionFactory()
+
+    //when
+    val actual = factory.supported()
+
+    //then
+    actual.shouldContainExactly("zstd")
   }
 }
