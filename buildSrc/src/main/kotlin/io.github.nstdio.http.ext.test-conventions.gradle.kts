@@ -17,7 +17,6 @@
 @file:Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
 
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
-import org.gradle.configurationcache.extensions.capitalized
 import org.gradle.kotlin.dsl.invoke
 import org.gradle.nativeplatform.OperatingSystemFamily.LINUX
 import org.gradle.nativeplatform.OperatingSystemFamily.MACOS
@@ -25,41 +24,15 @@ import org.gradle.nativeplatform.OperatingSystemFamily.WINDOWS
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentArchitecture
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.getCurrentOperatingSystem
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.paukov.combinatorics3.Generator
 import java.lang.Boolean
 import kotlin.Suppress
-import kotlin.to
 
 plugins {
   `java-library`
-  idea
   id("org.gradlex.extra-java-module-info")
 }
 
 val isCI = System.getenv("CI").toBoolean()
-
-java {
-  sourceSets {
-    create("spiTest") {
-      val output = sourceSets.main.get().output
-      compileClasspath += output
-      runtimeClasspath += output
-    }
-  }
-}
-val sourceSetsSpiTest by sourceSets.named("spiTest")
-val spiTestImplementation by configurations
-
-idea.module {
-  testSourceDirs.addAll(sourceSetsSpiTest.allSource.srcDirs)
-}
-
-mapOf(
-  "spiTestImplementation" to "testImplementation",
-  "spiTestRuntimeOnly" to "testRuntimeOnly",
-).forEach { (t, u) ->
-  configurations.getByName(t) { extendsFrom(configurations.getByName(u)) }
-}
 
 val junitVersion = "5.11.4"
 val assertJVersion = "3.27.3"
@@ -75,12 +48,7 @@ val gsonVersion = "2.11.0"
 val equalsverifierVersion = "3.18.1"
 val coroutinesVersion = "1.10.1"
 
-val jsonLibs = mapOf(
-  "jackson" to "com.fasterxml.jackson.core",
-  "gson" to "gson-$gsonVersion"
-)
-
-val spiDeps = listOf(
+val optionalDeps = listOf(
   "org.brotli:dec:$brotliOrgVersion",
   "com.aayushatharva.brotli4j:brotli4j:$brotli4JVersion",
   "com.github.luben:zstd-jni:$zstdJniVersion",
@@ -89,7 +57,7 @@ val spiDeps = listOf(
 )
 
 dependencies {
-  spiDeps.forEach { compileOnly(it) }
+  optionalDeps.forEach { compileOnly(it) }
 
   testImplementation(platform("org.jetbrains.kotlinx:kotlinx-coroutines-bom:$coroutinesVersion"))
 
@@ -115,28 +83,9 @@ dependencies {
   /** Kotlin Coroutines */
   testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core")
 
-  spiDeps.forEach { spiTestImplementation(it) }
-  spiTestImplementation("com.aayushatharva.brotli4j:native-${arch()}:$brotli4JVersion")
+  optionalDeps.forEach { testImplementation(it) }
+  testImplementation("com.aayushatharva.brotli4j:native-${arch()}:$brotli4JVersion")
 }
-
-Generator.subset(jsonLibs.keys)
-  .simple()
-  .stream()
-  .forEach { it ->
-    val postFix = it.joinToString("And") { it.capitalized() }
-    val taskName = if (postFix.isEmpty()) "spiTest" else "spiTestWithout${postFix}"
-    tasks.create<Test>(taskName) {
-      description = "Run SPI tests"
-      group = "verification"
-      testClassesDirs = sourceSetsSpiTest.output.classesDirs
-      classpath = sourceSetsSpiTest.runtimeClasspath
-
-      doFirst {
-        val toExclude = classpath.filter { file -> it?.any { file.absolutePath.contains(it) } ?: false }
-        classpath -= toExclude
-      }
-    }
-  }
 
 tasks {
   withType<Test> {
@@ -150,25 +99,11 @@ tasks {
     }
   }
 
-  create<Task>("spiMatrixTest") {
-    description = "The aggregator task for all tests"
-    group = "verification"
-    dependsOn(filter { it.name.startsWith("spiTest") })
-  }
-
   withType<KotlinCompile> {
     kotlinOptions {
       languageVersion = "2.0"
       jvmTarget = JavaVersion.VERSION_11.toString()
     }
-  }
-
-  check {
-    dependsOn("spiMatrixTest")
-  }
-
-  build {
-    dependsOn("spiMatrixTest")
   }
 }
 

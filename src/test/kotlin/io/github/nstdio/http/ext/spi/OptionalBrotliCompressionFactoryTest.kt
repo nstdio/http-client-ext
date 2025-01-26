@@ -15,11 +15,16 @@
  */
 package io.github.nstdio.http.ext.spi
 
+import com.aayushatharva.brotli4j.Brotli4jLoader
+import io.github.nstdio.http.ext.jupiter.FilteredClassLoaderTest
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactly
 import org.assertj.core.api.Assertions.assertThat
+import org.brotli.dec.BrotliInputStream
 import org.junit.jupiter.api.Test
 
 internal class OptionalBrotliCompressionFactoryTest {
-  @Test
+  @FilteredClassLoaderTest(BrotliInputStream::class, Brotli4jLoader::class)
   fun shouldSupportNothing() {
     //given
     val factory = OptionalBrotliCompressionFactory()
@@ -29,5 +34,41 @@ internal class OptionalBrotliCompressionFactoryTest {
 
     //then
     assertThat(actual).isEmpty()
+  }
+
+  @Test
+  fun shouldSupportSomething() {
+    //given
+    val factory = OptionalBrotliCompressionFactory()
+
+    //when
+    val actual = factory.supported()
+
+    //then
+    actual.shouldContainExactly("br")
+  }
+
+  @FilteredClassLoaderTest(BrotliInputStream::class)
+  fun `Should support if BrotliInputStream is missing`() {
+    //given
+    val factory = OptionalBrotliCompressionFactory()
+
+    //when
+    val actual = factory.supported()
+
+    //then
+    actual.shouldContainExactly("br")
+  }
+
+  @FilteredClassLoaderTest(Brotli4jLoader::class)
+  fun `Should support if Brotli4jLoader is missing`() {
+    //given
+    val factory = OptionalBrotliCompressionFactory()
+
+    //when
+    val actual = factory.supported()
+
+    //then
+    actual.shouldContainExactly("br")
   }
 }

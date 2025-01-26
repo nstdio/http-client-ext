@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,16 @@
  */
 package io.github.nstdio.http.ext.spi
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.google.gson.Gson
 import io.github.nstdio.http.ext.ALL_JSON
-import io.github.nstdio.http.ext.GSON
-import io.github.nstdio.http.ext.JACKSON
-import io.github.nstdio.http.ext.jupiter.DisabledIfOnClasspath
+import io.github.nstdio.http.ext.jupiter.FilteredClassLoaderTest
 import io.github.nstdio.http.ext.spi.CompositeJsonMappingProvider.hasAnyImplementation
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
-import org.junit.jupiter.api.Test
 
-internal class CompositeJsonMappingProviderSpiTest {
-  @Test
-  @DisabledIfOnClasspath(JACKSON, GSON)
+internal class CompositeJsonMappingProviderTest {
+  @FilteredClassLoaderTest(ObjectMapper::class, Gson::class)
   fun shouldThrowExceptionIfNothingFound() {
     //give
     val provider = CompositeJsonMappingProvider()

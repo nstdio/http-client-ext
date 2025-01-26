@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package io.github.nstdio.http.ext.spi
 
-package io.github.nstdio.http.ext.jupiter;
-
-import java.util.List;
-
-class EnabledIfOnClasspathCondition extends IfOnClasspathCondition<EnabledIfOnClasspath> {
-  EnabledIfOnClasspathCondition() {
-    super(EnabledIfOnClasspath.class, EnabledIfOnClasspath::value);
-  }
-
-  @Override
-  boolean enabled(List<String> present, List<String> notPresent) {
-    return notPresent.isEmpty();
+class JacksonJsonMappingTest : JsonMappingContract {
+  override fun get(): JsonMapping {
+    return JacksonJsonMapping()
   }
 }
