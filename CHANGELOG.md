@@ -1,8 +1,15 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
-## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.3.2...HEAD)
+## [Unreleased](https://github.com/nstdio/http-client-ext/compare/v2.4.0...HEAD)
 
+## [v2.4.0](https://github.com/nstdio/http-client-ext/compare/v2.3.2...v2.4.0)
+
+### ⭐  Features
+ -  Support zstd compression via zstd-jni. ([c7e8775](https://github.com/nstdio/http-client-ext/commit/c7e877555386e1e21b71451e75392fb74cd90cb8))
+### ♻️ Improvements
+ -  Replace synchronized method with locks in SynchronizedCache. ([38d09af](https://github.com/nstdio/http-client-ext/commit/38d09af866cf79960956e5db3becaabd53585af4))
+ -  Replace synchronized with ReentrantLock in PathSubscriber. ([0733b26](https://github.com/nstdio/http-client-ext/commit/0733b260c37bf6dd92f815e276e5da3a31dde142))
 ## [v2.3.2](https://github.com/nstdio/http-client-ext/compare/v2.3.1...v2.3.2)
 
 ### 🐞  Bug Fixes
