@@ -45,7 +45,6 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
   private final BodyHandler<T> original;
   private final Options options;
   private final boolean direct;
-  private volatile List<String> directives;
 
   DecompressingBodyHandler(BodyHandler<T> original, Options options) {
     this(Objects.requireNonNull(original), Objects.requireNonNull(options), false);
@@ -102,8 +101,6 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
         .stream()
         .reduce(IDENTITY, this::chain);
 
-    directives = List.copyOf(directiveToFn.keySet());
-
     if (direct) {
       return directSubscriber(reduced);
     }
@@ -133,10 +130,7 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
   }
 
   List<String> directives(HttpHeaders headers) {
-    if (directives != null)
-      return directives;
-
-    return (directives = List.copyOf(computeDirectives(headers).keySet()));
+    return List.copyOf(computeDirectives(headers).keySet());
   }
 
   static class Options {
