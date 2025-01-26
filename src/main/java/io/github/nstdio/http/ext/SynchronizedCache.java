@@ -19,38 +19,66 @@ package io.github.nstdio.http.ext;
 import java.io.IOException;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 class SynchronizedCache implements Cache {
   private final Cache delegate;
+  private final Lock lock = new ReentrantLock();
 
   SynchronizedCache(Cache delegate) {
     this.delegate = delegate;
   }
 
   @Override
-  public synchronized CacheEntry get(HttpRequest request) {
-    return delegate.get(request);
+  public CacheEntry get(HttpRequest request) {
+    lock.lock();
+    try {
+      return delegate.get(request);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized void put(HttpRequest request, CacheEntry entry) {
-    delegate.put(request, entry);
+  public void put(HttpRequest request, CacheEntry entry) {
+    lock.lock();
+    try {
+      delegate.put(request, entry);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized void evict(HttpRequest request) {
-    delegate.evict(request);
+  public void evict(HttpRequest request) {
+    lock.lock();
+    try {
+      delegate.evict(request);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized void evictAll(HttpRequest request) {
-    delegate.evictAll(request);
+  public void evictAll(HttpRequest request) {
+    lock.lock();
+    try {
+      delegate.evictAll(request);
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
-  public synchronized void evictAll() {
-    delegate.evictAll();
+  public void evictAll() {
+    lock.lock();
+    try {
+      delegate.evictAll();
+    } finally {
+      lock.unlock();
+    }
   }
 
   @Override
@@ -79,8 +107,13 @@ class SynchronizedCache implements Cache {
   }
 
   @Override
-  public synchronized void close() throws IOException {
-    delegate.close();
+  public void close() throws IOException {
+    lock.lock();
+    try {
+      delegate.close();
+    } finally {
+      lock.unlock();
+    }
   }
   
   Cache delegate() {
