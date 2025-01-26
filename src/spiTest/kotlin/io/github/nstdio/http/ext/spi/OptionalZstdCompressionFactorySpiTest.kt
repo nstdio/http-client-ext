@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022, 2025 Edgar Asatryan
+ * Copyright (C) 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,59 +15,34 @@
  */
 package io.github.nstdio.http.ext.spi
 
-import com.aayushatharva.brotli4j.Brotli4jLoader
+import com.github.luben.zstd.ZstdInputStream
 import io.github.nstdio.http.ext.jupiter.FilteredClassLoaderTest
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
-import org.brotli.dec.BrotliInputStream
 import org.junit.jupiter.api.Test
 
-internal class OptionalBrotliCompressionFactorySpiTest {
+internal class OptionalZstdCompressionFactorySpiTest {
   @Test
   fun shouldSupportSomething() {
     //given
-    val factory = OptionalBrotliCompressionFactory()
+    val factory = OptionalZstdCompressionFactory()
 
     //when
     val actual = factory.supported()
 
     //then
-    actual.shouldContainExactly("br")
+    actual.shouldContainExactly("zstd")
   }
 
-  @FilteredClassLoaderTest(BrotliInputStream::class, Brotli4jLoader::class)
-  fun shouldNotSupportIfClassesAreMissing() {
+  @FilteredClassLoaderTest(ZstdInputStream::class)
+  fun `Should not support if ZstdInputStream is missing`() {
     //given
-    val factory = OptionalBrotliCompressionFactory()
+    val factory = OptionalZstdCompressionFactory()
 
     //when
     val actual = factory.supported()
 
     //then
     actual.shouldBeEmpty()
-  }
-
-  @FilteredClassLoaderTest(BrotliInputStream::class)
-  fun `Should support if BrotliInputStream is missing`() {
-    //given
-    val factory = OptionalBrotliCompressionFactory()
-
-    //when
-    val actual = factory.supported()
-
-    //then
-    actual.shouldContainExactly("br")
-  }
-
-  @FilteredClassLoaderTest(Brotli4jLoader::class)
-  fun `Should support if Brotli4jLoader is missing`() {
-    //given
-    val factory = OptionalBrotliCompressionFactory()
-
-    //when
-    val actual = factory.supported()
-
-    //then
-    actual.shouldContainExactly("br")
   }
 }

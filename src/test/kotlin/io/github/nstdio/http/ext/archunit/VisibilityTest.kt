@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,6 +48,7 @@ import io.github.nstdio.http.ext.spi.JsonMapping
 import io.github.nstdio.http.ext.spi.JsonMappingProvider
 import io.github.nstdio.http.ext.spi.JsonMappingProviderNotFoundException
 import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory
+import io.github.nstdio.http.ext.spi.OptionalZstdCompressionFactory
 
 
 @AnalyzeClasses(packages = ["io.github.nstdio.http.ext"], importOptions = [DoNotIncludeTests::class])
@@ -78,6 +79,7 @@ internal object VisibilityTest {
         .and(not(JdkCompressionFactory::class.java))
         .and(not(IdentityCompressionFactory::class.java))
         .and(not(OptionalBrotliCompressionFactory::class.java))
+        .and(not(OptionalZstdCompressionFactory::class.java))
         .and(not(JsonMappingProvider::class.java))
         .and(not(JsonMapping::class.java))
         .and(not(JacksonJsonMapping::class.java))

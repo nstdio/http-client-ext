@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import io.github.nstdio.http.ext.spi.IdentityCompressionFactory;
 import io.github.nstdio.http.ext.spi.JdkCompressionFactory;
 import io.github.nstdio.http.ext.spi.JsonMappingProvider;
 import io.github.nstdio.http.ext.spi.OptionalBrotliCompressionFactory;
+import io.github.nstdio.http.ext.spi.OptionalZstdCompressionFactory;
 
 module http.client.ext {
   uses CompressionFactory;
@@ -28,6 +29,7 @@ module http.client.ext {
 
   requires static com.aayushatharva.brotli4j;
   requires static org.brotli.dec;
+  requires static com.github.luben.zstd_jni;
 
   requires static transitive com.fasterxml.jackson.core;
   requires static transitive com.fasterxml.jackson.databind;
@@ -38,5 +40,6 @@ module http.client.ext {
 
   provides CompressionFactory with JdkCompressionFactory,
       IdentityCompressionFactory,
-      OptionalBrotliCompressionFactory;
+      OptionalBrotliCompressionFactory,
+      OptionalZstdCompressionFactory;
 }

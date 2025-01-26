@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Edgar Asatryan
+ * Copyright (C) 2022, 2025 Edgar Asatryan
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ class DecompressingBodyHandler<T> implements BodyHandler<T> {
   private static final String UNSUPPORTED_DIRECTIVE = "Compression directive '%s' is not supported";
   private static final String UNKNOWN_DIRECTIVE = "Unknown compression directive '%s'";
   private static final UnaryOperator<InputStream> IDENTITY = UnaryOperator.identity();
-  private static final Set<String> WELL_KNOWN_DIRECTIVES = Set.of("gzip", "x-gzip", "br", "compress", "deflate", "identity");
+  private static final Set<String> WELL_KNOWN_DIRECTIVES = Set.of("gzip", "x-gzip", "br", "compress", "deflate", "identity", "zstd");
 
   private final BodyHandler<T> original;
   private final Options options;
