@@ -28,10 +28,10 @@ dependencies {
     implementation("net.researchgate:gradle-release:3.0.2")
     implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.21")
     implementation("me.champeau.jmh:jmh-gradle-plugin:0.7.2")
-    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:2.1.0") {
+    implementation("se.bjurr.gitchangelog:git-changelog-gradle-plugin:2.6.3") {
         isTransitive = false
     }
-    implementation("se.bjurr.gitchangelog:git-changelog-lib:2.1.0") {
+    implementation("se.bjurr.gitchangelog:git-changelog-lib:2.6.3") {
         exclude("org.gitlab", "java-gitlab-api")
         exclude("org.ow2.asm", "asm")
     }
