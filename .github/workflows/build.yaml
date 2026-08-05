@@ -30,7 +30,7 @@ jobs:
         if: always()
         with:
           files: "build/test-results/**/*.xml"
-      - uses: codecov/codecov-action@v6
+      - uses: codecov/codecov-action@v7
         with:
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
